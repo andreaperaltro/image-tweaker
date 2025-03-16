@@ -4,10 +4,13 @@
  * This module provides functionality for:
  * 1. Converting canvas to SVG
  * 2. Exporting SVG as a file
+ * 3. Adding metadata and timestamps to exports
+ * 4. Creating vector-based halftone patterns
  */
 
 import { saveAs } from 'file-saver';
 import C2S from 'canvas2svg';
+import { HalftoneSettings, HalftoneShape } from './Halftone';
 
 /**
  * Creates a Canvas2SVG context that can be used like a regular canvas context
@@ -20,9 +23,44 @@ export function createSvgContext(width: number, height: number): any {
 }
 
 /**
+ * Adds metadata to an SVG string
+ */
+export function addSvgMetadata(svgString: string, imageInfo: Record<string, string> = {}): string {
+  // Create timestamp
+  const now = new Date();
+  const timestamp = now.toISOString();
+  
+  // Basic metadata
+  const metadata = {
+    creator: 'ImageTweaker',
+    creationDate: timestamp,
+    software: 'ImageTweaker v0.1.0',
+    ...imageInfo
+  };
+  
+  // Create metadata tags
+  const metadataTags = Object.entries(metadata)
+    .map(([key, value]) => `    <meta name="${key}" content="${value}" />`)
+    .join('\n');
+  
+  // Add metadata section after the opening SVG tag
+  return svgString.replace(
+    '<svg',
+    `<svg xmlns:metadata="http://www.w3.org/ns/metadata/"
+     data-creation-date="${timestamp}"`
+  ).replace(
+    '</svg>',
+    `  <metadata>
+${metadataTags}
+  </metadata>
+</svg>`
+  );
+}
+
+/**
  * Converts a regular canvas to SVG format
  */
-export function canvasToSvg(canvas: HTMLCanvasElement): string {
+export function canvasToSvg(canvas: HTMLCanvasElement, imageInfo: Record<string, string> = {}): string {
   const width = canvas.width;
   const height = canvas.height;
   
@@ -32,16 +70,21 @@ export function canvasToSvg(canvas: HTMLCanvasElement): string {
   // Draw the canvas content to the SVG context
   ctx.drawImage(canvas, 0, 0);
   
-  // Get the SVG as a string
-  return ctx.getSerializedSvg(true);
+  // Get the SVG as a string and add metadata
+  const svgString = ctx.getSerializedSvg(true);
+  return addSvgMetadata(svgString, imageInfo);
 }
 
 /**
  * Exports the canvas as an SVG file
  */
-export function exportAsSvg(canvas: HTMLCanvasElement, filename: string = 'imagetweaker-export.svg'): void {
+export function exportAsSvg(
+  canvas: HTMLCanvasElement, 
+  filename: string = 'imagetweaker-export.svg',
+  imageInfo: Record<string, string> = {}
+): void {
   // Convert the canvas to SVG
-  const svgContent = canvasToSvg(canvas);
+  const svgContent = canvasToSvg(canvas, imageInfo);
   
   // Create a blob with the SVG content
   const blob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
@@ -51,11 +94,32 @@ export function exportAsSvg(canvas: HTMLCanvasElement, filename: string = 'image
 }
 
 /**
- * Exports the canvas as a PNG file
+ * Exports the canvas as a PNG file with embedded metadata
  */
-export function exportAsPng(canvas: HTMLCanvasElement, filename: string = 'imagetweaker-export.png'): void {
+export function exportAsPng(
+  canvas: HTMLCanvasElement, 
+  filename: string = 'imagetweaker-export.png',
+  imageInfo: Record<string, string> = {}
+): void {
+  // Create a temporary canvas to add metadata
+  const tempCanvas = document.createElement('canvas');
+  tempCanvas.width = canvas.width;
+  tempCanvas.height = canvas.height;
+  const ctx = tempCanvas.getContext('2d');
+  
+  if (!ctx) return;
+  
+  // Draw the original canvas
+  ctx.drawImage(canvas, 0, 0);
+  
+  // Add timestamp as small text in the bottom corner
+  const timestamp = new Date().toISOString();
+  ctx.font = '10px monospace';
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+  ctx.fillText(`Created: ${timestamp}`, 10, canvas.height - 10);
+  
   // Convert the canvas to a data URL and download it
-  const dataUrl = canvas.toDataURL('image/png');
+  const dataUrl = tempCanvas.toDataURL('image/png');
   
   // Remove the data URL prefix (e.g., "data:image/png;base64,")
   const base64Data = dataUrl.split(',')[1];
@@ -90,7 +154,8 @@ export function exportAsPng(canvas: HTMLCanvasElement, filename: string = 'image
 export function recreateImageAsSvg(
   width: number, 
   height: number, 
-  renderFunction: (ctx: CanvasRenderingContext2D) => void
+  renderFunction: (ctx: CanvasRenderingContext2D) => void,
+  imageInfo: Record<string, string> = {}
 ): string {
   // Create an SVG context
   const ctx = createSvgContext(width, height);
@@ -98,14 +163,263 @@ export function recreateImageAsSvg(
   // Apply the render function to draw on the SVG context
   renderFunction(ctx as unknown as CanvasRenderingContext2D);
   
-  // Get the SVG as a string
-  return ctx.getSerializedSvg(true);
+  // Get the SVG as a string and add metadata
+  const svgString = ctx.getSerializedSvg(true);
+  return addSvgMetadata(svgString, imageInfo);
 }
 
 /**
  * Saves SVG string content to a file
  */
-export function saveSvgString(svgString: string, filename: string = 'imagetweaker-export.svg'): void {
-  const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+export function saveSvgString(
+  svgString: string, 
+  filename: string = 'imagetweaker-export.svg',
+  imageInfo: Record<string, string> = {}
+): void {
+  // Add metadata if it's not already there
+  const svgWithMetadata = svgString.includes('<metadata>') 
+    ? svgString 
+    : addSvgMetadata(svgString, imageInfo);
+    
+  const blob = new Blob([svgWithMetadata], { type: 'image/svg+xml;charset=utf-8' });
   saveAs(blob, filename);
+}
+
+/**
+ * Create an SVG halftone pattern directly without using canvas
+ * This creates true vector shapes for each dot, making it ideal for vector editing software
+ */
+export function createHalftoneVectorSvg(
+  imageData: ImageData,
+  width: number,
+  height: number,
+  settings: HalftoneSettings,
+  imageInfo: Record<string, string> = {}
+): string {
+  const { cellSize, dotScaleFactor, shape, arrangement, spiralTightness, enableCMYK, channels, cmykAngles } = settings;
+  
+  // Calculate number of cells
+  const cols = Math.ceil(width / cellSize);
+  const rows = Math.ceil(height / cellSize);
+  
+  // Start building SVG
+  let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">\n`;
+  
+  // Add a white background
+  svg += `  <rect width="${width}" height="${height}" fill="white" />\n`;
+  
+  // RGB to CMYK conversion for CMYK mode
+  const rgbToCmyk = (r: number, g: number, b: number) => {
+    r = r / 255;
+    g = g / 255;
+    b = b / 255;
+    
+    const k = 1 - Math.max(r, g, b);
+    const c = k === 1 ? 0 : (1 - r - k) / (1 - k);
+    const m = k === 1 ? 0 : (1 - g - k) / (1 - k);
+    const y = k === 1 ? 0 : (1 - b - k) / (1 - k);
+    
+    return { c, m, y, k };
+  };
+  
+  // If CMYK mode is enabled
+  if (enableCMYK && (channels.cyan || channels.magenta || channels.yellow || channels.black)) {
+    // Create group for each channel
+    if (channels.cyan) {
+      svg += `  <g id="cyan-channel" fill="cyan" opacity="0.8">\n`;
+      processChannel('c', cmykAngles.cyan);
+      svg += `  </g>\n`;
+    }
+    
+    if (channels.magenta) {
+      svg += `  <g id="magenta-channel" fill="magenta" opacity="0.8">\n`;
+      processChannel('m', cmykAngles.magenta);
+      svg += `  </g>\n`;
+    }
+    
+    if (channels.yellow) {
+      svg += `  <g id="yellow-channel" fill="yellow" opacity="0.8">\n`;
+      processChannel('y', cmykAngles.yellow);
+      svg += `  </g>\n`;
+    }
+    
+    if (channels.black) {
+      svg += `  <g id="black-channel" fill="black" opacity="0.9">\n`;
+      processChannel('k', cmykAngles.black);
+      svg += `  </g>\n`;
+    }
+  } else {
+    // Standard halftone (B&W)
+    svg += `  <g id="halftone-dots" fill="black">\n`;
+    
+    for (let y = 0; y < rows; y++) {
+      for (let x = 0; x < cols; x++) {
+        // Cell position
+        let centerX = x * cellSize + cellSize / 2;
+        let centerY = y * cellSize + cellSize / 2;
+        
+        // Apply arrangement adjustments
+        centerX = adjustForArrangement(centerX, centerY, x, y).x;
+        centerY = adjustForArrangement(centerX, centerY, x, y).y;
+        
+        // Get the pixel at this position
+        const pixelX = Math.min(width - 1, Math.max(0, Math.floor(centerX)));
+        const pixelY = Math.min(height - 1, Math.max(0, Math.floor(centerY)));
+        const pixelIndex = (pixelY * width + pixelX) * 4;
+        
+        // Get RGB values
+        const r = imageData.data[pixelIndex];
+        const g = imageData.data[pixelIndex + 1];
+        const b = imageData.data[pixelIndex + 2];
+        
+        // Calculate brightness (0 to 1)
+        let brightness = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+        
+        // For standard halftone, we want dark areas to have large dots
+        if (!settings.invertBrightness) {
+          brightness = 1 - brightness;
+        }
+        
+        // Apply size variation
+        const sizeVariation = 1 + (Math.random() - 0.5) * settings.sizeVariation;
+        
+        // Calculate max dot size
+        const maxDotSize = cellSize * dotScaleFactor * sizeVariation;
+        
+        // Calculate actual dot size
+        const dotSize = maxDotSize * brightness;
+        
+        // Skip drawing dots that are too small
+        if (dotSize < 0.5) continue;
+        
+        // Add the vector shape
+        svg += addVectorShape(centerX, centerY, dotSize, shape, 0);
+      }
+    }
+    
+    svg += `  </g>\n`;
+  }
+  
+  // Close SVG tag
+  svg += `</svg>`;
+  
+  // Add metadata
+  return addSvgMetadata(svg, imageInfo);
+  
+  // Helper function to adjust point positions for different arrangements
+  function adjustForArrangement(centerX: number, centerY: number, x: number, y: number): { x: number, y: number } {
+    let adjustedX = centerX;
+    let adjustedY = centerY;
+    
+    if (arrangement === 'hexagonal' && y % 2 === 0) {
+      adjustedX += cellSize / 2;
+    } else if (arrangement === 'spiral') {
+      const dx = centerX - width / 2;
+      const dy = centerY - height / 2;
+      const distanceFromCenter = Math.sqrt(dx * dx + dy * dy);
+      
+      let angle = Math.atan2(dy, dx);
+      const spiralAngle = angle + distanceFromCenter * spiralTightness / cellSize;
+      
+      adjustedX = width / 2 + Math.cos(spiralAngle) * distanceFromCenter;
+      adjustedY = height / 2 + Math.sin(spiralAngle) * distanceFromCenter;
+    } else if (arrangement === 'concentric') {
+      const distance = Math.sqrt(Math.pow(centerX - width / 2, 2) + Math.pow(centerY - height / 2, 2));
+      const rings = Math.floor(distance / cellSize);
+      if (rings % 2 === 0) {
+        adjustedX += cellSize / 4;
+        adjustedY += cellSize / 4;
+      }
+    } else if (arrangement === 'random') {
+      adjustedX += (Math.random() - 0.5) * cellSize / 2;
+      adjustedY += (Math.random() - 0.5) * cellSize / 2;
+    }
+    
+    return { x: adjustedX, y: adjustedY };
+  }
+  
+  // Helper function to process each CMYK channel
+  function processChannel(channel: 'c' | 'm' | 'y' | 'k', angle: number): void {
+    for (let y = 0; y < rows; y++) {
+      for (let x = 0; x < cols; x++) {
+        // Cell position
+        let centerX = x * cellSize + cellSize / 2;
+        let centerY = y * cellSize + cellSize / 2;
+        
+        // Adjust position based on arrangement
+        const adjusted = adjustForArrangement(centerX, centerY, x, y);
+        centerX = adjusted.x;
+        centerY = adjusted.y;
+        
+        // Get the pixel at this position
+        const pixelX = Math.min(width - 1, Math.max(0, Math.floor(centerX)));
+        const pixelY = Math.min(height - 1, Math.max(0, Math.floor(centerY)));
+        const pixelIndex = (pixelY * width + pixelX) * 4;
+        
+        // Get RGB values
+        const r = imageData.data[pixelIndex];
+        const g = imageData.data[pixelIndex + 1];
+        const b = imageData.data[pixelIndex + 2];
+        
+        // Convert to CMYK
+        const cmyk = rgbToCmyk(r, g, b);
+        
+        // Get the value for this channel
+        let value = cmyk[channel];
+        
+        // Invert if needed (CMYK is subtractive)
+        if (settings.invertBrightness) {
+          value = 1 - value;
+        }
+        
+        // Apply size variation
+        const sizeVariation = 1 + (Math.random() - 0.5) * settings.sizeVariation;
+        
+        // Calculate max dot size
+        const maxDotSize = cellSize * dotScaleFactor * sizeVariation;
+        
+        // Calculate actual dot size
+        const dotSize = maxDotSize * value;
+        
+        // Skip drawing dots that are too small
+        if (dotSize < 0.5) continue;
+        
+        // Add the vector shape
+        svg += addVectorShape(centerX, centerY, dotSize, shape, angle);
+      }
+    }
+  }
+  
+  // Helper function to add vector shapes
+  function addVectorShape(x: number, y: number, size: number, shape: HalftoneShape, angle: number): string {
+    switch (shape) {
+      case 'circle':
+        return `    <circle cx="${x}" cy="${y}" r="${size/2}" />\n`;
+        
+      case 'square':
+        return `    <rect x="${x - size/2}" y="${y - size/2}" width="${size}" height="${size}" transform="rotate(${angle} ${x} ${y})" />\n`;
+        
+      case 'diamond':
+        return `    <rect x="${x - size/2}" y="${y - size/2}" width="${size}" height="${size}" transform="rotate(45 ${x} ${y}) rotate(${angle} ${x} ${y})" />\n`;
+        
+      case 'line':
+        return `    <line x1="${x - size/2}" y1="${y}" x2="${x + size/2}" y2="${y}" stroke="currentColor" stroke-width="${size/4}" transform="rotate(${angle} ${x} ${y})" />\n`;
+        
+      case 'cross':
+        return `    <path d="M ${x - size/2} ${y} L ${x + size/2} ${y} M ${x} ${y - size/2} L ${x} ${y + size/2}" stroke="currentColor" stroke-width="${size/4}" transform="rotate(${angle} ${x} ${y})" />\n`;
+        
+      case 'ellipse':
+        return `    <ellipse cx="${x}" cy="${y}" rx="${size/2}" ry="${size/4}" transform="rotate(${angle} ${x} ${y})" />\n`;
+        
+      case 'triangle':
+        const h = size * Math.sqrt(3) / 2;
+        return `    <polygon points="${x},${y - size/2} ${x - size/2},${y + h/2} ${x + size/2},${y + h/2}" transform="rotate(${angle} ${x} ${y})" />\n`;
+        
+      case 'hexagon':
+        return `    <polygon points="${x + size/2},${y} ${x + size/4},${y + size*0.433} ${x - size/4},${y + size*0.433} ${x - size/2},${y} ${x - size/4},${y - size*0.433} ${x + size/4},${y - size*0.433}" transform="rotate(${angle} ${x} ${y})" />\n`;
+        
+      default:
+        return `    <circle cx="${x}" cy="${y}" r="${size/2}" />\n`;
+    }
+  }
 } 

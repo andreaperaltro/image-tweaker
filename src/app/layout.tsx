@@ -1,18 +1,22 @@
 import React from 'react';
 import './globals.css';
 import type { Metadata, Viewport } from 'next';
-import { Inter } from 'next/font/google';
+import { Space_Mono } from 'next/font/google';
 
-const inter = Inter({ subsets: ['latin'] });
+const spaceMono = Space_Mono({ 
+  weight: ['400', '700'],
+  subsets: ['latin'],
+  display: 'swap' 
+});
 
 export const metadata: Metadata = {
-  title: 'ImageTweaker Advanced',
-  description: 'Progressive Web App for advanced image manipulation',
+  title: 'ImageTweaker',
+  description: 'Brutalist image manipulation app',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'ImageTweaker Advanced',
+    title: 'ImageTweaker',
   },
   icons: {
     icon: '/icons/icon-192x192.png',
@@ -24,7 +28,7 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
-  themeColor: '#2563eb',
+  themeColor: '#000000',
 };
 
 export default function RootLayout({
@@ -34,7 +38,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>{children}</body>
+      <body className={spaceMono.className}>{children}</body>
     </html>
   );
 } 

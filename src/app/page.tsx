@@ -6,35 +6,35 @@ import dynamic from 'next/dynamic';
 const AdvancedEditor = dynamic(() => import('@/components/AdvancedEditor'), {
   ssr: false,
   loading: () => (
-    <div className="flex flex-col items-center justify-center h-96 animate-pulse">
-      <div className="w-24 h-24 mb-4 rounded-full bg-blue-200"></div>
-      <div className="h-6 w-48 bg-blue-200 rounded"></div>
-      <div className="mt-3 h-4 w-64 bg-gray-200 rounded"></div>
+    <div className="flex flex-col items-center justify-center h-96">
+      <div className="w-12 h-12 mb-2 border-2 border-black"></div>
+      <div className="h-4 w-32 bg-black"></div>
+      <div className="mt-2 h-3 w-48 bg-gray-700"></div>
     </div>
   ),
 });
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
-      <header className="bg-blue-600 text-white p-4 shadow-md">
+    <main className="min-h-screen bg-white">
+      <header className="bg-black text-white p-3 border-b-2 border-gray-700">
         <div className="container mx-auto">
-          <h1 className="text-2xl font-bold">ImageTweaker Advanced</h1>
-          <p className="text-sm opacity-80">Your powerful image manipulation studio</p>
+          <h1 className="text-xl font-mono uppercase">ImageTweaker</h1>
+          <p className="text-xs font-mono">Image manipulation studio</p>
         </div>
       </header>
 
-      <div className="container mx-auto py-8 px-4">
-        <div className="bg-white rounded-lg shadow-xl p-4 md:p-8">
+      <div className="container mx-auto py-6 px-3">
+        <div className="border-2 border-black p-3">
           <AdvancedEditor />
         </div>
       </div>
 
-      <footer className="bg-gray-800 text-white p-4 mt-12">
-        <div className="container mx-auto text-center text-sm">
-          <p className="mb-2">ImageTweaker Advanced | Progressive Web App for image manipulation</p>
-          <p className="text-xs text-gray-400">
-            Edit your images with advanced controls for canvas size, aspect ratio, and more. Your images never leave your device.
+      <footer className="bg-black text-white p-3 mt-8 border-t-2 border-gray-700">
+        <div className="container mx-auto text-center">
+          <p className="text-xs font-mono uppercase">ImageTweaker | Image manipulation app</p>
+          <p className="text-xs text-gray-400 font-mono">
+            All processing happens on your device
           </p>
         </div>
       </footer>

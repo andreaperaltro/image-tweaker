@@ -15,12 +15,21 @@ export type HalftoneSettings = {
   cellSize: number;
   mix: number;
   colored: boolean;
+  enableCMYK: boolean;
   arrangement: HalftoneArrangement;
   shape: HalftoneShape;
   angleOffset: number;
   sizeVariation: number;
   dotScaleFactor: number;
   invertBrightness: boolean;
+  spiralTightness: number;
+  spiralExpansion: number;
+  spiralRotation: number;
+  spiralCenterX: number;
+  spiralCenterY: number;
+  concentricCenterX: number;
+  concentricCenterY: number;
+  concentricRingSpacing: number;
   channels: {
     cyan: boolean;
     magenta: boolean;
@@ -69,9 +78,9 @@ export function applyHalftone(
   const cols = Math.ceil(width / cellSize);
   const rows = Math.ceil(height / cellSize);
   
-  // CMYK halftone if channels are enabled
-  if (settings.channels.cyan || settings.channels.magenta || 
-      settings.channels.yellow || settings.channels.black) {
+  // CMYK halftone if CMYK mode is enabled and channels are selected
+  if (settings.enableCMYK && (settings.channels.cyan || settings.channels.magenta || 
+      settings.channels.yellow || settings.channels.black)) {
     applyCMYKHalftone(ctx, pixels, width, height, cols, rows, cellSize, settings);
     
     // Apply the original image with reduced opacity for mixing if mix < 100
@@ -88,28 +97,66 @@ export function applyHalftone(
   for (let y = 0; y < rows; y++) {
     for (let x = 0; x < cols; x++) {
       // Cell position
-      let centerX = x * cellSize + cellSize / 2;
-      let centerY = y * cellSize + cellSize / 2;
+      const initialCenterX = x * cellSize + cellSize / 2;
+      const initialCenterY = y * cellSize + cellSize / 2;
+      
+      // Variables to hold the final position (may be adjusted based on arrangement)
+      let centerX = initialCenterX;
+      let centerY = initialCenterY;
       
       // Adjust position based on arrangement
       if (settings.arrangement === 'hexagonal' && y % 2 === 0) {
         centerX += cellSize / 2;
       } else if (settings.arrangement === 'spiral') {
-        const angle = Math.atan2(centerY - height / 2, centerX - width / 2);
-        const distance = Math.sqrt(Math.pow(centerX - width / 2, 2) + Math.pow(centerY - height / 2, 2));
-        const offset = distance / 20;
-        centerX += Math.cos(angle) * offset;
-        centerY += Math.sin(angle) * offset;
+        // Calculate angle and distance from original center
+        const spiralCenterX = width / 2 + settings.spiralCenterX;
+        const spiralCenterY = height / 2 + settings.spiralCenterY;
+        
+        const dx = initialCenterX - spiralCenterX;
+        const dy = initialCenterY - spiralCenterY;
+        const distanceFromCenter = Math.sqrt(dx * dx + dy * dy);
+        
+        // Get the angle to the center
+        let angle = Math.atan2(dy, dx);
+        
+        // Add rotation offset (convert degrees to radians)
+        const rotationRadians = settings.spiralRotation * (Math.PI / 180);
+        
+        // Add a spiral effect - increasing angle based on distance
+        // This creates an Archimedean spiral with additional parameters
+        const spiralAngle = angle + rotationRadians + (distanceFromCenter * settings.spiralTightness * settings.spiralExpansion / cellSize);
+        
+        // Calculate new position based on spiral equation
+        centerX = spiralCenterX + Math.cos(spiralAngle) * distanceFromCenter;
+        centerY = spiralCenterY + Math.sin(spiralAngle) * distanceFromCenter;
       } else if (settings.arrangement === 'concentric') {
-        const distance = Math.sqrt(Math.pow(centerX - width / 2, 2) + Math.pow(centerY - height / 2, 2));
-        const rings = Math.floor(distance / cellSize);
-        if (rings % 2 === 0) {
-          centerX += cellSize / 4;
-          centerY += cellSize / 4;
-        }
+        // Calculate the center point with offset
+        const concentricCenterX = width / 2 + settings.concentricCenterX;
+        const concentricCenterY = height / 2 + settings.concentricCenterY;
+        
+        // Calculate distance from the center point
+        const dx = initialCenterX - concentricCenterX;
+        const dy = initialCenterY - concentricCenterY;
+        const distanceFromCenter = Math.sqrt(dx * dx + dy * dy);
+        
+        // Calculate angle from center
+        const angle = Math.atan2(dy, dx);
+        
+        // Calculate ring number (which concentric circle this point belongs to)
+        // Adjust spacing with the concentricRingSpacing setting
+        const ringSpacing = cellSize * (settings.concentricRingSpacing || 1);
+        const ringNumber = Math.floor(distanceFromCenter / ringSpacing);
+        
+        // Quantize the distance to create distinct rings
+        // This creates the concentric circle effect
+        const quantizedDistance = ringNumber * ringSpacing;
+        
+        // Place the dot on the quantized circle
+        centerX = concentricCenterX + Math.cos(angle) * quantizedDistance;
+        centerY = concentricCenterY + Math.sin(angle) * quantizedDistance;
       } else if (settings.arrangement === 'random') {
-        centerX += (Math.random() - 0.5) * cellSize / 2;
-        centerY += (Math.random() - 0.5) * cellSize / 2;
+        centerX = initialCenterX + (Math.random() - 0.5) * cellSize / 2;
+        centerY = initialCenterY + (Math.random() - 0.5) * cellSize / 2;
       }
       
       // Get the pixel at this position (clamped to image boundaries)
@@ -125,8 +172,9 @@ export function applyHalftone(
       // Calculate brightness (0 to 1) - Perceived luminance approach
       let brightness = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
       
-      // Invert brightness if needed
-      if (settings.invertBrightness) {
+      // For standard halftone, we want dark areas to have large dots by default
+      // So we invert the brightness here unless invertBrightness is true
+      if (!settings.invertBrightness) {
         brightness = 1 - brightness;
       }
       
@@ -227,28 +275,66 @@ function applyCMYKHalftone(
     for (let y = 0; y < rows; y++) {
       for (let x = 0; x < cols; x++) {
         // Cell position
-        let centerX = x * cellSize + cellSize / 2;
-        let centerY = y * cellSize + cellSize / 2;
+        const initialCenterX = x * cellSize + cellSize / 2;
+        const initialCenterY = y * cellSize + cellSize / 2;
+        
+        // Variables to hold the final position (may be adjusted based on arrangement)
+        let centerX = initialCenterX;
+        let centerY = initialCenterY;
         
         // Adjust position based on arrangement
         if (settings.arrangement === 'hexagonal' && y % 2 === 0) {
           centerX += cellSize / 2;
         } else if (settings.arrangement === 'spiral') {
-          const angle = Math.atan2(centerY - height / 2, centerX - width / 2);
-          const distance = Math.sqrt(Math.pow(centerX - width / 2, 2) + Math.pow(centerY - height / 2, 2));
-          const offset = distance / 20;
-          centerX += Math.cos(angle) * offset;
-          centerY += Math.sin(angle) * offset;
+          // Calculate angle and distance from original center
+          const spiralCenterX = width / 2 + settings.spiralCenterX;
+          const spiralCenterY = height / 2 + settings.spiralCenterY;
+          
+          const dx = initialCenterX - spiralCenterX;
+          const dy = initialCenterY - spiralCenterY;
+          const distanceFromCenter = Math.sqrt(dx * dx + dy * dy);
+          
+          // Get the angle to the center
+          let angle = Math.atan2(dy, dx);
+          
+          // Add rotation offset (convert degrees to radians)
+          const rotationRadians = settings.spiralRotation * (Math.PI / 180);
+          
+          // Add a spiral effect - increasing angle based on distance
+          // This creates an Archimedean spiral with additional parameters
+          const spiralAngle = angle + rotationRadians + (distanceFromCenter * settings.spiralTightness * settings.spiralExpansion / cellSize);
+          
+          // Calculate new position based on spiral equation
+          centerX = spiralCenterX + Math.cos(spiralAngle) * distanceFromCenter;
+          centerY = spiralCenterY + Math.sin(spiralAngle) * distanceFromCenter;
         } else if (settings.arrangement === 'concentric') {
-          const distance = Math.sqrt(Math.pow(centerX - width / 2, 2) + Math.pow(centerY - height / 2, 2));
-          const rings = Math.floor(distance / cellSize);
-          if (rings % 2 === 0) {
-            centerX += cellSize / 4;
-            centerY += cellSize / 4;
-          }
+          // Calculate the center point with offset
+          const concentricCenterX = width / 2 + settings.concentricCenterX;
+          const concentricCenterY = height / 2 + settings.concentricCenterY;
+          
+          // Calculate distance from the center point
+          const dx = initialCenterX - concentricCenterX;
+          const dy = initialCenterY - concentricCenterY;
+          const distanceFromCenter = Math.sqrt(dx * dx + dy * dy);
+          
+          // Calculate angle from center
+          const angle = Math.atan2(dy, dx);
+          
+          // Calculate ring number (which concentric circle this point belongs to)
+          // Adjust spacing with the concentricRingSpacing setting
+          const ringSpacing = cellSize * (settings.concentricRingSpacing || 1);
+          const ringNumber = Math.floor(distanceFromCenter / ringSpacing);
+          
+          // Quantize the distance to create distinct rings
+          // This creates the concentric circle effect
+          const quantizedDistance = ringNumber * ringSpacing;
+          
+          // Place the dot on the quantized circle
+          centerX = concentricCenterX + Math.cos(angle) * quantizedDistance;
+          centerY = concentricCenterY + Math.sin(angle) * quantizedDistance;
         } else if (settings.arrangement === 'random') {
-          centerX += (Math.random() - 0.5) * cellSize / 2;
-          centerY += (Math.random() - 0.5) * cellSize / 2;
+          centerX = initialCenterX + (Math.random() - 0.5) * cellSize / 2;
+          centerY = initialCenterY + (Math.random() - 0.5) * cellSize / 2;
         }
         
         // Get the pixel at this position
@@ -268,7 +354,7 @@ function applyCMYKHalftone(
         let value = cmyk[channel];
         
         // Invert if needed (CMYK is subtractive)
-        if (!settings.invertBrightness) {
+        if (settings.invertBrightness) {
           value = 1 - value;
         }
         

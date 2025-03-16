@@ -5,17 +5,21 @@ import { useDropzone } from 'react-dropzone'
 import { ColorSettings, applyColorAdjustments } from './ColorUtils'
 import { GridSettings, GridCell, createGrid, renderGridCell } from './Grid'
 import { HalftoneSettings, HalftoneArrangement, HalftoneShape, applyHalftone } from './Halftone'
+import { exportAsPng, exportAsSvg, createHalftoneVectorSvg } from './SvgExport'
 import { Pane } from 'tweakpane'
 import type { 
   ButtonApi, 
   FolderApi, 
   TabApi,
   BladeApi,
-  InputBindingApi 
+  InputBindingApi,
+  BladeController,
+  View
 } from '@tweakpane/core'
 
 // Import Tweakpane types for development
 type TweakpanePane = Pane;
+type TweakpaneBladeApi = BladeApi<BladeController<View>>;
 
 // Define aspect ratio presets
 type AspectRatioPreset = '1:1' | '4:3' | '16:9' | '3:2' | '5:4' | '2:1' | '3:4' | '9:16' | '2:3' | '4:5' | '1:2' | 'custom';
@@ -63,12 +67,21 @@ export default function AdvancedEditor() {
     cellSize: 8,
     mix: 100,
     colored: false,
+    enableCMYK: false,
     arrangement: 'grid' as HalftoneArrangement,
     shape: 'circle' as HalftoneShape,
     angleOffset: 0,
     sizeVariation: 0,
     dotScaleFactor: 0.8,
     invertBrightness: false,
+    spiralTightness: 0.1,
+    spiralExpansion: 1.0,
+    spiralRotation: 0,
+    spiralCenterX: 0,
+    spiralCenterY: 0,
+    concentricCenterX: 0,
+    concentricCenterY: 0,
+    concentricRingSpacing: 1.0,
     channels: {
       cyan: true,
       magenta: true,
@@ -180,14 +193,6 @@ export default function AdvancedEditor() {
         }).on('change', (ev) => {
           setAspectRatio(ev.value as AspectRatioPreset);
         });
-        
-        // Orientation button
-        const orientationBtn = canvasFolder.addButton({
-          title: orientation === 'landscape' ? 'Switch to Portrait' : 'Switch to Landscape'
-        }).on('click', () => {
-          toggleOrientation();
-        });
-        bindings.orientationBtn = orientationBtn;
         
         // Lock ratio
         bindings.lockRatio = canvasFolder.addBinding(canvasParams, 'lockRatio', {
@@ -327,6 +332,16 @@ export default function AdvancedEditor() {
           handleHalftoneChange('cellSize', ev.value);
         });
         
+        // Dot scale factor
+        bindings.dotScaleFactor = halftoneFolder.addBinding(halftoneSettings, 'dotScaleFactor', {
+          label: 'Dot Scale',
+          min: 0.1,
+          max: 1.5,
+          step: 0.05,
+        }).on('change', (ev) => {
+          handleHalftoneChange('dotScaleFactor', ev.value);
+        });
+        
         // Mix amount
         bindings.mix = halftoneFolder.addBinding(halftoneSettings, 'mix', {
           label: 'Mix Amount',
@@ -344,21 +359,7 @@ export default function AdvancedEditor() {
           handleHalftoneChange('colored', ev.value);
         });
         
-        // Arrangement options
-        bindings.arrangement = halftoneFolder.addBinding(halftoneSettings, 'arrangement', {
-          label: 'Pattern',
-          options: {
-            'Grid': 'grid',
-            'Hexagonal': 'hexagonal',
-            'Spiral': 'spiral',
-            'Concentric': 'concentric',
-            'Random': 'random',
-          }
-        }).on('change', (ev) => {
-          handleHalftoneChange('arrangement', ev.value);
-        });
-        
-        // Shape options
+        // Shape options - moved ABOVE pattern
         bindings.shape = halftoneFolder.addBinding(halftoneSettings, 'shape', {
           label: 'Shape',
           options: {
@@ -375,14 +376,19 @@ export default function AdvancedEditor() {
           handleHalftoneChange('shape', ev.value);
         });
         
-        // Dot scale factor
-        bindings.dotScaleFactor = halftoneFolder.addBinding(halftoneSettings, 'dotScaleFactor', {
-          label: 'Dot Scale',
-          min: 0.1,
-          max: 1.5,
-          step: 0.05,
+        // Pattern options (renamed from "Arrangement")
+        bindings.arrangement = halftoneFolder.addBinding(halftoneSettings, 'arrangement', {
+          label: 'Pattern',
+          options: {
+            'Grid': 'grid',
+            'Hexagonal': 'hexagonal',
+            'Spiral': 'spiral',
+            'Concentric': 'concentric',
+            'Random': 'random'
+          }
         }).on('change', (ev) => {
-          handleHalftoneChange('dotScaleFactor', ev.value);
+          handleHalftoneChange('arrangement', ev.value);
+          updateSpiralControls();
         });
         
         // Size variation
@@ -397,7 +403,7 @@ export default function AdvancedEditor() {
         
         // Invert brightness
         bindings.invertBrightness = halftoneFolder.addBinding(halftoneSettings, 'invertBrightness', {
-          label: 'Invert Brightness'
+          label: 'Invert'
         }).on('change', (ev) => {
           handleHalftoneChange('invertBrightness', ev.value);
         });
@@ -406,6 +412,13 @@ export default function AdvancedEditor() {
         const cmykFolder = halftoneFolder.addFolder({
           title: 'CMYK Mode',
           expanded: false
+        });
+        
+        // Enable CMYK mode checkbox
+        bindings.enableCMYK = cmykFolder.addBinding(halftoneSettings, 'enableCMYK', {
+          label: 'Enable CMYK'
+        }).on('change', (ev) => {
+          handleHalftoneChange('enableCMYK', ev.value);
         });
         
         // Cyan channel
@@ -434,6 +447,180 @@ export default function AdvancedEditor() {
           label: 'Black'
         }).on('change', (ev) => {
           handleHalftoneChannelChange('black', ev.value);
+        });
+        
+        // Modify the updateSpiralControls function to add spiral controls one after another
+        const updateSpiralControls = () => {
+          const isSpiralVisible = halftoneSettings.arrangement === 'spiral';
+          const allSpiralBindings = ['spiralTightness', 'spiralExpansion', 'spiralRotation', 'spiralCenterX', 'spiralCenterY'];
+          
+          // Remove all spiral controls if they exist but shouldn't be visible
+          if (!isSpiralVisible) {
+            allSpiralBindings.forEach(key => {
+              if (bindings[key]) {
+                halftoneFolder.remove(bindings[key]);
+                bindings[key] = null;
+              }
+            });
+            return;
+          }
+          
+          // Add spiral controls if they should be visible but don't exist yet
+          if (!bindings.spiralTightness) {
+            // First, remove all controls after arrangement to reinsert them later
+            const controlsToRemove: TweakpaneBladeApi[] = [];
+            let foundArrangement = false;
+            
+            halftoneFolder.children.forEach(control => {
+              if (foundArrangement && control !== bindings.arrangement) {
+                controlsToRemove.push(control as TweakpaneBladeApi);
+              }
+              if (control === bindings.arrangement) {
+                foundArrangement = true;
+              }
+            });
+            
+            // Store references to removed controls
+            const removedControls: TweakpaneBladeApi[] = [];
+            controlsToRemove.forEach(control => {
+              removedControls.push(control);
+              halftoneFolder.remove(control);
+            });
+            
+            // Add spiral controls
+            bindings.spiralTightness = halftoneFolder.addBinding(halftoneSettings, 'spiralTightness', {
+              label: 'Spiral Tightness',
+              min: 0.01,
+              max: 0.5,
+              step: 0.01
+            }).on('change', (ev) => {
+              handleHalftoneChange('spiralTightness', ev.value);
+            });
+            
+            bindings.spiralExpansion = halftoneFolder.addBinding(halftoneSettings, 'spiralExpansion', {
+              label: 'Spiral Growth',
+              min: 0.5,
+              max: 3.0,
+              step: 0.1
+            }).on('change', (ev) => {
+              handleHalftoneChange('spiralExpansion', ev.value);
+            });
+            
+            bindings.spiralRotation = halftoneFolder.addBinding(halftoneSettings, 'spiralRotation', {
+              label: 'Spiral Rotation',
+              min: -180,
+              max: 180,
+              step: 5
+            }).on('change', (ev) => {
+              handleHalftoneChange('spiralRotation', ev.value);
+            });
+            
+            bindings.spiralCenterX = halftoneFolder.addBinding(halftoneSettings, 'spiralCenterX', {
+              label: 'Center X Offset',
+              min: -500,
+              max: 500,
+              step: 5
+            }).on('change', (ev) => {
+              handleHalftoneChange('spiralCenterX', ev.value);
+            });
+            
+            bindings.spiralCenterY = halftoneFolder.addBinding(halftoneSettings, 'spiralCenterY', {
+              label: 'Center Y Offset',
+              min: -500,
+              max: 500,
+              step: 5
+            }).on('change', (ev) => {
+              handleHalftoneChange('spiralCenterY', ev.value);
+            });
+            
+            // Re-add the removed controls
+            removedControls.forEach(control => {
+              halftoneFolder.add(control);
+            });
+          }
+        };
+        
+        // Define the updateConcentricControls function
+        const updateConcentricControls = () => {
+          const isConcentricVisible = halftoneSettings.arrangement === 'concentric';
+          const allConcentricBindings = ['concentricRingSpacing', 'concentricCenterX', 'concentricCenterY'];
+          
+          // Remove all concentric controls if they exist but shouldn't be visible
+          if (!isConcentricVisible) {
+            allConcentricBindings.forEach(key => {
+              if (bindings[key]) {
+                halftoneFolder.remove(bindings[key]);
+                bindings[key] = null;
+              }
+            });
+            return;
+          }
+          
+          // Add concentric controls if they should be visible but don't exist yet
+          if (!bindings.concentricRingSpacing) {
+            // First, remove all controls after arrangement to reinsert them later
+            const controlsToRemove: TweakpaneBladeApi[] = [];
+            let foundArrangement = false;
+            
+            halftoneFolder.children.forEach(control => {
+              if (foundArrangement && control !== bindings.arrangement) {
+                controlsToRemove.push(control as TweakpaneBladeApi);
+              }
+              if (control === bindings.arrangement) {
+                foundArrangement = true;
+              }
+            });
+            
+            // Store references to removed controls
+            const removedControls: TweakpaneBladeApi[] = [];
+            controlsToRemove.forEach(control => {
+              removedControls.push(control);
+              halftoneFolder.remove(control);
+            });
+            
+            // Add concentric controls
+            bindings.concentricRingSpacing = halftoneFolder.addBinding(halftoneSettings, 'concentricRingSpacing', {
+              label: 'Ring Spacing',
+              min: 0.5,
+              max: 3.0,
+              step: 0.1
+            }).on('change', (ev) => {
+              handleHalftoneChange('concentricRingSpacing', ev.value);
+            });
+            
+            bindings.concentricCenterX = halftoneFolder.addBinding(halftoneSettings, 'concentricCenterX', {
+              label: 'Center X Offset',
+              min: -500,
+              max: 500,
+              step: 5
+            }).on('change', (ev) => {
+              handleHalftoneChange('concentricCenterX', ev.value);
+            });
+            
+            bindings.concentricCenterY = halftoneFolder.addBinding(halftoneSettings, 'concentricCenterY', {
+              label: 'Center Y Offset',
+              min: -500,
+              max: 500,
+              step: 5
+            }).on('change', (ev) => {
+              handleHalftoneChange('concentricCenterY', ev.value);
+            });
+            
+            // Re-add the removed controls
+            removedControls.forEach(control => {
+              halftoneFolder.add(control);
+            });
+          }
+        };
+        
+        // Call initially to set up the UI correctly
+        updateSpiralControls();
+        updateConcentricControls();
+        
+        // Update when arrangement changes
+        bindings.arrangement.on('change', () => {
+          updateSpiralControls();
+          updateConcentricControls();
         });
         
         // 4. GRID EFFECTS FOLDER
@@ -531,19 +718,105 @@ export default function AdvancedEditor() {
           setGridSettings({...gridSettings});
         });
         
-        // 5. ACTIONS FOLDER
+        // 5. EXPORT FOLDER
+        const exportFolder = pane.addFolder({
+          title: 'Export',
+          expanded: false
+        });
+
+        // Export as PNG button
+        exportFolder.addButton({
+          title: 'Export PNG'
+        }).on('click', () => {
+          if (!canvasRef.current) return;
+          
+          // Create timestamp and basic info
+          const now = new Date();
+          const dateStr = now.toISOString().replace(/:/g, '-').split('.')[0];
+          const imageInfo = {
+            title: `ImageTweaker Export ${dateStr}`,
+            description: 'Created with ImageTweaker',
+            effects: `${colorSettings.enabled ? 'Color' : ''}${halftoneSettings.enabled ? ' Halftone' : ''}${gridSettings.enabled ? ' Grid' : ''}`.trim()
+          };
+          
+          exportAsPng(canvasRef.current, `imagetweaker_${dateStr}.png`, imageInfo);
+        });
+
+        // Export as SVG button
+        exportFolder.addButton({
+          title: 'Export SVG'
+        }).on('click', () => {
+          if (!canvasRef.current) return;
+          
+          // Create timestamp and basic info
+          const now = new Date();
+          const dateStr = now.toISOString().replace(/:/g, '-').split('.')[0];
+          const imageInfo = {
+            title: `ImageTweaker Export ${dateStr}`,
+            description: 'Created with ImageTweaker',
+            effects: `${colorSettings.enabled ? 'Color' : ''}${halftoneSettings.enabled ? ' Halftone' : ''}${gridSettings.enabled ? ' Grid' : ''}`.trim()
+          };
+          
+          exportAsSvg(canvasRef.current, `imagetweaker_${dateStr}.svg`, imageInfo);
+        });
+
+        // Vector Halftone export button (conditionally shown)
+        if (halftoneSettings.enabled) {
+          exportFolder.addButton({
+            title: 'Export Vector Halftone'
+          }).on('click', () => {
+            if (!sourceCanvasRef.current) return;
+            
+            // Create timestamp and basic info
+            const now = new Date();
+            const dateStr = now.toISOString().replace(/:/g, '-').split('.')[0];
+            const imageInfo = {
+              title: `ImageTweaker Vector Halftone ${dateStr}`,
+              description: 'Created with ImageTweaker',
+              halftoneSettings: JSON.stringify({
+                cellSize: halftoneSettings.cellSize,
+                arrangement: halftoneSettings.arrangement,
+                shape: halftoneSettings.shape,
+                cmyk: halftoneSettings.enableCMYK
+              })
+            };
+            
+            // Get the source image data
+            const sourceCtx = sourceCanvasRef.current.getContext('2d');
+            if (!sourceCtx) return;
+            
+            const imageData = sourceCtx.getImageData(
+              0, 0, 
+              sourceCanvasRef.current.width, 
+              sourceCanvasRef.current.height
+            );
+            
+            // Create vector SVG
+            const vectorSvg = createHalftoneVectorSvg(
+              imageData,
+              sourceCanvasRef.current.width,
+              sourceCanvasRef.current.height,
+              halftoneSettings,
+              imageInfo
+            );
+            
+            // Create a blob with the SVG content
+            const blob = new Blob([vectorSvg], { type: 'image/svg+xml;charset=utf-8' });
+            
+            // Download the file
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `imagetweaker_vector_halftone_${dateStr}.svg`;
+            link.click();
+          });
+        }
+        
+        // 6. ACTIONS FOLDER
         const actionsFolder = pane.addFolder({
           title: 'Actions',
           expanded: true,
         });
-        
-        // Download image button
-        actionsFolder.addButton({
-          title: 'Download Image'
-        }).on('click', () => {
-          downloadImage();
-        });
-        
+
         // Reset changes button
         actionsFolder.addButton({
           title: 'Reset Changes'
@@ -594,11 +867,6 @@ export default function AdvancedEditor() {
         bindings.height.refresh();
       }
       
-      // Update orientation button text
-      if (bindings.orientationBtn) {
-        bindings.orientationBtn.title = orientation === 'landscape' ? 'Switch to Portrait' : 'Switch to Landscape';
-      }
-      
       // Other controls don't need manual updates since they have change handlers
       // that set the state directly. The canvas rendering will happen based on
       // the updated state values.
@@ -606,7 +874,7 @@ export default function AdvancedEditor() {
     } catch (error) {
       console.error('Error updating Tweakpane bindings:', error);
     }
-  }, [canvasWidth, canvasHeight, orientation, aspectRatio, lockRatio, autoCanvasSize]);
+  }, [canvasWidth, canvasHeight, aspectRatio, lockRatio, autoCanvasSize]);
 
   // Handle file drop
   const onDrop = (acceptedFiles: File[]) => {
@@ -622,18 +890,36 @@ export default function AdvancedEditor() {
           setImage(imageData);
           setOriginalImageDataRef(imageData);
           
-          // If auto canvas size is enabled, adjust canvas to image dimensions
-          if (autoCanvasSize) {
-            const img = new Image();
-            img.onload = () => {
-              setCanvasWidth(img.width);
-              setCanvasHeight(img.height);
-              
-              // Set aspect ratio to custom when loading a new image with auto size
-              setAspectRatio('custom');
-            };
-            img.src = imageData;
-          }
+          // Adjust canvas to match image aspect ratio while fitting viewport
+          const img = new Image();
+          img.onload = () => {
+            // Get viewport dimensions
+            const viewportWidth = window.innerWidth - 80; // Account for margins/padding
+            const viewportHeight = window.innerHeight - 200; // Account for header/footer/margins
+            
+            // Calculate dimensions to maintain aspect ratio while fitting viewport
+            let newWidth = img.width;
+            let newHeight = img.height;
+            
+            // Scale down if larger than viewport
+            if (newWidth > viewportWidth) {
+              const ratio = viewportWidth / newWidth;
+              newWidth = viewportWidth;
+              newHeight = newHeight * ratio;
+            }
+            
+            if (newHeight > viewportHeight) {
+              const ratio = viewportHeight / newHeight;
+              newHeight = viewportHeight;
+              newWidth = newWidth * ratio;
+            }
+            
+            // Update canvas dimensions
+            setCanvasWidth(Math.round(newWidth));
+            setCanvasHeight(Math.round(newHeight));
+            setAspectRatio('custom');
+          };
+          img.src = imageData;
         }
       };
       
@@ -843,10 +1129,9 @@ export default function AdvancedEditor() {
 
   // Load a random image
   const loadRandomImage = () => {
-    const width = canvasWidth;
-    const height = canvasHeight;
+    // Use a standard size for initial fetching
     const randomId = Math.floor(Math.random() * 1000);
-    const imageUrl = `https://picsum.photos/${width}/${height}?random=${randomId}`;
+    const imageUrl = `https://picsum.photos/1200/800?random=${randomId}`;
     
     // Fetch the image
     fetch(imageUrl)
@@ -858,6 +1143,37 @@ export default function AdvancedEditor() {
             const imageData = e.target.result as string;
             setImage(imageData);
             setOriginalImageDataRef(imageData);
+            
+            // Adjust canvas to match image aspect ratio while fitting viewport
+            const img = new Image();
+            img.onload = () => {
+              // Get viewport dimensions
+              const viewportWidth = window.innerWidth - 80; // Account for margins/padding
+              const viewportHeight = window.innerHeight - 200; // Account for header/footer/margins
+              
+              // Calculate dimensions to maintain aspect ratio while fitting viewport
+              let newWidth = img.width;
+              let newHeight = img.height;
+              
+              // Scale down if larger than viewport
+              if (newWidth > viewportWidth) {
+                const ratio = viewportWidth / newWidth;
+                newWidth = viewportWidth;
+                newHeight = newHeight * ratio;
+              }
+              
+              if (newHeight > viewportHeight) {
+                const ratio = viewportHeight / newHeight;
+                newHeight = viewportHeight;
+                newWidth = newWidth * ratio;
+              }
+              
+              // Update canvas dimensions
+              setCanvasWidth(Math.round(newWidth));
+              setCanvasHeight(Math.round(newHeight));
+              setAspectRatio('custom');
+            };
+            img.src = imageData;
           }
         };
         reader.readAsDataURL(blob);
@@ -869,72 +1185,68 @@ export default function AdvancedEditor() {
 
   // Reset to original image
   const resetImage = () => {
-    if (originalImageDataRef) {
-      setImage(originalImageDataRef);
-      
-      // Reset all adjustment settings
-      setColorSettings({
-        enabled: false,
-        hueShift: 0,
-        saturation: 100,
-        brightness: 100,
-        contrast: 100,
-        posterize: 0,
-        invert: false,
-        glitchIntensity: 0,
-        glitchSeed: Math.random(),
-        blendMode: 'normal'
-      });
-      
-      // Reset halftone settings
-      setHalftoneSettings({
-        enabled: false,
-        cellSize: 8,
-        mix: 100,
-        colored: false,
-        arrangement: 'grid',
-        shape: 'circle',
-        angleOffset: 0,
-        sizeVariation: 0,
-        dotScaleFactor: 0.8,
-        invertBrightness: false,
-        channels: {
-          cyan: true,
-          magenta: true,
-          yellow: true,
-          black: true
-        },
-        cmykAngles: {
-          cyan: 15,
-          magenta: 75,
-          yellow: 0,
-          black: 45
-        }
-      });
-      
-      // Reset grid settings
-      setGridSettings({
-        enabled: false,
-        columns: 3,
-        rows: 3,
-        applyRotation: false,
-        maxRotation: 10,
-        splitEnabled: false,
-        splitProbability: 0.5,
-        maxSplitLevels: 2,
-        minCellSize: 50
-      });
-    }
-  };
-
-  // Download the edited image
-  const downloadImage = () => {
-    if (!canvasRef.current) return;
+    if (!originalImageDataRef) return;
+    setImage(originalImageDataRef);
     
-    const link = document.createElement('a');
-    link.download = 'imagetweaker-edited.png';
-    link.href = canvasRef.current.toDataURL('image/png');
-    link.click();
+    // Reset settings
+    setColorSettings({
+      enabled: false,
+      hueShift: 0,
+      saturation: 100,
+      brightness: 100,
+      contrast: 100,
+      posterize: 0,
+      invert: false,
+      glitchIntensity: 0,
+      glitchSeed: Math.random(),
+      blendMode: 'normal'
+    });
+    
+    setHalftoneSettings({
+      enabled: false,
+      cellSize: 8,
+      mix: 100,
+      colored: false,
+      enableCMYK: false,
+      arrangement: 'grid',
+      shape: 'circle',
+      angleOffset: 0,
+      sizeVariation: 0,
+      dotScaleFactor: 0.8,
+      invertBrightness: false,
+      spiralTightness: 0.1,
+      spiralExpansion: 1.0,
+      spiralRotation: 0,
+      spiralCenterX: 0,
+      spiralCenterY: 0,
+      concentricCenterX: 0,
+      concentricCenterY: 0,
+      concentricRingSpacing: 1.0,
+      channels: {
+        cyan: true,
+        magenta: true,
+        yellow: true,
+        black: true
+      },
+      cmykAngles: {
+        cyan: 15,
+        magenta: 75,
+        yellow: 0,
+        black: 45
+      }
+    });
+    
+    setGridSettings({
+      enabled: false,
+      columns: 3,
+      rows: 3,
+      applyRotation: false,
+      maxRotation: 10,
+      splitEnabled: false,
+      splitProbability: 0.5,
+      maxSplitLevels: 2,
+      minCellSize: 50
+    });
   };
 
   // Handle color setting changes
@@ -1039,25 +1351,28 @@ export default function AdvancedEditor() {
     
     const img = new Image();
     img.onload = () => {
-      // Calculate dimensions to cover the canvas
+      // Calculate dimensions for "cover" behavior
       const imgRatio = img.width / img.height;
       const canvasRatio = canvas.width / canvas.height;
       
       let drawWidth, drawHeight, x, y;
       
+      // Implement "cover" behavior - always fill canvas completely
       if (canvasRatio > imgRatio) {
+        // Canvas is wider than image ratio - crop top/bottom
         drawWidth = canvas.width;
-        drawHeight = canvas.width / imgRatio;
+        drawHeight = drawWidth / imgRatio;
         x = 0;
         y = (canvas.height - drawHeight) / 2;
       } else {
+        // Canvas is taller than image ratio - crop sides
         drawHeight = canvas.height;
-        drawWidth = canvas.height * imgRatio;
+        drawWidth = drawHeight * imgRatio;
         x = (canvas.width - drawWidth) / 2;
         y = 0;
       }
       
-      // Draw the image with "cover" behavior on source canvas
+      // Draw the image on source canvas with "cover" behavior
       sourceCtx.drawImage(img, x, y, drawWidth, drawHeight);
       
       // Apply color adjustments if enabled to source canvas
@@ -1116,25 +1431,22 @@ export default function AdvancedEditor() {
       {!image ? (
         <div 
           {...getRootProps()} 
-          className={`border-2 border-dashed rounded-lg p-12 text-center cursor-pointer transition-colors ${
-            isDragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-blue-400'
+          className={`border-4 border-dashed border-black p-10 text-center cursor-pointer ${
+            isDragActive ? 'bg-gray-100' : ''
           }`}
+          style={{ minHeight: '200px' }}
         >
           <input {...getInputProps()} />
-          <div className="flex flex-col items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-400 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            <p className="text-lg font-medium">Drag & drop an image here</p>
-            <p className="text-sm text-gray-500 mt-1">or click to select a file</p>
+          <div className="flex flex-col items-center justify-center h-32">
+            <p className="text-base uppercase font-bold">Drag or upload an image</p>
             <button 
               onClick={(e) => {
                 e.stopPropagation();
                 loadRandomImage();
               }}
-              className="mt-6 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
+              className="mt-4 px-3 py-1 bg-black text-white border border-black hover:bg-white hover:text-black transition"
             >
-              Load Random Image
+              Random Image
             </button>
           </div>
         </div>
@@ -1143,13 +1455,13 @@ export default function AdvancedEditor() {
           {/* Canvas Area */}
           <div className="relative">
             {processing && (
-              <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-50 z-10">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+              <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-70 z-10">
+                <div className="h-6 w-6 border-2 border-black border-t-transparent animate-spin"></div>
               </div>
             )}
             <canvas 
               ref={canvasRef} 
-              className="max-w-full border border-gray-200 rounded shadow-sm bg-gray-50"
+              className="max-w-full border border-black"
             />
           </div>
           
