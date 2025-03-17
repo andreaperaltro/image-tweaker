@@ -7,6 +7,42 @@
  * 3. Controlling cell size, mix, and color settings
  */
 
+import React, { useRef, useEffect } from 'react';
+
+// Define exact dot info type to store the exact parameters for each dot
+export type HalftoneDotInfo = {
+  x: number;
+  y: number;
+  size: number;
+  color?: string;
+};
+
+// Background type definitions
+export type BackgroundType = 'transparent' | 'solid' | 'gradient';
+
+export type BackgroundSettings = {
+  enabled: boolean;
+  type: BackgroundType;
+  color: string;
+  gradientStartColor: string;
+  gradientEndColor: string;
+  gradientAngle: number;
+};
+
+// Create a global store to access the dot information for SVG export
+export const halftoneDotsStore = {
+  dots: [] as HalftoneDotInfo[],
+  width: 0,
+  height: 0,
+  settings: null as HalftoneSettings | null,
+  updateDots(newDots: HalftoneDotInfo[], width: number, height: number, settings: HalftoneSettings) {
+    this.dots = newDots;
+    this.width = width;
+    this.height = height;
+    this.settings = {...settings};
+  }
+};
+
 export type HalftoneArrangement = 'grid' | 'hexagonal' | 'spiral' | 'concentric' | 'random';
 export type HalftoneShape = 'circle' | 'square' | 'diamond' | 'line' | 'cross' | 'ellipse' | 'triangle' | 'hexagon';
 
@@ -78,10 +114,13 @@ export function applyHalftone(
   const cols = Math.ceil(width / cellSize);
   const rows = Math.ceil(height / cellSize);
   
+  // Store calculated dots for SVG export
+  const calculatedDots: HalftoneDotInfo[] = [];
+  
   // CMYK halftone if CMYK mode is enabled and channels are selected
   if (settings.enableCMYK && (settings.channels.cyan || settings.channels.magenta || 
       settings.channels.yellow || settings.channels.black)) {
-    applyCMYKHalftone(ctx, pixels, width, height, cols, rows, cellSize, settings);
+    applyCMYKHalftone(ctx, pixels, width, height, cols, rows, cellSize, settings, calculatedDots);
     
     // Apply the original image with reduced opacity for mixing if mix < 100
     if (settings.mix < 100) {
@@ -89,6 +128,9 @@ export function applyHalftone(
       ctx.drawImage(sourceCanvas, 0, 0);
       ctx.globalAlpha = 1;
     }
+    
+    // Store the dots for SVG export
+    halftoneDotsStore.updateDots(calculatedDots, width, height, settings);
     
     return;
   }
@@ -108,12 +150,13 @@ export function applyHalftone(
       if (settings.arrangement === 'hexagonal' && y % 2 === 0) {
         centerX += cellSize / 2;
       } else if (settings.arrangement === 'spiral') {
-        // Calculate angle and distance from original center
-        const spiralCenterX = width / 2 + settings.spiralCenterX;
-        const spiralCenterY = height / 2 + settings.spiralCenterY;
+        // Calculate angle and distance from center
+        // Adjust center point based on offset settings
+        let centerX = width / 2 + settings.spiralCenterX;
+        let centerY = height / 2 + settings.spiralCenterY;
         
-        const dx = initialCenterX - spiralCenterX;
-        const dy = initialCenterY - spiralCenterY;
+        const dx = centerX - width / 2;
+        const dy = centerY - height / 2;
         const distanceFromCenter = Math.sqrt(dx * dx + dy * dy);
         
         // Get the angle to the center
@@ -127,8 +170,8 @@ export function applyHalftone(
         const spiralAngle = angle + rotationRadians + (distanceFromCenter * settings.spiralTightness * settings.spiralExpansion / cellSize);
         
         // Calculate new position based on spiral equation
-        centerX = spiralCenterX + Math.cos(spiralAngle) * distanceFromCenter;
-        centerY = spiralCenterY + Math.sin(spiralAngle) * distanceFromCenter;
+        centerX = width / 2 + Math.cos(spiralAngle) * distanceFromCenter;
+        centerY = height / 2 + Math.sin(spiralAngle) * distanceFromCenter;
       } else if (settings.arrangement === 'concentric') {
         // Calculate the center point with offset
         const concentricCenterX = width / 2 + settings.concentricCenterX;
@@ -208,8 +251,19 @@ export function applyHalftone(
         settings.shape, 
         settings.angleOffset
       );
+      
+      // Store dot information for SVG export
+      calculatedDots.push({
+        x: centerX,
+        y: centerY,
+        size: dotSize,
+        color: settings.colored ? `rgb(${r},${g},${b})` : undefined
+      });
     }
   }
+  
+  // Store the dots for SVG export
+  halftoneDotsStore.updateDots(calculatedDots, width, height, settings);
   
   // Apply the original image with reduced opacity for mixing
   if (settings.mix < 100) {
@@ -230,7 +284,8 @@ function applyCMYKHalftone(
   cols: number,
   rows: number,
   cellSize: number,
-  settings: HalftoneSettings
+  settings: HalftoneSettings,
+  calculatedDots: HalftoneDotInfo[]
 ): void {
   // Convert RGB to CMYK function
   const rgbToCmyk = (r: number, g: number, b: number) => {
@@ -244,6 +299,12 @@ function applyCMYKHalftone(
     const y = k === 1 ? 0 : (1 - b - k) / (1 - k);
     
     return { c, m, y, k };
+  };
+  
+  // Use a seeded random generator for consistent results
+  const seedRandom = (x: number, y: number) => {
+    const seed = (x * 9999 + y * 9973) % 10000;
+    return Math.sin(seed) * 0.5 + 0.5;
   };
   
   // Process each CMYK channel
@@ -286,12 +347,13 @@ function applyCMYKHalftone(
         if (settings.arrangement === 'hexagonal' && y % 2 === 0) {
           centerX += cellSize / 2;
         } else if (settings.arrangement === 'spiral') {
-          // Calculate angle and distance from original center
-          const spiralCenterX = width / 2 + settings.spiralCenterX;
-          const spiralCenterY = height / 2 + settings.spiralCenterY;
+          // Calculate angle and distance from center
+          // Adjust center point based on offset settings
+          let centerX = width / 2 + settings.spiralCenterX;
+          let centerY = height / 2 + settings.spiralCenterY;
           
-          const dx = initialCenterX - spiralCenterX;
-          const dy = initialCenterY - spiralCenterY;
+          const dx = centerX - width / 2;
+          const dy = centerY - height / 2;
           const distanceFromCenter = Math.sqrt(dx * dx + dy * dy);
           
           // Get the angle to the center
@@ -305,8 +367,8 @@ function applyCMYKHalftone(
           const spiralAngle = angle + rotationRadians + (distanceFromCenter * settings.spiralTightness * settings.spiralExpansion / cellSize);
           
           // Calculate new position based on spiral equation
-          centerX = spiralCenterX + Math.cos(spiralAngle) * distanceFromCenter;
-          centerY = spiralCenterY + Math.sin(spiralAngle) * distanceFromCenter;
+          centerX = width / 2 + Math.cos(spiralAngle) * distanceFromCenter;
+          centerY = height / 2 + Math.sin(spiralAngle) * distanceFromCenter;
         } else if (settings.arrangement === 'concentric') {
           // Calculate the center point with offset
           const concentricCenterX = width / 2 + settings.concentricCenterX;
@@ -379,6 +441,18 @@ function applyCMYKHalftone(
           settings.shape, 
           angle + settings.angleOffset
         );
+        
+        // Store dot information for SVG export
+        const channelColor = channel === 'c' ? 'cyan' : 
+                            channel === 'm' ? 'magenta' : 
+                            channel === 'y' ? 'yellow' : 'black';
+                            
+        calculatedDots.push({
+          x: centerX,
+          y: centerY,
+          size: dotSize,
+          color: channelColor
+        });
       }
     }
     

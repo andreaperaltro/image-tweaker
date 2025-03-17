@@ -739,31 +739,45 @@ export default function AdvancedEditor() {
             
             exportAsPng(canvasRef.current, `imagetweaker_${dateStr}.png`, imageInfo);
           }},
-          { title: 'Export as SVG', handler: () => {
+          { title: 'Export SVG', handler: () => {
             if (!canvasRef.current) return;
             
             const now = new Date();
             const dateStr = now.toISOString().replace(/:/g, '-').split('.')[0];
-            const imageInfo = {
-              title: `ImageTweaker Export ${dateStr}`,
-              description: 'Created with ImageTweaker',
-              effects: `${colorSettings.enabled ? 'Color' : ''}${halftoneSettings.enabled ? ' Halftone' : ''}${gridSettings.enabled ? ' Grid' : ''}`.trim()
-            };
             
-            exportAsSvg(canvasRef.current, `imagetweaker_${dateStr}.svg`, imageInfo);
-          }},
-          { title: 'Export as Vector SVG', handler: () => {
-            if (!canvasRef.current) return;
-            
-            const now = new Date();
-            const dateStr = now.toISOString().replace(/:/g, '-').split('.')[0];
+            // Create detailed imageInfo with all halftone parameters
             const imageInfo = {
               title: `ImageTweaker Vector Export ${dateStr}`,
               description: 'Created with ImageTweaker',
-              effects: `${colorSettings.enabled ? 'Color' : ''}${halftoneSettings.enabled ? ' Halftone' : ''}${gridSettings.enabled ? ' Grid' : ''}`.trim()
+              timestamp: dateStr,
+              effects: `${colorSettings.enabled ? 'Color' : ''}${halftoneSettings.enabled ? ' Halftone' : ''}${gridSettings.enabled ? ' Grid' : ''}`.trim(),
+              // Add detailed halftone parameters
+              cellSize: halftoneSettings.cellSize.toString(),
+              dotScale: halftoneSettings.dotScaleFactor.toString(),
+              shape: halftoneSettings.shape,
+              pattern: halftoneSettings.arrangement,
+              sizeVariation: halftoneSettings.sizeVariation.toString(),
+              invertBrightness: halftoneSettings.invertBrightness.toString(),
+              colored: halftoneSettings.colored.toString(),
+              enableCMYK: halftoneSettings.enableCMYK.toString(),
+              spiralTightness: halftoneSettings.spiralTightness.toString(),
+              spiralExpansion: halftoneSettings.spiralExpansion.toString(),
+              spiralRotation: halftoneSettings.spiralRotation.toString(),
+              spiralCenterX: halftoneSettings.spiralCenterX.toString(),
+              spiralCenterY: halftoneSettings.spiralCenterY.toString(),
+              concentricRingSpacing: halftoneSettings.concentricRingSpacing.toString(),
+              concentricCenterX: halftoneSettings.concentricCenterX.toString(),
+              concentricCenterY: halftoneSettings.concentricCenterY.toString()
             };
             
-            exportAsVectorSvg(canvasRef.current, `imagetweaker_vector_${dateStr}.svg`, imageInfo);
+            // Use vector SVG export for all SVG exports to get true vectors with accurate dot sizes
+            if (halftoneSettings.enabled) {
+              // For halftone, we want to use the stored dots from the canvas rendering
+              exportAsVectorSvg(canvasRef.current, `imagetweaker_${dateStr}.svg`, imageInfo);
+            } else {
+              // For non-halftone use regular SVG export
+              exportAsSvg(canvasRef.current, `imagetweaker_${dateStr}.svg`, imageInfo);
+            }
           }}
         ];
         
@@ -773,57 +787,6 @@ export default function AdvancedEditor() {
             title: button.title
           }).on('click', button.handler);
         });
-        
-        // Conditionally add Vector Halftone export button if halftone is enabled
-        if (halftoneSettings.enabled) {
-          exportFolder.addButton({
-            title: 'Export Vector Halftone'
-          }).on('click', () => {
-            if (!sourceCanvasRef.current) return;
-            
-            // Create timestamp and basic info
-            const now = new Date();
-            const dateStr = now.toISOString().replace(/:/g, '-').split('.')[0];
-            const imageInfo = {
-              title: `ImageTweaker Vector Halftone ${dateStr}`,
-              description: 'Created with ImageTweaker',
-              halftoneSettings: JSON.stringify({
-                cellSize: halftoneSettings.cellSize,
-                arrangement: halftoneSettings.arrangement,
-                shape: halftoneSettings.shape,
-                cmyk: halftoneSettings.enableCMYK
-              })
-            };
-            
-            // Get the source image data
-            const sourceCtx = sourceCanvasRef.current.getContext('2d');
-            if (!sourceCtx) return;
-            
-            const imageData = sourceCtx.getImageData(
-              0, 0, 
-              sourceCanvasRef.current.width, 
-              sourceCanvasRef.current.height
-            );
-            
-            // Create vector SVG
-            const vectorSvg = createHalftoneVectorSvg(
-              imageData,
-              sourceCanvasRef.current.width,
-              sourceCanvasRef.current.height,
-              halftoneSettings,
-              imageInfo
-            );
-            
-            // Create a blob with the SVG content
-            const blob = new Blob([vectorSvg], { type: 'image/svg+xml;charset=utf-8' });
-            
-            // Download the file
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = `imagetweaker_vector_halftone_${dateStr}.svg`;
-            link.click();
-          });
-        }
         
         // 6. ACTIONS FOLDER
         const actionsFolder = pane.addFolder({
