@@ -5,7 +5,7 @@ import { useDropzone } from 'react-dropzone'
 import { ColorSettings, applyColorAdjustments } from './ColorUtils'
 import { GridSettings, GridCell, createGrid, renderGridCell } from './Grid'
 import { HalftoneSettings, HalftoneArrangement, HalftoneShape, applyHalftone } from './Halftone'
-import { exportAsPng, exportAsSvg, createHalftoneVectorSvg } from './SvgExport'
+import { exportAsPng, exportAsSvg, createHalftoneVectorSvg, exportAsVectorSvg } from './SvgExport'
 import { Pane } from 'tweakpane'
 import type { 
   ButtonApi, 
@@ -491,7 +491,7 @@ export default function AdvancedEditor() {
             bindings.spiralTightness = halftoneFolder.addBinding(halftoneSettings, 'spiralTightness', {
               label: 'Spiral Tightness',
               min: 0.01,
-              max: 0.5,
+              max: 0.2,
               step: 0.01
             }).on('change', (ev) => {
               handleHalftoneChange('spiralTightness', ev.value);
@@ -724,43 +724,57 @@ export default function AdvancedEditor() {
           expanded: false
         });
 
-        // Export as PNG button
-        exportFolder.addButton({
-          title: 'Export PNG'
-        }).on('click', () => {
-          if (!canvasRef.current) return;
-          
-          // Create timestamp and basic info
-          const now = new Date();
-          const dateStr = now.toISOString().replace(/:/g, '-').split('.')[0];
-          const imageInfo = {
-            title: `ImageTweaker Export ${dateStr}`,
-            description: 'Created with ImageTweaker',
-            effects: `${colorSettings.enabled ? 'Color' : ''}${halftoneSettings.enabled ? ' Halftone' : ''}${gridSettings.enabled ? ' Grid' : ''}`.trim()
-          };
-          
-          exportAsPng(canvasRef.current, `imagetweaker_${dateStr}.png`, imageInfo);
+        // Add export buttons to Export folder in Tweakpane
+        const exportButtons = [
+          { title: 'Export PNG', handler: () => {
+            if (!canvasRef.current) return;
+            
+            const now = new Date();
+            const dateStr = now.toISOString().replace(/:/g, '-').split('.')[0];
+            const imageInfo = {
+              title: `ImageTweaker Export ${dateStr}`,
+              description: 'Created with ImageTweaker',
+              effects: `${colorSettings.enabled ? 'Color' : ''}${halftoneSettings.enabled ? ' Halftone' : ''}${gridSettings.enabled ? ' Grid' : ''}`.trim()
+            };
+            
+            exportAsPng(canvasRef.current, `imagetweaker_${dateStr}.png`, imageInfo);
+          }},
+          { title: 'Export as SVG', handler: () => {
+            if (!canvasRef.current) return;
+            
+            const now = new Date();
+            const dateStr = now.toISOString().replace(/:/g, '-').split('.')[0];
+            const imageInfo = {
+              title: `ImageTweaker Export ${dateStr}`,
+              description: 'Created with ImageTweaker',
+              effects: `${colorSettings.enabled ? 'Color' : ''}${halftoneSettings.enabled ? ' Halftone' : ''}${gridSettings.enabled ? ' Grid' : ''}`.trim()
+            };
+            
+            exportAsSvg(canvasRef.current, `imagetweaker_${dateStr}.svg`, imageInfo);
+          }},
+          { title: 'Export as Vector SVG', handler: () => {
+            if (!canvasRef.current) return;
+            
+            const now = new Date();
+            const dateStr = now.toISOString().replace(/:/g, '-').split('.')[0];
+            const imageInfo = {
+              title: `ImageTweaker Vector Export ${dateStr}`,
+              description: 'Created with ImageTweaker',
+              effects: `${colorSettings.enabled ? 'Color' : ''}${halftoneSettings.enabled ? ' Halftone' : ''}${gridSettings.enabled ? ' Grid' : ''}`.trim()
+            };
+            
+            exportAsVectorSvg(canvasRef.current, `imagetweaker_vector_${dateStr}.svg`, imageInfo);
+          }}
+        ];
+        
+        // Add all export buttons to the folder
+        exportButtons.forEach(button => {
+          exportFolder.addButton({
+            title: button.title
+          }).on('click', button.handler);
         });
-
-        // Export as SVG button
-        exportFolder.addButton({
-          title: 'Export SVG'
-        }).on('click', () => {
-          if (!canvasRef.current) return;
-          
-          // Create timestamp and basic info
-          const now = new Date();
-          const dateStr = now.toISOString().replace(/:/g, '-').split('.')[0];
-          const imageInfo = {
-            title: `ImageTweaker Export ${dateStr}`,
-            description: 'Created with ImageTweaker',
-            effects: `${colorSettings.enabled ? 'Color' : ''}${halftoneSettings.enabled ? ' Halftone' : ''}${gridSettings.enabled ? ' Grid' : ''}`.trim()
-          };
-          
-          exportAsSvg(canvasRef.current, `imagetweaker_${dateStr}.svg`, imageInfo);
-        });
-
-        // Vector Halftone export button (conditionally shown)
+        
+        // Conditionally add Vector Halftone export button if halftone is enabled
         if (halftoneSettings.enabled) {
           exportFolder.addButton({
             title: 'Export Vector Halftone'

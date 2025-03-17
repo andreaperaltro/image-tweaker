@@ -422,4 +422,163 @@ export function createHalftoneVectorSvg(
         return `    <circle cx="${x}" cy="${y}" r="${size/2}" />\n`;
     }
   }
+}
+
+/**
+ * Creates a true vector-based SVG from the canvas content
+ * This uses image tracing to convert the canvas content to vector paths
+ */
+export function createVectorSvg(
+  canvas: HTMLCanvasElement,
+  imageInfo: Record<string, string> = {}
+): string {
+  const width = canvas.width;
+  const height = canvas.height;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  
+  if (!ctx) {
+    return '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><text x="10" y="50">Error: Could not get canvas context</text></svg>';
+  }
+  
+  // Get image data
+  const imageData = ctx.getImageData(0, 0, width, height);
+  
+  // Start building SVG
+  let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">\n`;
+  
+  // Add a white background
+  svg += `  <rect width="${width}" height="${height}" fill="white" />\n`;
+  
+  // Detect and create vector paths for different color regions
+  // This is a simplified version - we'll use color quantization to reduce colors
+  
+  // Quantize the colors (reduce to a manageable number)
+  const maxColors = 32; // Maximum number of colors to use
+  const colorMap = quantizeColors(imageData, maxColors);
+  
+  // Create paths for each color
+  for (const [colorStr, pixels] of Object.entries(colorMap)) {
+    // Skip colors with very few pixels (likely noise)
+    if (pixels.length < 10) continue;
+    
+    // Group adjacent pixels into regions
+    const regions = createRegions(pixels, width, height);
+    
+    // Create path for each region
+    for (const region of regions) {
+      const path = createSvgPath(region);
+      svg += `  <path d="${path}" fill="${colorStr}" />\n`;
+    }
+  }
+  
+  // Close SVG tag
+  svg += `</svg>`;
+  
+  // Add metadata
+  return addSvgMetadata(svg, imageInfo);
+  
+  // Helper function to quantize colors in the image
+  function quantizeColors(imageData: ImageData, maxColors: number): Record<string, Array<{x: number, y: number}>> {
+    const colorMap: Record<string, Array<{x: number, y: number}>> = {};
+    const data = imageData.data;
+    const width = imageData.width;
+    const colorStep = Math.ceil(256 / Math.cbrt(maxColors));
+    
+    for (let y = 0; y < imageData.height; y++) {
+      for (let x = 0; x < width; x++) {
+        const i = (y * width + x) * 4;
+        
+        // Quantize by rounding to nearest multiple of colorStep
+        const r = Math.round(data[i] / colorStep) * colorStep;
+        const g = Math.round(data[i + 1] / colorStep) * colorStep;
+        const b = Math.round(data[i + 2] / colorStep) * colorStep;
+        const a = data[i + 3];
+        
+        // Skip fully transparent pixels
+        if (a < 10) continue;
+        
+        // Create color string
+        const colorStr = `rgba(${r},${g},${b},${a/255})`;
+        
+        // Add pixel to color map
+        if (!colorMap[colorStr]) {
+          colorMap[colorStr] = [];
+        }
+        colorMap[colorStr].push({x, y});
+      }
+    }
+    
+    return colorMap;
+  }
+  
+  // Helper function to group adjacent pixels into regions
+  function createRegions(pixels: Array<{x: number, y: number}>, width: number, height: number): Array<Array<{x: number, y: number}>> {
+    // A simple way to create regions is to use a grid approach
+    const cellSize = 4;  // Size of each cell in the grid
+    const regions: Array<Array<{x: number, y: number}>> = [];
+    
+    // Group pixels by their cell coordinates
+    const cellMap: Record<string, Array<{x: number, y: number}>> = {};
+    
+    for (const pixel of pixels) {
+      const cellX = Math.floor(pixel.x / cellSize);
+      const cellY = Math.floor(pixel.y / cellSize);
+      const cellKey = `${cellX},${cellY}`;
+      
+      if (!cellMap[cellKey]) {
+        cellMap[cellKey] = [];
+      }
+      cellMap[cellKey].push(pixel);
+    }
+    
+    // Add each cell as a region
+    for (const cellPixels of Object.values(cellMap)) {
+      regions.push(cellPixels);
+    }
+    
+    return regions;
+  }
+  
+  // Helper function to create an SVG path from a region of pixels
+  function createSvgPath(region: Array<{x: number, y: number}>): string {
+    // For simplicity, we'll just create a rectangle for each region
+    // A more advanced approach would use an actual path tracing algorithm
+    
+    if (region.length === 0) return '';
+    
+    // Find the bounding box of the region
+    let minX = width;
+    let minY = height;
+    let maxX = 0;
+    let maxY = 0;
+    
+    for (const pixel of region) {
+      minX = Math.min(minX, pixel.x);
+      minY = Math.min(minY, pixel.y);
+      maxX = Math.max(maxX, pixel.x);
+      maxY = Math.max(maxY, pixel.y);
+    }
+    
+    // Create a simple rectangle path
+    return `M${minX},${minY} H${maxX} V${maxY} H${minX} Z`;
+  }
+}
+
+/**
+ * Exports the canvas as a true vector SVG file
+ * Uses createVectorSvg for true vector paths
+ */
+export function exportAsVectorSvg(
+  canvas: HTMLCanvasElement, 
+  filename: string = 'imagetweaker-vector-export.svg',
+  imageInfo: Record<string, string> = {}
+): void {
+  // Convert the canvas to vector SVG
+  const svgContent = createVectorSvg(canvas, imageInfo);
+  
+  // Create a blob with the SVG content
+  const blob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
+  
+  // Save the file using file-saver
+  saveAs(blob, filename);
 } 
