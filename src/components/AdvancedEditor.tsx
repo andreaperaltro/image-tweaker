@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { ColorSettings, applyColorAdjustments } from './ColorUtils'
 import { GridSettings, GridCell, createGrid, renderGridCell } from './Grid'
@@ -16,6 +16,7 @@ import type {
   BladeController,
   View
 } from '@tweakpane/core'
+import { applyDithering, DitherSettings } from '../components/DitherUtils'
 
 // Import Tweakpane types for development
 type TweakpanePane = Pane;
@@ -107,6 +108,16 @@ export default function AdvancedEditor() {
     splitProbability: 0.5,
     maxSplitLevels: 2,
     minCellSize: 50
+  });
+
+  // Dither settings
+  const [ditherSettings, setDitherSettings] = useState<DitherSettings>({
+    enabled: false,
+    type: 'ordered',
+    threshold: 128,
+    colorMode: 'grayscale',
+    resolution: 30,
+    colorDepth: 2
   });
 
   // Initialize the source canvas
@@ -309,7 +320,76 @@ export default function AdvancedEditor() {
           handleColorChange('glitchSeed', Math.random());
         });
         
-        // 3. HALFTONE EFFECTS FOLDER
+        // 3. DITHERING FOLDER
+        const ditherFolder = pane.addFolder({
+          title: 'Dithering',
+          expanded: false,
+        });
+        
+        // Enable dithering
+        bindings.ditherEnabled = ditherFolder.addBinding(ditherSettings, 'enabled', {
+          label: 'Enable'
+        }).on('change', (ev) => {
+          setDitherSettings(prev => ({ ...prev, enabled: ev.value }));
+        });
+        
+        // Dithering type
+        bindings.ditherType = ditherFolder.addBinding(ditherSettings, 'type', {
+          label: 'Type',
+          options: {
+            'Ordered': 'ordered',
+            'Floyd-Steinberg': 'floyd-steinberg',
+            'Jarvis': 'jarvis',
+            'Judice & Ninke': 'judice-ninke',
+            'Stucki': 'stucki',
+            'Burkes': 'burkes'
+          }
+        }).on('change', (ev) => {
+          setDitherSettings(prev => ({ ...prev, type: ev.value }));
+        });
+        
+        // Resolution
+        bindings.ditherResolution = ditherFolder.addBinding(ditherSettings, 'resolution', {
+          label: 'Resolution',
+          min: 1,
+          max: 100,
+          step: 1,
+        }).on('change', (ev) => {
+          setDitherSettings(prev => ({ ...prev, resolution: ev.value }));
+        });
+        
+        // Color depth
+        bindings.ditherColorDepth = ditherFolder.addBinding(ditherSettings, 'colorDepth', {
+          label: 'Color Depth',
+          min: 2,
+          max: 256,
+          step: 1,
+        }).on('change', (ev) => {
+          setDitherSettings(prev => ({ ...prev, colorDepth: ev.value }));
+        });
+        
+        // Threshold
+        bindings.ditherThreshold = ditherFolder.addBinding(ditherSettings, 'threshold', {
+          label: 'Threshold',
+          min: 0,
+          max: 255,
+          step: 1,
+        }).on('change', (ev) => {
+          setDitherSettings(prev => ({ ...prev, threshold: ev.value }));
+        });
+        
+        // Color mode
+        bindings.ditherColorMode = ditherFolder.addBinding(ditherSettings, 'colorMode', {
+          label: 'Color Mode',
+          options: {
+            'Color': 'color',
+            'Grayscale': 'grayscale'
+          }
+        }).on('change', (ev) => {
+          setDitherSettings(prev => ({ ...prev, colorMode: ev.value }));
+        });
+        
+        // 4. HALFTONE EFFECTS FOLDER
         const halftoneFolder = pane.addFolder({
           title: 'Halftone Effect',
           expanded: false,
@@ -623,7 +703,7 @@ export default function AdvancedEditor() {
           updateConcentricControls();
         });
         
-        // 4. GRID EFFECTS FOLDER
+        // 5. GRID EFFECTS FOLDER
         const gridFolder = pane.addFolder({
           title: 'Grid Effects',
           expanded: false,
@@ -718,7 +798,7 @@ export default function AdvancedEditor() {
           setGridSettings({...gridSettings});
         });
         
-        // 5. EXPORT FOLDER
+        // 6. EXPORT FOLDER
         const exportFolder = pane.addFolder({
           title: 'Export',
           expanded: false
@@ -788,17 +868,10 @@ export default function AdvancedEditor() {
           }).on('click', button.handler);
         });
         
-        // 6. ACTIONS FOLDER
+        // 7. ACTIONS FOLDER
         const actionsFolder = pane.addFolder({
           title: 'Actions',
           expanded: true,
-        });
-
-        // Reset changes button
-        actionsFolder.addButton({
-          title: 'Reset Changes'
-        }).on('click', () => {
-          resetImage();
         });
         
         // New image button
@@ -825,7 +898,7 @@ export default function AdvancedEditor() {
     }
   }, [image]); // Only depend on image, not other state variables
 
-  // This useEffect updates the Tweakpane UI when relevant state changes
+  // Update Tweakpane bindings when canvas dimensions change
   useEffect(() => {
     if (!paneRef.current) return;
     
@@ -834,24 +907,51 @@ export default function AdvancedEditor() {
     
     try {
       // Update canvas dimensions
-      if (bindings.width) {
+      if (bindings.width?.controller_?.binding?.target) {
         bindings.width.controller_.binding.target.width = canvasWidth;
         bindings.width.refresh();
       }
       
-      if (bindings.height) {
+      if (bindings.height?.controller_?.binding?.target) {
         bindings.height.controller_.binding.target.height = canvasHeight;
         bindings.height.refresh();
       }
       
-      // Other controls don't need manual updates since they have change handlers
-      // that set the state directly. The canvas rendering will happen based on
-      // the updated state values.
+      // Update dithering settings if they exist
+      if (bindings.ditherEnabled?.controller_?.binding?.target) {
+        bindings.ditherEnabled.controller_.binding.target.enabled = ditherSettings.enabled;
+        bindings.ditherEnabled.refresh();
+      }
+      
+      if (bindings.ditherType?.controller_?.binding?.target) {
+        bindings.ditherType.controller_.binding.target.type = ditherSettings.type;
+        bindings.ditherType.refresh();
+      }
+      
+      if (bindings.ditherResolution?.controller_?.binding?.target) {
+        bindings.ditherResolution.controller_.binding.target.resolution = ditherSettings.resolution;
+        bindings.ditherResolution.refresh();
+      }
+      
+      if (bindings.ditherColorDepth?.controller_?.binding?.target) {
+        bindings.ditherColorDepth.controller_.binding.target.colorDepth = ditherSettings.colorDepth;
+        bindings.ditherColorDepth.refresh();
+      }
+      
+      if (bindings.ditherThreshold?.controller_?.binding?.target) {
+        bindings.ditherThreshold.controller_.binding.target.threshold = ditherSettings.threshold;
+        bindings.ditherThreshold.refresh();
+      }
+      
+      if (bindings.ditherColorMode?.controller_?.binding?.target) {
+        bindings.ditherColorMode.controller_.binding.target.colorMode = ditherSettings.colorMode;
+        bindings.ditherColorMode.refresh();
+      }
       
     } catch (error) {
       console.error('Error updating Tweakpane bindings:', error);
     }
-  }, [canvasWidth, canvasHeight, aspectRatio, lockRatio, autoCanvasSize]);
+  }, [canvasWidth, canvasHeight, ditherSettings]);
 
   // Handle file drop
   const onDrop = (acceptedFiles: File[]) => {
@@ -1357,25 +1457,37 @@ export default function AdvancedEditor() {
         applyColorAdjustments(sourceCtx, sourceCanvas.width, sourceCanvas.height, colorSettings);
       }
       
-      // Create a temporary canvas for halftone processing
-      let tempCanvas = sourceCanvas;
+      // Apply dithering if enabled
+      if (ditherSettings.enabled) {
+        // Create a temporary canvas for dithering
+        const ditherCanvas = document.createElement('canvas');
+        ditherCanvas.width = canvasWidth;
+        ditherCanvas.height = canvasHeight;
+        const ditherCtx = ditherCanvas.getContext('2d');
+        if (ditherCtx) {
+          // Draw the source canvas onto the temporary canvas
+          ditherCtx.drawImage(sourceCanvas, 0, 0);
+          // Clear the source canvas
+          sourceCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+          // Apply dithering
+          applyDithering(sourceCtx, ditherCanvas, canvasWidth, canvasHeight, ditherSettings);
+        }
+      }
       
-      // Apply halftone effect if enabled
+      // Apply halftone if enabled
       if (halftoneSettings.enabled) {
-        // Create a temporary canvas for halftone processing
-        const tempCanvasEl = document.createElement('canvas');
-        tempCanvasEl.width = canvas.width;
-        tempCanvasEl.height = canvas.height;
-        const tempCtx = tempCanvasEl.getContext('2d');
-        
-        if (tempCtx) {
-          tempCtx.drawImage(sourceCanvas, 0, 0);
-          
-          // Clear the source canvas for halftone rendering
-          sourceCtx.clearRect(0, 0, sourceCanvas.width, sourceCanvas.height);
-          
-          // Apply halftone effect
-          applyHalftone(sourceCtx, tempCanvasEl, canvas.width, canvas.height, halftoneSettings);
+        // Create a temporary canvas for halftone
+        const halftoneCanvas = document.createElement('canvas');
+        halftoneCanvas.width = canvasWidth;
+        halftoneCanvas.height = canvasHeight;
+        const halftoneCtx = halftoneCanvas.getContext('2d');
+        if (halftoneCtx) {
+          // Draw the source canvas onto the temporary canvas
+          halftoneCtx.drawImage(sourceCanvas, 0, 0);
+          // Clear the source canvas
+          sourceCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+          // Apply halftone
+          applyHalftone(sourceCtx, halftoneCanvas, canvasWidth, canvasHeight, halftoneSettings);
         }
       }
       
@@ -1401,7 +1513,7 @@ export default function AdvancedEditor() {
       setProcessing(false);
     };
     img.src = image;
-  }, [image, canvasWidth, canvasHeight, colorSettings, halftoneSettings, gridSettings]);
+  }, [image, canvasWidth, canvasHeight, colorSettings, ditherSettings, halftoneSettings, gridSettings]);
 
   return (
     <div className="min-h-screen relative">
