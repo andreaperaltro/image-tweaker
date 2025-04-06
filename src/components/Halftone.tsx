@@ -150,28 +150,40 @@ export function applyHalftone(
       if (settings.arrangement === 'hexagonal' && y % 2 === 0) {
         centerX += cellSize / 2;
       } else if (settings.arrangement === 'spiral') {
-        // Calculate angle and distance from center
-        // Adjust center point based on offset settings
-        let centerX = width / 2 + settings.spiralCenterX;
-        let centerY = height / 2 + settings.spiralCenterY;
+        // Calculate the center point with offset
+        const spiralCenterX = width / 2 + settings.spiralCenterX;
+        const spiralCenterY = height / 2 + settings.spiralCenterY;
         
-        const dx = centerX - width / 2;
-        const dy = centerY - height / 2;
+        // Calculate distance from the center point
+        const dx = initialCenterX - spiralCenterX;
+        const dy = initialCenterY - spiralCenterY;
         const distanceFromCenter = Math.sqrt(dx * dx + dy * dy);
         
-        // Get the angle to the center
-        let angle = Math.atan2(dy, dx);
+        // Calculate angle from center
+        const angle = Math.atan2(dy, dx);
         
         // Add rotation offset (convert degrees to radians)
         const rotationRadians = settings.spiralRotation * (Math.PI / 180);
         
-        // Add a spiral effect - increasing angle based on distance
-        // This creates an Archimedean spiral with additional parameters
-        const spiralAngle = angle + rotationRadians + (distanceFromCenter * settings.spiralTightness * settings.spiralExpansion / cellSize);
+        // Calculate spiral parameters
+        // Scale tightness to be between 0.001 and 0.01 for better control
+        const tightness = 0.001 + (settings.spiralTightness * 0.009);
+        const expansion = settings.spiralExpansion || 1.0;
+        
+        // Calculate spiral angle - this is the key to creating a proper spiral
+        // The angle increases as we move outward from the center
+        const spiralAngle = angle + rotationRadians + (distanceFromCenter * tightness * expansion);
         
         // Calculate new position based on spiral equation
-        centerX = width / 2 + Math.cos(spiralAngle) * distanceFromCenter;
-        centerY = height / 2 + Math.sin(spiralAngle) * distanceFromCenter;
+        // For a proper spiral, we need to use the original distance but with the new angle
+        centerX = spiralCenterX + Math.cos(spiralAngle) * distanceFromCenter;
+        centerY = spiralCenterY + Math.sin(spiralAngle) * distanceFromCenter;
+        
+        // Ensure the spiral covers the entire canvas by scaling the distance
+        const maxDistance = Math.sqrt(width * width + height * height) / 2;
+        const scaleFactor = maxDistance / (maxDistance * 0.8); // 0.8 to ensure some margin
+        centerX = spiralCenterX + (centerX - spiralCenterX) * scaleFactor;
+        centerY = spiralCenterY + (centerY - spiralCenterY) * scaleFactor;
       } else if (settings.arrangement === 'concentric') {
         // Calculate the center point with offset
         const concentricCenterX = width / 2 + settings.concentricCenterX;
@@ -347,28 +359,39 @@ function applyCMYKHalftone(
         if (settings.arrangement === 'hexagonal' && y % 2 === 0) {
           centerX += cellSize / 2;
         } else if (settings.arrangement === 'spiral') {
-          // Calculate angle and distance from center
-          // Adjust center point based on offset settings
-          let centerX = width / 2 + settings.spiralCenterX;
-          let centerY = height / 2 + settings.spiralCenterY;
+          // Calculate the center point with offset
+          const spiralCenterX = width / 2 + settings.spiralCenterX;
+          const spiralCenterY = height / 2 + settings.spiralCenterY;
           
-          const dx = centerX - width / 2;
-          const dy = centerY - height / 2;
+          // Calculate distance from the center point
+          const dx = initialCenterX - spiralCenterX;
+          const dy = initialCenterY - spiralCenterY;
           const distanceFromCenter = Math.sqrt(dx * dx + dy * dy);
           
-          // Get the angle to the center
-          let angle = Math.atan2(dy, dx);
+          // Calculate angle from center
+          const angle = Math.atan2(dy, dx);
           
           // Add rotation offset (convert degrees to radians)
           const rotationRadians = settings.spiralRotation * (Math.PI / 180);
           
-          // Add a spiral effect - increasing angle based on distance
-          // This creates an Archimedean spiral with additional parameters
-          const spiralAngle = angle + rotationRadians + (distanceFromCenter * settings.spiralTightness * settings.spiralExpansion / cellSize);
+          // Calculate spiral parameters
+          const tightness = 0.001 + (settings.spiralTightness * 0.009);
+          const expansion = settings.spiralExpansion || 1.0;
+          
+          // Calculate spiral angle - this is the key to creating a proper spiral
+          // The angle increases as we move outward from the center
+          const spiralAngle = angle + rotationRadians + (distanceFromCenter * tightness * expansion);
           
           // Calculate new position based on spiral equation
-          centerX = width / 2 + Math.cos(spiralAngle) * distanceFromCenter;
-          centerY = height / 2 + Math.sin(spiralAngle) * distanceFromCenter;
+          // For a proper spiral, we need to use the original distance but with the new angle
+          centerX = spiralCenterX + Math.cos(spiralAngle) * distanceFromCenter;
+          centerY = spiralCenterY + Math.sin(spiralAngle) * distanceFromCenter;
+          
+          // Ensure the spiral covers the entire canvas by scaling the distance
+          const maxDistance = Math.sqrt(width * width + height * height) / 2;
+          const scaleFactor = maxDistance / (maxDistance * 0.8); // 0.8 to ensure some margin
+          centerX = spiralCenterX + (centerX - spiralCenterX) * scaleFactor;
+          centerY = spiralCenterY + (centerY - spiralCenterY) * scaleFactor;
         } else if (settings.arrangement === 'concentric') {
           // Calculate the center point with offset
           const concentricCenterX = width / 2 + settings.concentricCenterX;

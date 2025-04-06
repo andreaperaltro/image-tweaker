@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- Text dithering effect that distributes characters based on image brightness
+- Character weight mapping for more natural dithering patterns
+- Support for both monochrome and colored text dithering modes
+
+### Improved
+- Enhanced spiral halftone effect to cover the entire canvas
+- Adjusted spiral tightness range (0.001 to 0.01) for better control
+- Improved spiral scaling to ensure full canvas coverage
+- Fixed spiral center point calculation for more accurate patterns
+
+### Fixed
+- Corrected spiral implementation to create proper spiral patterns
+- Fixed variable naming inconsistencies in spiral calculations
+- Addressed issues with spiral being cut off at canvas edges
+
 ## [0.1.3] - 2024-04-02
 
 ### Added
@@ -66,3 +84,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cleaned up project by removing backup and temporary files
 - Removed unused background feature implementation
 - Eliminated redundant export buttons 
+
+## [0.1.0] - 2024-03-XX
+- Initial release 
