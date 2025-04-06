@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback } from 'react'
+import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { ColorSettings, applyColorAdjustments } from './ColorUtils'
 import { GridSettings, GridCell, createGrid, renderGridCell } from './Grid'
@@ -17,6 +17,7 @@ import type {
   View
 } from '@tweakpane/core'
 import { applyDithering, DitherSettings } from '../components/DitherUtils'
+import { TextDitherSettings, applyTextDither } from './TextDitherUtils'
 
 // Import Tweakpane types for development
 type TweakpanePane = Pane;
@@ -118,6 +119,18 @@ export default function AdvancedEditor() {
     colorMode: 'grayscale',
     resolution: 30,
     colorDepth: 2
+  });
+
+  const [textDitherSettings, setTextDitherSettings] = useState<TextDitherSettings>({
+    enabled: false,
+    text: 'MATRIX',
+    fontSize: 12,
+    fontFamily: 'monospace',
+    colorMode: 'monochrome',
+    contrast: 1,
+    brightness: 0.5,
+    invert: false,
+    resolution: 2
   });
 
   // Initialize the source canvas
@@ -469,6 +482,7 @@ export default function AdvancedEditor() {
         }).on('change', (ev) => {
           handleHalftoneChange('arrangement', ev.value);
           updateSpiralControls();
+          updateConcentricControls();
         });
         
         // Size variation
@@ -487,7 +501,7 @@ export default function AdvancedEditor() {
         }).on('change', (ev) => {
           handleHalftoneChange('invertBrightness', ev.value);
         });
-        
+
         // CMYK Mode subfolder
         const cmykFolder = halftoneFolder.addFolder({
           title: 'CMYK Mode',
@@ -528,181 +542,93 @@ export default function AdvancedEditor() {
         }).on('change', (ev) => {
           handleHalftoneChannelChange('black', ev.value);
         });
-        
-        // Modify the updateSpiralControls function to add spiral controls one after another
-        const updateSpiralControls = () => {
-          const isSpiralVisible = halftoneSettings.arrangement === 'spiral';
-          const allSpiralBindings = ['spiralTightness', 'spiralExpansion', 'spiralRotation', 'spiralCenterX', 'spiralCenterY'];
-          
-          // Remove all spiral controls if they exist but shouldn't be visible
-          if (!isSpiralVisible) {
-            allSpiralBindings.forEach(key => {
-              if (bindings[key]) {
-                halftoneFolder.remove(bindings[key]);
-                bindings[key] = null;
-              }
-            });
-            return;
-          }
-          
-          // Add spiral controls if they should be visible but don't exist yet
-          if (!bindings.spiralTightness) {
-            // First, remove all controls after arrangement to reinsert them later
-            const controlsToRemove: TweakpaneBladeApi[] = [];
-            let foundArrangement = false;
-            
-            halftoneFolder.children.forEach(control => {
-              if (foundArrangement && control !== bindings.arrangement) {
-                controlsToRemove.push(control as TweakpaneBladeApi);
-              }
-              if (control === bindings.arrangement) {
-                foundArrangement = true;
-              }
-            });
-            
-            // Store references to removed controls
-            const removedControls: TweakpaneBladeApi[] = [];
-            controlsToRemove.forEach(control => {
-              removedControls.push(control);
-              halftoneFolder.remove(control);
-            });
-            
-            // Add spiral controls
-            bindings.spiralTightness = halftoneFolder.addBinding(halftoneSettings, 'spiralTightness', {
-              label: 'Spiral Tightness',
-              min: 0.01,
-              max: 0.2,
-              step: 0.01
-            }).on('change', (ev) => {
-              handleHalftoneChange('spiralTightness', ev.value);
-            });
-            
-            bindings.spiralExpansion = halftoneFolder.addBinding(halftoneSettings, 'spiralExpansion', {
-              label: 'Spiral Growth',
-              min: 0.5,
-              max: 3.0,
-              step: 0.1
-            }).on('change', (ev) => {
-              handleHalftoneChange('spiralExpansion', ev.value);
-            });
-            
-            bindings.spiralRotation = halftoneFolder.addBinding(halftoneSettings, 'spiralRotation', {
-              label: 'Spiral Rotation',
-              min: -180,
-              max: 180,
-              step: 5
-            }).on('change', (ev) => {
-              handleHalftoneChange('spiralRotation', ev.value);
-            });
-            
-            bindings.spiralCenterX = halftoneFolder.addBinding(halftoneSettings, 'spiralCenterX', {
-              label: 'Center X Offset',
-              min: -500,
-              max: 500,
-              step: 5
-            }).on('change', (ev) => {
-              handleHalftoneChange('spiralCenterX', ev.value);
-            });
-            
-            bindings.spiralCenterY = halftoneFolder.addBinding(halftoneSettings, 'spiralCenterY', {
-              label: 'Center Y Offset',
-              min: -500,
-              max: 500,
-              step: 5
-            }).on('change', (ev) => {
-              handleHalftoneChange('spiralCenterY', ev.value);
-            });
-            
-            // Re-add the removed controls
-            removedControls.forEach(control => {
-              halftoneFolder.add(control);
-            });
-          }
-        };
-        
-        // Define the updateConcentricControls function
-        const updateConcentricControls = () => {
-          const isConcentricVisible = halftoneSettings.arrangement === 'concentric';
-          const allConcentricBindings = ['concentricRingSpacing', 'concentricCenterX', 'concentricCenterY'];
-          
-          // Remove all concentric controls if they exist but shouldn't be visible
-          if (!isConcentricVisible) {
-            allConcentricBindings.forEach(key => {
-              if (bindings[key]) {
-                halftoneFolder.remove(bindings[key]);
-                bindings[key] = null;
-              }
-            });
-            return;
-          }
-          
-          // Add concentric controls if they should be visible but don't exist yet
-          if (!bindings.concentricRingSpacing) {
-            // First, remove all controls after arrangement to reinsert them later
-            const controlsToRemove: TweakpaneBladeApi[] = [];
-            let foundArrangement = false;
-            
-            halftoneFolder.children.forEach(control => {
-              if (foundArrangement && control !== bindings.arrangement) {
-                controlsToRemove.push(control as TweakpaneBladeApi);
-              }
-              if (control === bindings.arrangement) {
-                foundArrangement = true;
-              }
-            });
-            
-            // Store references to removed controls
-            const removedControls: TweakpaneBladeApi[] = [];
-            controlsToRemove.forEach(control => {
-              removedControls.push(control);
-              halftoneFolder.remove(control);
-            });
-            
-            // Add concentric controls
-            bindings.concentricRingSpacing = halftoneFolder.addBinding(halftoneSettings, 'concentricRingSpacing', {
-              label: 'Ring Spacing',
-              min: 0.5,
-              max: 3.0,
-              step: 0.1
-            }).on('change', (ev) => {
-              handleHalftoneChange('concentricRingSpacing', ev.value);
-            });
-            
-            bindings.concentricCenterX = halftoneFolder.addBinding(halftoneSettings, 'concentricCenterX', {
-              label: 'Center X Offset',
-              min: -500,
-              max: 500,
-              step: 5
-            }).on('change', (ev) => {
-              handleHalftoneChange('concentricCenterX', ev.value);
-            });
-            
-            bindings.concentricCenterY = halftoneFolder.addBinding(halftoneSettings, 'concentricCenterY', {
-              label: 'Center Y Offset',
-              min: -500,
-              max: 500,
-              step: 5
-            }).on('change', (ev) => {
-              handleHalftoneChange('concentricCenterY', ev.value);
-            });
-            
-            // Re-add the removed controls
-            removedControls.forEach(control => {
-              halftoneFolder.add(control);
-            });
-          }
-        };
-        
-        // Call initially to set up the UI correctly
-        updateSpiralControls();
-        updateConcentricControls();
-        
-        // Update when arrangement changes
-        bindings.arrangement.on('change', () => {
-          updateSpiralControls();
-          updateConcentricControls();
+
+        // Text dither settings
+        const textDitherFolder = pane.addFolder({
+          title: 'Text Dither Effect',
+          expanded: false
         });
-        
+
+        // Enable text dithering
+        textDitherFolder.addBinding(textDitherSettings, 'enabled', {
+          label: 'Enable'
+        }).on('change', (ev) => {
+          setTextDitherSettings(prev => ({ ...prev, enabled: ev.value }));
+          processImage();
+        });
+
+        // Text input
+        textDitherFolder.addBinding(textDitherSettings, 'text', {
+          label: 'Text Pattern'
+        }).on('change', (ev) => {
+          setTextDitherSettings(prev => ({ ...prev, text: ev.value }));
+          processImage();
+        });
+
+        // Font size
+        textDitherFolder.addBinding(textDitherSettings, 'fontSize', {
+          label: 'Font Size',
+          min: 6,
+          max: 24,
+          step: 1
+        }).on('change', (ev) => {
+          setTextDitherSettings(prev => ({ ...prev, fontSize: ev.value }));
+          processImage();
+        });
+
+        // Resolution
+        textDitherFolder.addBinding(textDitherSettings, 'resolution', {
+          label: 'Resolution',
+          min: 0.5,
+          max: 4,
+          step: 0.1
+        }).on('change', (ev) => {
+          setTextDitherSettings(prev => ({ ...prev, resolution: ev.value }));
+          processImage();
+        });
+
+        // Color mode
+        textDitherFolder.addBinding(textDitherSettings, 'colorMode', {
+          label: 'Color Mode',
+          options: {
+            'Monochrome': 'monochrome',
+            'Colored': 'colored'
+          }
+        }).on('change', (ev) => {
+          setTextDitherSettings(prev => ({ ...prev, colorMode: ev.value }));
+          processImage();
+        });
+
+        // Contrast
+        textDitherFolder.addBinding(textDitherSettings, 'contrast', {
+          label: 'Contrast',
+          min: 0.5,
+          max: 2,
+          step: 0.1
+        }).on('change', (ev) => {
+          setTextDitherSettings(prev => ({ ...prev, contrast: ev.value }));
+          processImage();
+        });
+
+        // Brightness
+        textDitherFolder.addBinding(textDitherSettings, 'brightness', {
+          label: 'Brightness',
+          min: 0,
+          max: 1,
+          step: 0.1
+        }).on('change', (ev) => {
+          setTextDitherSettings(prev => ({ ...prev, brightness: ev.value }));
+          processImage();
+        });
+
+        // Invert
+        textDitherFolder.addBinding(textDitherSettings, 'invert', {
+          label: 'Invert'
+        }).on('change', (ev) => {
+          setTextDitherSettings(prev => ({ ...prev, invert: ev.value }));
+          processImage();
+        });
+
         // 5. GRID EFFECTS FOLDER
         const gridFolder = pane.addFolder({
           title: 'Grid Effects',
@@ -886,6 +812,180 @@ export default function AdvancedEditor() {
         paneRef.current = pane;
         (paneRef.current as any).bindings = bindings;
         
+        // Define the updateSpiralControls function
+        const updateSpiralControls = () => {
+          const isSpiralVisible = halftoneSettings.arrangement === 'spiral';
+          const allSpiralBindings = ['spiralTightness', 'spiralExpansion', 'spiralRotation', 'spiralCenterX', 'spiralCenterY'];
+          
+          // Remove all spiral controls if they exist but shouldn't be visible
+          if (!isSpiralVisible) {
+            allSpiralBindings.forEach(key => {
+              if (bindings[key]) {
+                halftoneFolder.remove(bindings[key]);
+                bindings[key] = null;
+              }
+            });
+            return;
+          }
+          
+          // Add spiral controls if they should be visible but don't exist yet
+          if (!bindings.spiralTightness) {
+            // First, remove all controls after arrangement to reinsert them later
+            const controlsToRemove: TweakpaneBladeApi[] = [];
+            let foundArrangement = false;
+            
+            halftoneFolder.children.forEach(control => {
+              if (foundArrangement && control !== bindings.arrangement) {
+                controlsToRemove.push(control as TweakpaneBladeApi);
+              }
+              if (control === bindings.arrangement) {
+                foundArrangement = true;
+              }
+            });
+            
+            // Store references to removed controls
+            const removedControls: TweakpaneBladeApi[] = [];
+            controlsToRemove.forEach(control => {
+              removedControls.push(control);
+              halftoneFolder.remove(control);
+            });
+            
+            // Add spiral controls
+            bindings.spiralTightness = halftoneFolder.addBinding(halftoneSettings, 'spiralTightness', {
+              label: 'Spiral Tightness',
+              min: 0.01,
+              max: 0.2,
+              step: 0.01
+            }).on('change', (ev) => {
+              handleHalftoneChange('spiralTightness', ev.value);
+            });
+            
+            bindings.spiralExpansion = halftoneFolder.addBinding(halftoneSettings, 'spiralExpansion', {
+              label: 'Spiral Growth',
+              min: 0.5,
+              max: 3.0,
+              step: 0.1
+            }).on('change', (ev) => {
+              handleHalftoneChange('spiralExpansion', ev.value);
+            });
+            
+            bindings.spiralRotation = halftoneFolder.addBinding(halftoneSettings, 'spiralRotation', {
+              label: 'Spiral Rotation',
+              min: -180,
+              max: 180,
+              step: 5
+            }).on('change', (ev) => {
+              handleHalftoneChange('spiralRotation', ev.value);
+            });
+            
+            bindings.spiralCenterX = halftoneFolder.addBinding(halftoneSettings, 'spiralCenterX', {
+              label: 'Center X Offset',
+              min: -500,
+              max: 500,
+              step: 5
+            }).on('change', (ev) => {
+              handleHalftoneChange('spiralCenterX', ev.value);
+            });
+            
+            bindings.spiralCenterY = halftoneFolder.addBinding(halftoneSettings, 'spiralCenterY', {
+              label: 'Center Y Offset',
+              min: -500,
+              max: 500,
+              step: 5
+            }).on('change', (ev) => {
+              handleHalftoneChange('spiralCenterY', ev.value);
+            });
+            
+            // Re-add the removed controls
+            removedControls.forEach(control => {
+              halftoneFolder.add(control);
+            });
+          }
+        };
+
+        // Define the updateConcentricControls function
+        const updateConcentricControls = () => {
+          const isConcentricVisible = halftoneSettings.arrangement === 'concentric';
+          const allConcentricBindings = ['concentricRingSpacing', 'concentricCenterX', 'concentricCenterY'];
+          
+          // Remove all concentric controls if they exist but shouldn't be visible
+          if (!isConcentricVisible) {
+            allConcentricBindings.forEach(key => {
+              if (bindings[key]) {
+                halftoneFolder.remove(bindings[key]);
+                bindings[key] = null;
+              }
+            });
+            return;
+          }
+          
+          // Add concentric controls if they should be visible but don't exist yet
+          if (!bindings.concentricRingSpacing) {
+            // First, remove all controls after arrangement to reinsert them later
+            const controlsToRemove: TweakpaneBladeApi[] = [];
+            let foundArrangement = false;
+            
+            halftoneFolder.children.forEach(control => {
+              if (foundArrangement && control !== bindings.arrangement) {
+                controlsToRemove.push(control as TweakpaneBladeApi);
+              }
+              if (control === bindings.arrangement) {
+                foundArrangement = true;
+              }
+            });
+            
+            // Store references to removed controls
+            const removedControls: TweakpaneBladeApi[] = [];
+            controlsToRemove.forEach(control => {
+              removedControls.push(control);
+              halftoneFolder.remove(control);
+            });
+            
+            // Add concentric controls
+            bindings.concentricRingSpacing = halftoneFolder.addBinding(halftoneSettings, 'concentricRingSpacing', {
+              label: 'Ring Spacing',
+              min: 0.5,
+              max: 3.0,
+              step: 0.1
+            }).on('change', (ev) => {
+              handleHalftoneChange('concentricRingSpacing', ev.value);
+            });
+            
+            bindings.concentricCenterX = halftoneFolder.addBinding(halftoneSettings, 'concentricCenterX', {
+              label: 'Center X Offset',
+              min: -500,
+              max: 500,
+              step: 5
+            }).on('change', (ev) => {
+              handleHalftoneChange('concentricCenterX', ev.value);
+            });
+            
+            bindings.concentricCenterY = halftoneFolder.addBinding(halftoneSettings, 'concentricCenterY', {
+              label: 'Center Y Offset',
+              min: -500,
+              max: 500,
+              step: 5
+            }).on('change', (ev) => {
+              handleHalftoneChange('concentricCenterY', ev.value);
+            });
+            
+            // Re-add the removed controls
+            removedControls.forEach(control => {
+              halftoneFolder.add(control);
+            });
+          }
+        };
+        
+        // Call initially to set up the UI correctly
+        updateSpiralControls();
+        updateConcentricControls();
+        
+        // Update when arrangement changes
+        bindings.arrangement.on('change', () => {
+          updateSpiralControls();
+          updateConcentricControls();
+        });
+
         return () => {
           if (paneRef.current) {
             paneRef.current.dispose();
@@ -1404,116 +1504,69 @@ export default function AdvancedEditor() {
     }));
   };
 
-  // Draw image on canvas
-  useEffect(() => {
-    if (!image || !canvasRef.current || !sourceCanvasRef.current) return;
+  const processImage = useCallback(() => {
+    if (!canvasRef.current || !image) return;
+    
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
 
     setProcessing(true);
-    const canvas = canvasRef.current;
-    const sourceCanvas = sourceCanvasRef.current;
-    const ctx = canvas.getContext('2d');
-    const sourceCtx = sourceCanvas.getContext('2d');
-    
-    if (!ctx || !sourceCtx) return;
-    
-    // Set canvas dimensions
-    canvas.width = canvasWidth;
-    canvas.height = canvasHeight;
-    sourceCanvas.width = canvasWidth;
-    sourceCanvas.height = canvasHeight;
-    
-    // Clear canvases
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    sourceCtx.clearRect(0, 0, sourceCanvas.width, sourceCanvas.height);
-    
-    const img = new Image();
-    img.onload = () => {
-      // Calculate dimensions for "cover" behavior
-      const imgRatio = img.width / img.height;
-      const canvasRatio = canvas.width / canvas.height;
+
+    try {
+      // Set canvas dimensions
+      canvas.width = canvasWidth;
+      canvas.height = canvasHeight;
+
+      // Clear canvas
+      ctx.clearRect(0, 0, canvasWidth, canvasHeight);
       
-      let drawWidth, drawHeight, x, y;
-      
-      // Implement "cover" behavior - always fill canvas completely
-      if (canvasRatio > imgRatio) {
-        // Canvas is wider than image ratio - crop top/bottom
-        drawWidth = canvas.width;
-        drawHeight = drawWidth / imgRatio;
-        x = 0;
-        y = (canvas.height - drawHeight) / 2;
-      } else {
-        // Canvas is taller than image ratio - crop sides
-        drawHeight = canvas.height;
-        drawWidth = drawHeight * imgRatio;
-        x = (canvas.width - drawWidth) / 2;
-        y = 0;
-      }
-      
-      // Draw the image on source canvas with "cover" behavior
-      sourceCtx.drawImage(img, x, y, drawWidth, drawHeight);
-      
-      // Apply color adjustments if enabled to source canvas
-      if (colorSettings.enabled) {
-        applyColorAdjustments(sourceCtx, sourceCanvas.width, sourceCanvas.height, colorSettings);
-      }
-      
-      // Apply dithering if enabled
-      if (ditherSettings.enabled) {
-        // Create a temporary canvas for dithering
-        const ditherCanvas = document.createElement('canvas');
-        ditherCanvas.width = canvasWidth;
-        ditherCanvas.height = canvasHeight;
-        const ditherCtx = ditherCanvas.getContext('2d');
-        if (ditherCtx) {
-          // Draw the source canvas onto the temporary canvas
-          ditherCtx.drawImage(sourceCanvas, 0, 0);
-          // Clear the source canvas
-          sourceCtx.clearRect(0, 0, canvasWidth, canvasHeight);
-          // Apply dithering
-          applyDithering(sourceCtx, ditherCanvas, canvasWidth, canvasHeight, ditherSettings);
+      // Create an HTMLImageElement from the image string
+      const img = new Image();
+      img.onload = () => {
+        // Draw original image
+        ctx.drawImage(img, 0, 0, canvasWidth, canvasHeight);
+
+        // Apply effects in order
+        if (colorSettings.enabled) {
+          applyColorAdjustments(ctx, canvasWidth, canvasHeight, colorSettings);
         }
-      }
-      
-      // Apply halftone if enabled
-      if (halftoneSettings.enabled) {
-        // Create a temporary canvas for halftone
-        const halftoneCanvas = document.createElement('canvas');
-        halftoneCanvas.width = canvasWidth;
-        halftoneCanvas.height = canvasHeight;
-        const halftoneCtx = halftoneCanvas.getContext('2d');
-        if (halftoneCtx) {
-          // Draw the source canvas onto the temporary canvas
-          halftoneCtx.drawImage(sourceCanvas, 0, 0);
-          // Clear the source canvas
-          sourceCtx.clearRect(0, 0, canvasWidth, canvasHeight);
-          // Apply halftone
-          applyHalftone(sourceCtx, halftoneCanvas, canvasWidth, canvasHeight, halftoneSettings);
+
+        if (ditherSettings.enabled) {
+          applyDithering(ctx, canvas, canvasWidth, canvasHeight, ditherSettings);
         }
-      }
-      
-      // Apply grid effects if enabled
-      if (gridSettings.enabled) {
-        // Create a grid
-        const cells = createGrid(canvas.width, canvas.height, gridSettings);
-        
-        // Render grid cells
-        if (cells.length > 0) {
-          for (const cell of cells) {
-            renderGridCell(ctx, cell, sourceCanvas, sourceCtx);
+
+        if (textDitherSettings.enabled) {
+          applyTextDither(ctx, canvasWidth, canvasHeight, textDitherSettings);
+        }
+
+        if (halftoneSettings.enabled) {
+          applyHalftone(ctx, canvas, canvasWidth, canvasHeight, halftoneSettings);
+        }
+
+        if (gridSettings.enabled) {
+          const cells = createGrid(canvasWidth, canvasHeight, gridSettings);
+          const sourceCanvas = sourceCanvasRef.current;
+          if (sourceCanvas) {
+            cells.forEach(cell => renderGridCell(ctx, cell, sourceCanvas, gridSettings));
           }
-        } else {
-          // If no grid cells, just copy from source canvas
-          ctx.drawImage(sourceCanvas, 0, 0);
         }
-      } else {
-        // If no grid effects, just copy from source canvas
-        ctx.drawImage(sourceCanvas, 0, 0);
-      }
-      
+
+        setProcessing(false);
+      };
+      img.src = image;
+    } catch (error) {
+      console.error('Error processing image:', error);
       setProcessing(false);
-    };
-    img.src = image;
-  }, [image, canvasWidth, canvasHeight, colorSettings, ditherSettings, halftoneSettings, gridSettings]);
+    }
+  }, [image, canvasWidth, canvasHeight, colorSettings, ditherSettings, textDitherSettings, halftoneSettings, gridSettings]);
+
+  // Process image when it changes
+  useEffect(() => {
+    if (image) {
+      processImage();
+    }
+  }, [image, processImage]);
 
   return (
     <div className="min-h-screen relative">
@@ -1550,6 +1603,8 @@ export default function AdvancedEditor() {
             )}
             <canvas 
               ref={canvasRef} 
+              width={canvasWidth}
+              height={canvasHeight}
               className="max-w-full border border-black"
             />
           </div>

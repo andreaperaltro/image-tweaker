@@ -169,7 +169,7 @@ export function renderGridCell(
   ctx: CanvasRenderingContext2D, 
   cell: GridCell,
   sourceCanvas: HTMLCanvasElement,
-  sourceCtx: CanvasRenderingContext2D
+  settings: GridSettings
 ): void {
   // Save the current context state
   ctx.save();
@@ -198,7 +198,7 @@ export function renderGridCell(
     
     // Draw each child cell
     for (const childCell of cell.children) {
-      renderGridCell(ctx, childCell, sourceCanvas, sourceCtx);
+      renderGridCell(ctx, childCell, sourceCanvas, settings);
     }
   }
   
