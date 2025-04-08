@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.5] - 2024-04-07
+
+### Added
+- Threshold effect with customizable threshold value
+- Support for both solid and gradient color modes in threshold effect
+- Color pickers for dark and light colors in solid mode
+- Gradient color pickers with start/end colors for both dark and light ranges
+
+### Changed
+- Improved UI organization with threshold controls
+- Optimized threshold slider placement for better usability
+- Enhanced color picker integration using Tweakpane's native color picker
+
+### Fixed
+- Color picker interaction and update issues
+- Real-time preview performance with threshold effect
+- Color gradient interpolation in threshold mode
+
 ## [0.1.4] - 2024-04-06
 
 ### Added

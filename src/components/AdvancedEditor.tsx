@@ -18,6 +18,7 @@ import type {
 } from '@tweakpane/core'
 import { applyDithering, DitherSettings } from '../components/DitherUtils'
 import { TextDitherSettings, applyTextDither } from './TextDitherUtils'
+import { ThresholdSettings, ThresholdMode, applyThreshold } from './ThresholdUtils'
 
 // Import Tweakpane types for development
 type TweakpanePane = Pane;
@@ -131,6 +132,21 @@ export default function AdvancedEditor() {
     brightness: 0.5,
     invert: false,
     resolution: 2
+  });
+
+  // Threshold settings
+  const [thresholdSettings, setThresholdSettings] = useState<ThresholdSettings>({
+    enabled: false,
+    mode: 'solid',
+    threshold: 128,
+    // Solid colors
+    darkColor: '#000000',
+    lightColor: '#FFFFFF',
+    // Gradient colors
+    darkColorStart: '#000000',
+    darkColorEnd: '#000066',
+    lightColorStart: '#FFFFFF',
+    lightColorEnd: '#FFFF66'
   });
 
   // Initialize the source canvas
@@ -332,6 +348,135 @@ export default function AdvancedEditor() {
         }).on('click', () => {
           handleColorChange('glitchSeed', Math.random());
         });
+        
+        // 1. THRESHOLD FOLDER
+        const thresholdFolder = pane.addFolder({
+          title: 'Threshold',
+          expanded: false,
+        });
+
+        const thresholdParams = {
+          enabled: thresholdSettings.enabled,
+          mode: thresholdSettings.mode,
+          threshold: thresholdSettings.threshold,
+          darkColor: thresholdSettings.darkColor,
+          lightColor: thresholdSettings.lightColor,
+          darkColorStart: thresholdSettings.darkColorStart,
+          darkColorEnd: thresholdSettings.darkColorEnd,
+          lightColorStart: thresholdSettings.lightColorStart,
+          lightColorEnd: thresholdSettings.lightColorEnd
+        };
+
+        // Enable threshold
+        bindings.thresholdEnabled = thresholdFolder.addBinding(thresholdParams, 'enabled', {
+          label: 'Enable'
+        }).on('change', (ev) => {
+          setThresholdSettings(prev => ({ ...prev, enabled: ev.value }));
+          processImage();
+        });
+
+        // Threshold value (moved up)
+        bindings.threshold = thresholdFolder.addBinding(thresholdParams, 'threshold', {
+          label: 'Threshold',
+          min: 0,
+          max: 255,
+          step: 1
+        }).on('change', (ev) => {
+          setThresholdSettings(prev => ({ ...prev, threshold: ev.value }));
+          processImage();
+        });
+
+        // Threshold mode
+        bindings.thresholdMode = thresholdFolder.addBinding(thresholdParams, 'mode', {
+          label: 'Mode',
+          options: {
+            'Solid': 'solid',
+            'Gradient': 'gradient'
+          }
+        }).on('change', (ev) => {
+          setThresholdSettings(prev => ({ ...prev, mode: ev.value }));
+          updateThresholdControls(ev.value);
+          processImage();
+        });
+
+        // Create folders but don't add them yet
+        const solidColorsFolder = thresholdFolder.addFolder({
+          title: 'Colors',
+          expanded: true
+        });
+
+        const gradientColorsFolder = thresholdFolder.addFolder({
+          title: 'Gradient Colors',
+          expanded: true
+        });
+
+        // Dark color (solid)
+        bindings.darkColor = solidColorsFolder.addBinding(thresholdParams, 'darkColor', {
+          view: 'color',
+          label: 'Dark Color'
+        }).on('change', (ev) => {
+          setThresholdSettings(prev => ({ ...prev, darkColor: ev.value }));
+          processImage();
+        });
+
+        // Light color (solid)
+        bindings.lightColor = solidColorsFolder.addBinding(thresholdParams, 'lightColor', {
+          view: 'color',
+          label: 'Light Color'
+        }).on('change', (ev) => {
+          setThresholdSettings(prev => ({ ...prev, lightColor: ev.value }));
+          processImage();
+        });
+
+        // Dark color start (gradient)
+        bindings.darkColorStart = gradientColorsFolder.addBinding(thresholdParams, 'darkColorStart', {
+          view: 'color',
+          label: 'Dark Start'
+        }).on('change', (ev) => {
+          setThresholdSettings(prev => ({ ...prev, darkColorStart: ev.value }));
+          processImage();
+        });
+
+        // Dark color end (gradient)
+        bindings.darkColorEnd = gradientColorsFolder.addBinding(thresholdParams, 'darkColorEnd', {
+          view: 'color',
+          label: 'Dark End'
+        }).on('change', (ev) => {
+          setThresholdSettings(prev => ({ ...prev, darkColorEnd: ev.value }));
+          processImage();
+        });
+
+        // Light color start (gradient)
+        bindings.lightColorStart = gradientColorsFolder.addBinding(thresholdParams, 'lightColorStart', {
+          view: 'color',
+          label: 'Light Start'
+        }).on('change', (ev) => {
+          setThresholdSettings(prev => ({ ...prev, lightColorStart: ev.value }));
+          processImage();
+        });
+
+        // Light color end (gradient)
+        bindings.lightColorEnd = gradientColorsFolder.addBinding(thresholdParams, 'lightColorEnd', {
+          view: 'color',
+          label: 'Light End'
+        }).on('change', (ev) => {
+          setThresholdSettings(prev => ({ ...prev, lightColorEnd: ev.value }));
+          processImage();
+        });
+
+        // Function to update visibility of color controls
+        const updateThresholdControls = (mode: ThresholdMode) => {
+          if (mode === 'solid') {
+            thresholdFolder.remove(gradientColorsFolder);
+            thresholdFolder.add(solidColorsFolder);
+          } else {
+            thresholdFolder.remove(solidColorsFolder);
+            thresholdFolder.add(gradientColorsFolder);
+          }
+        };
+
+        // Initial setup of controls based on current mode
+        updateThresholdControls(thresholdSettings.mode);
         
         // 3. DITHERING FOLDER
         const ditherFolder = pane.addFolder({
@@ -1505,61 +1650,84 @@ export default function AdvancedEditor() {
   };
 
   const processImage = useCallback(() => {
-    if (!canvasRef.current || !image) return;
+    if (!image || !canvasRef.current || !sourceCanvasRef.current) return;
+    
+    setProcessing(true);
     
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    setProcessing(true);
-
-    try {
-      // Set canvas dimensions
-      canvas.width = canvasWidth;
-      canvas.height = canvasHeight;
-
-      // Clear canvas
-      ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-      
-      // Create an HTMLImageElement from the image string
-      const img = new Image();
-      img.onload = () => {
-        // Draw original image
-        ctx.drawImage(img, 0, 0, canvasWidth, canvasHeight);
-
-        // Apply effects in order
-        if (colorSettings.enabled) {
-          applyColorAdjustments(ctx, canvasWidth, canvasHeight, colorSettings);
-        }
-
-        if (ditherSettings.enabled) {
-          applyDithering(ctx, canvas, canvasWidth, canvasHeight, ditherSettings);
-        }
-
-        if (textDitherSettings.enabled) {
-          applyTextDither(ctx, canvasWidth, canvasHeight, textDitherSettings);
-        }
-
-        if (halftoneSettings.enabled) {
-          applyHalftone(ctx, canvas, canvasWidth, canvasHeight, halftoneSettings);
-        }
-
-        if (gridSettings.enabled) {
-          const cells = createGrid(canvasWidth, canvasHeight, gridSettings);
-          const sourceCanvas = sourceCanvasRef.current;
-          if (sourceCanvas) {
-            cells.forEach(cell => renderGridCell(ctx, cell, sourceCanvas, gridSettings));
-          }
-        }
-
-        setProcessing(false);
-      };
-      img.src = image;
-    } catch (error) {
-      console.error('Error processing image:', error);
+    const sourceCanvas = sourceCanvasRef.current;
+    const sourceCtx = sourceCanvas.getContext('2d');
+    
+    if (!ctx || !sourceCtx) {
       setProcessing(false);
+      return;
     }
-  }, [image, canvasWidth, canvasHeight, colorSettings, ditherSettings, textDitherSettings, halftoneSettings, gridSettings]);
+    
+    // Set canvas dimensions
+    canvas.width = canvasWidth;
+    canvas.height = canvasHeight;
+    sourceCanvas.width = canvasWidth;
+    sourceCanvas.height = canvasHeight;
+    
+    // Load and draw the image
+    const img = new Image();
+    img.onload = () => {
+      // Clear canvases
+      ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+      sourceCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+      
+      // Draw image on source canvas
+      sourceCtx.drawImage(img, 0, 0, canvasWidth, canvasHeight);
+      
+      // Apply color adjustments
+      if (colorSettings.enabled) {
+        applyColorAdjustments(sourceCtx, canvasWidth, canvasHeight, colorSettings);
+      }
+      
+      // Apply threshold effect
+      if (thresholdSettings.enabled) {
+        applyThreshold(sourceCtx, canvasWidth, canvasHeight, thresholdSettings);
+      }
+      
+      // Apply halftone effect
+      if (halftoneSettings.enabled) {
+        applyHalftone(sourceCtx, sourceCanvas, canvasWidth, canvasHeight, halftoneSettings);
+      }
+      
+      // Apply grid effect
+      if (gridSettings.enabled) {
+        const grid = createGrid(canvasWidth, canvasHeight, gridSettings);
+        grid.forEach(cell => renderGridCell(sourceCtx, cell, sourceCanvas, gridSettings));
+      }
+      
+      // Apply dithering
+      if (ditherSettings.enabled) {
+        applyDithering(sourceCtx, sourceCanvas, canvasWidth, canvasHeight, ditherSettings);
+      }
+      
+      // Apply text dithering
+      if (textDitherSettings.enabled) {
+        applyTextDither(sourceCtx, canvasWidth, canvasHeight, textDitherSettings);
+      }
+      
+      // Copy final result to main canvas
+      ctx.drawImage(sourceCanvas, 0, 0);
+      setProcessing(false);
+    };
+    
+    img.src = image;
+  }, [
+    image,
+    canvasWidth,
+    canvasHeight,
+    colorSettings,
+    thresholdSettings,
+    halftoneSettings,
+    gridSettings,
+    ditherSettings,
+    textDitherSettings
+  ]);
 
   // Process image when it changes
   useEffect(() => {
