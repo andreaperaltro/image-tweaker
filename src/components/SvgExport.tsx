@@ -749,4 +749,13 @@ export function createVectorSvg(
       halftoneDotsStore.height === height &&
       halftoneDotsStore.settings) {
     
-    console.log(`
+    console.log(`Using ${halftoneDotsStore.dots.length} stored dots for vector SVG`);
+    
+    // Use the halftone vector generation
+    const imageData = ctx.getImageData(0, 0, width, height);
+    return createHalftoneVectorSvg(imageData, width, height, halftoneDotsStore.settings, imageInfo);
+  }
+  
+  // Fallback to normal SVG conversion if no halftone data is available
+  return canvasToSvg(canvas, imageInfo);
+}
