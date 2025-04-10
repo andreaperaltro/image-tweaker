@@ -69,37 +69,104 @@ export function applyGlitch(
   // Draw source to temp canvas as starting point
   tempCtx.drawImage(sourceCanvas, 0, 0);
   
+  // Create a single effect canvas that we'll reuse for each effect
+  const effectCanvas = document.createElement('canvas');
+  effectCanvas.width = width;
+  effectCanvas.height = height;
+  const effectCtx = effectCanvas.getContext('2d');
+  if (!effectCtx) {
+    // If we can't get a context, just copy the source and return
+    ctx.drawImage(sourceCanvas, 0, 0);
+    return;
+  }
+  
+  // Apply each effect independently based on its own enabled flag
+  
   // Apply pixel sorting if enabled
   if (settings.pixelSortingEnabled) {
-    applyPixelSorting(tempCtx, width, height, settings);
+    // Copy from temp canvas to effect canvas
+    effectCtx.clearRect(0, 0, width, height);
+    effectCtx.drawImage(tempCanvas, 0, 0);
+    
+    // Apply effect
+    applyPixelSorting(effectCtx, width, height, settings);
+    
+    // Update temp canvas with this effect
+    tempCtx.clearRect(0, 0, width, height);
+    tempCtx.drawImage(effectCanvas, 0, 0);
   }
   
   // Apply channel shift if enabled
   if (settings.channelShiftEnabled) {
-    applyChannelShift(tempCtx, width, height, settings);
+    // Copy from temp canvas to effect canvas
+    effectCtx.clearRect(0, 0, width, height);
+    effectCtx.drawImage(tempCanvas, 0, 0);
+    
+    // Apply effect
+    applyChannelShift(effectCtx, width, height, settings);
+    
+    // Update temp canvas with this effect
+    tempCtx.clearRect(0, 0, width, height);
+    tempCtx.drawImage(effectCanvas, 0, 0);
   }
   
   // Apply scan lines if enabled
   if (settings.scanLinesEnabled) {
-    applyScanLines(tempCtx, width, height, settings);
+    // Copy from temp canvas to effect canvas
+    effectCtx.clearRect(0, 0, width, height);
+    effectCtx.drawImage(tempCanvas, 0, 0);
+    
+    // Apply effect
+    applyScanLines(effectCtx, width, height, settings);
+    
+    // Update temp canvas with this effect
+    tempCtx.clearRect(0, 0, width, height);
+    tempCtx.drawImage(effectCanvas, 0, 0);
   }
   
   // Apply noise if enabled
   if (settings.noiseEnabled) {
-    applyNoise(tempCtx, width, height, settings);
+    // Copy from temp canvas to effect canvas
+    effectCtx.clearRect(0, 0, width, height);
+    effectCtx.drawImage(tempCanvas, 0, 0);
+    
+    // Apply effect
+    applyNoise(effectCtx, width, height, settings);
+    
+    // Update temp canvas with this effect
+    tempCtx.clearRect(0, 0, width, height);
+    tempCtx.drawImage(effectCanvas, 0, 0);
   }
   
   // Apply blocks if enabled
   if (settings.blocksEnabled) {
-    applyBlocks(tempCtx, width, height, settings);
+    // Copy from temp canvas to effect canvas
+    effectCtx.clearRect(0, 0, width, height);
+    effectCtx.drawImage(tempCanvas, 0, 0);
+    
+    // Apply effect
+    applyBlocks(effectCtx, width, height, settings);
+    
+    // Update temp canvas with this effect
+    tempCtx.clearRect(0, 0, width, height);
+    tempCtx.drawImage(effectCanvas, 0, 0);
   }
   
   // Apply general glitch effect only if specifically enabled
   if (settings.enabled) {
-    applyGeneralGlitch(tempCtx, width, height, settings);
+    // Copy from temp canvas to effect canvas
+    effectCtx.clearRect(0, 0, width, height);
+    effectCtx.drawImage(tempCanvas, 0, 0);
+    
+    // Apply effect
+    applyGeneralGlitch(effectCtx, width, height, settings);
+    
+    // Update temp canvas with this effect
+    tempCtx.clearRect(0, 0, width, height);
+    tempCtx.drawImage(effectCanvas, 0, 0);
   }
   
-  // Draw the result back to the original context
+  // Draw the final result back to the original context
   ctx.drawImage(tempCanvas, 0, 0);
 }
 
