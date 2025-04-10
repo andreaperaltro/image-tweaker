@@ -7,6 +7,7 @@ import { GridSettings, GridCell, createGrid, renderGridCell } from './Grid'
 import { HalftoneSettings, HalftoneArrangement, HalftoneShape, applyHalftone } from './Halftone'
 import { exportAsPng, exportAsSvg } from './SvgExport'
 import { exportCanvasAsPng, exportCanvasAsSvg } from './ExportUtils'
+import { GlitchSettings, applyGlitch } from './GlitchUtils'
 import { Pane } from 'tweakpane'
 import type { 
   ButtonApi, 
@@ -148,6 +149,35 @@ export default function AdvancedEditor() {
     darkColorEnd: '#000066',
     lightColorStart: '#FFFFFF',
     lightColorEnd: '#FFFF66'
+  });
+
+  // Glitch settings
+  const [glitchSettings, setGlitchSettings] = useState<GlitchSettings>({
+    enabled: false,
+    glitchIntensity: 50,
+    
+    // Pixel sorting
+    pixelSortingEnabled: false,
+    pixelSortingThreshold: 0.5,
+    pixelSortingDirection: 'horizontal' as 'horizontal' | 'vertical' | 'both',
+    
+    // Channel shift
+    channelShiftEnabled: false,
+    channelShiftAmount: 1,
+    
+    // Scan lines
+    scanLinesEnabled: false,
+    scanLinesCount: 20,
+    scanLinesIntensity: 50,
+    
+    // Noise
+    noiseEnabled: false,
+    noiseAmount: 20,
+    
+    // Blocks
+    blocksEnabled: false,
+    blocksSize: 20,
+    blocksOffset: 10
   });
 
   // Initialize the source canvas
@@ -730,6 +760,191 @@ export default function AdvancedEditor() {
           label: 'Invert'
         }).on('change', (ev) => {
           setTextDitherSettings(prev => ({ ...prev, invert: ev.value }));
+          processImage();
+        });
+
+        // Glitch effects settings
+        const glitchFolder = pane.addFolder({
+          title: 'Glitch Effects',
+          expanded: false
+        });
+        
+        // Enable glitch effects
+        bindings.glitchEnabled = glitchFolder.addBinding(glitchSettings, 'enabled', {
+          label: 'Enable'
+        }).on('change', (ev) => {
+          setGlitchSettings(prev => ({ ...prev, enabled: ev.value }));
+          processImage();
+        });
+        
+        // Glitch intensity
+        bindings.glitchIntensity = glitchFolder.addBinding(glitchSettings, 'glitchIntensity', {
+          label: 'Intensity',
+          min: 0,
+          max: 100,
+          step: 1
+        }).on('change', (ev) => {
+          setGlitchSettings(prev => ({ ...prev, glitchIntensity: ev.value }));
+          processImage();
+        });
+        
+        // Pixel sorting subfolder
+        const pixelSortingFolder = glitchFolder.addFolder({
+          title: 'Pixel Sorting',
+          expanded: false
+        });
+        
+        // Enable pixel sorting
+        bindings.pixelSortingEnabled = pixelSortingFolder.addBinding(glitchSettings, 'pixelSortingEnabled', {
+          label: 'Enable'
+        }).on('change', (ev) => {
+          setGlitchSettings(prev => ({ ...prev, pixelSortingEnabled: ev.value }));
+          processImage();
+        });
+        
+        // Pixel sorting threshold
+        bindings.pixelSortingThreshold = pixelSortingFolder.addBinding(glitchSettings, 'pixelSortingThreshold', {
+          label: 'Threshold',
+          min: 0,
+          max: 1,
+          step: 0.01
+        }).on('change', (ev) => {
+          setGlitchSettings(prev => ({ ...prev, pixelSortingThreshold: ev.value }));
+          processImage();
+        });
+        
+        // Pixel sorting direction
+        bindings.pixelSortingDirection = pixelSortingFolder.addBinding(glitchSettings, 'pixelSortingDirection', {
+          label: 'Direction',
+          options: {
+            'Horizontal': 'horizontal',
+            'Vertical': 'vertical',
+            'Both': 'both'
+          }
+        }).on('change', (ev) => {
+          setGlitchSettings(prev => ({ ...prev, pixelSortingDirection: ev.value }));
+          processImage();
+        });
+        
+        // Channel shift subfolder
+        const channelShiftFolder = glitchFolder.addFolder({
+          title: 'Channel Shift',
+          expanded: false
+        });
+        
+        // Enable channel shift
+        bindings.channelShiftEnabled = channelShiftFolder.addBinding(glitchSettings, 'channelShiftEnabled', {
+          label: 'Enable'
+        }).on('change', (ev) => {
+          setGlitchSettings(prev => ({ ...prev, channelShiftEnabled: ev.value }));
+          processImage();
+        });
+        
+        // Channel shift amount
+        bindings.channelShiftAmount = channelShiftFolder.addBinding(glitchSettings, 'channelShiftAmount', {
+          label: 'Amount',
+          min: 0,
+          max: 10,
+          step: 0.1
+        }).on('change', (ev) => {
+          setGlitchSettings(prev => ({ ...prev, channelShiftAmount: ev.value }));
+          processImage();
+        });
+        
+        // Scan lines subfolder
+        const scanLinesFolder = glitchFolder.addFolder({
+          title: 'Scan Lines',
+          expanded: false
+        });
+        
+        // Enable scan lines
+        bindings.scanLinesEnabled = scanLinesFolder.addBinding(glitchSettings, 'scanLinesEnabled', {
+          label: 'Enable'
+        }).on('change', (ev) => {
+          setGlitchSettings(prev => ({ ...prev, scanLinesEnabled: ev.value }));
+          processImage();
+        });
+        
+        // Scan lines count
+        bindings.scanLinesCount = scanLinesFolder.addBinding(glitchSettings, 'scanLinesCount', {
+          label: 'Count',
+          min: 1,
+          max: 100,
+          step: 1
+        }).on('change', (ev) => {
+          setGlitchSettings(prev => ({ ...prev, scanLinesCount: ev.value }));
+          processImage();
+        });
+        
+        // Scan lines intensity
+        bindings.scanLinesIntensity = scanLinesFolder.addBinding(glitchSettings, 'scanLinesIntensity', {
+          label: 'Intensity',
+          min: 0,
+          max: 100,
+          step: 1
+        }).on('change', (ev) => {
+          setGlitchSettings(prev => ({ ...prev, scanLinesIntensity: ev.value }));
+          processImage();
+        });
+        
+        // Noise subfolder
+        const noiseFolder = glitchFolder.addFolder({
+          title: 'Noise',
+          expanded: false
+        });
+        
+        // Enable noise
+        bindings.noiseEnabled = noiseFolder.addBinding(glitchSettings, 'noiseEnabled', {
+          label: 'Enable'
+        }).on('change', (ev) => {
+          setGlitchSettings(prev => ({ ...prev, noiseEnabled: ev.value }));
+          processImage();
+        });
+        
+        // Noise amount
+        bindings.noiseAmount = noiseFolder.addBinding(glitchSettings, 'noiseAmount', {
+          label: 'Amount',
+          min: 0,
+          max: 100,
+          step: 1
+        }).on('change', (ev) => {
+          setGlitchSettings(prev => ({ ...prev, noiseAmount: ev.value }));
+          processImage();
+        });
+        
+        // Blocks subfolder
+        const blocksFolder = glitchFolder.addFolder({
+          title: 'Blocks',
+          expanded: false
+        });
+        
+        // Enable blocks
+        bindings.blocksEnabled = blocksFolder.addBinding(glitchSettings, 'blocksEnabled', {
+          label: 'Enable'
+        }).on('change', (ev) => {
+          setGlitchSettings(prev => ({ ...prev, blocksEnabled: ev.value }));
+          processImage();
+        });
+        
+        // Block size
+        bindings.blocksSize = blocksFolder.addBinding(glitchSettings, 'blocksSize', {
+          label: 'Size',
+          min: 5,
+          max: 100,
+          step: 1
+        }).on('change', (ev) => {
+          setGlitchSettings(prev => ({ ...prev, blocksSize: ev.value }));
+          processImage();
+        });
+        
+        // Block offset
+        bindings.blocksOffset = blocksFolder.addBinding(glitchSettings, 'blocksOffset', {
+          label: 'Offset',
+          min: 1,
+          max: 50,
+          step: 1
+        }).on('change', (ev) => {
+          setGlitchSettings(prev => ({ ...prev, blocksOffset: ev.value }));
           processImage();
         });
 
@@ -1469,6 +1684,35 @@ export default function AdvancedEditor() {
       invert: false,
       resolution: 2
     });
+    
+    // Reset glitch settings
+    setGlitchSettings({
+      enabled: false,
+      glitchIntensity: 50,
+      
+      // Pixel sorting
+      pixelSortingEnabled: false,
+      pixelSortingThreshold: 0.5,
+      pixelSortingDirection: 'horizontal' as 'horizontal' | 'vertical' | 'both',
+      
+      // Channel shift
+      channelShiftEnabled: false,
+      channelShiftAmount: 1,
+      
+      // Scan lines
+      scanLinesEnabled: false,
+      scanLinesCount: 20,
+      scanLinesIntensity: 50,
+      
+      // Noise
+      noiseEnabled: false,
+      noiseAmount: 20,
+      
+      // Blocks
+      blocksEnabled: false,
+      blocksSize: 20,
+      blocksOffset: 10
+    });
 
     // Force recreate Tweakpane instance
     if (paneRef.current) {
@@ -1626,6 +1870,11 @@ export default function AdvancedEditor() {
         applyTextDither(sourceCtx, canvasWidth, canvasHeight, textDitherSettings);
       }
       
+      // Apply glitch effects
+      if (glitchSettings.enabled) {
+        applyGlitch(sourceCtx, sourceCanvas, canvasWidth, canvasHeight, glitchSettings);
+      }
+      
       // Copy final result to main canvas
       ctx.drawImage(sourceCanvas, 0, 0);
       setProcessing(false);
@@ -1641,7 +1890,8 @@ export default function AdvancedEditor() {
     halftoneSettings,
     gridSettings,
     ditherSettings,
-    textDitherSettings
+    textDitherSettings,
+    glitchSettings
   ]);
 
   // Process image when it changes

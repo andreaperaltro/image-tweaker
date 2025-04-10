@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.8] - 2024-04-10
+
+### Added
+- Comprehensive Glitch Effects suite with multiple components:
+  - Pixel Sorting with threshold and directional controls
+  - RGB Channel Shifting for color distortion effects
+  - Scan Lines with customizable count and intensity
+  - Noise generator with adjustable amount
+  - Block displacement with size and offset controls
+  - General glitch intensity control for random distortions
+
+### Changed
+- Reorganized the UI to accommodate new glitch effects
+- Enhanced the processing pipeline to support advanced distortion techniques
+- Optimized rendering for real-time preview of complex effects
+
 ## [0.1.7] - 2024-04-10
 
 ### Added
