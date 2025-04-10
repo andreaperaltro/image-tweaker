@@ -5,7 +5,8 @@ import { useDropzone } from 'react-dropzone'
 import { ColorSettings, applyColorAdjustments } from './ColorUtils'
 import { GridSettings, GridCell, createGrid, renderGridCell } from './Grid'
 import { HalftoneSettings, HalftoneArrangement, HalftoneShape, applyHalftone } from './Halftone'
-import { exportAsPng, exportAsSvg, createHalftoneVectorSvg, exportAsVectorSvg } from './SvgExport'
+import { exportAsPng, exportAsSvg } from './SvgExport'
+import { exportCanvasAsPng, exportCanvasAsSvg } from './ExportUtils'
 import { Pane } from 'tweakpane'
 import type { 
   ButtonApi, 
@@ -216,88 +217,7 @@ export default function AdvancedEditor() {
         // Store references to bindings so we can update them
         const bindings: Record<string, any> = {};
         
-        // 1. CANVAS SETTINGS FOLDER
-        const canvasFolder = pane.addFolder({
-          title: 'Canvas Settings',
-          expanded: true,
-        });
-        
-        // Create objects to bind to the UI
-        const canvasParams = { 
-          width: canvasWidth, 
-          height: canvasHeight,
-          lockRatio: lockRatio,
-          autoSize: autoCanvasSize
-        };
-        
-        const aspectParams = { aspectRatio };
-        
-        // Canvas Width
-        bindings.width = canvasFolder.addBinding(canvasParams, 'width', {
-          label: 'Width',
-          min: 100,
-          max: 3000,
-          step: 1,
-        }).on('change', (ev) => {
-          handleWidthChange(ev.value);
-        });
-        
-        // Canvas Height
-        bindings.height = canvasFolder.addBinding(canvasParams, 'height', {
-          label: 'Height',
-          min: 100,
-          max: 3000,
-          step: 1,
-        }).on('change', (ev) => {
-          handleHeightChange(ev.value);
-        });
-        
-        // Aspect Ratio
-        bindings.aspectRatio = canvasFolder.addBinding(aspectParams, 'aspectRatio', {
-          label: 'Aspect Ratio',
-          options: {
-            'Square (1:1)': '1:1',
-            '4:3': '4:3',
-            '16:9': '16:9',
-            '3:2': '3:2',
-            '5:4': '5:4',
-            '2:1': '2:1',
-            '3:4': '3:4',
-            '9:16': '9:16',
-            '2:3': '2:3',
-            '4:5': '4:5',
-            '1:2': '1:2',
-            'Custom': 'custom',
-          }
-        }).on('change', (ev) => {
-          setAspectRatio(ev.value as AspectRatioPreset);
-        });
-        
-        // Lock ratio
-        bindings.lockRatio = canvasFolder.addBinding(canvasParams, 'lockRatio', {
-          label: 'Lock Ratio'
-        }).on('change', (ev) => {
-          setLockRatio(ev.value);
-        });
-        
-        // Auto canvas size
-        bindings.autoSize = canvasFolder.addBinding(canvasParams, 'autoSize', {
-          label: 'Auto Size'
-        }).on('change', (ev) => {
-          setAutoCanvasSize(ev.value);
-          if (ev.value && image) {
-            // Reset to image dimensions when auto size is enabled
-            const img = new Image();
-            img.onload = () => {
-              setCanvasWidth(img.width);
-              setCanvasHeight(img.height);
-              setAspectRatio('custom');
-            };
-            img.src = image;
-          }
-        });
-        
-        // 2. COLOR ADJUSTMENTS FOLDER
+        // 1. COLOR ADJUSTMENTS FOLDER
         const colorFolder = pane.addFolder({
           title: 'Color Adjustments',
           expanded: false,
@@ -908,90 +828,6 @@ export default function AdvancedEditor() {
           setGridSettings({...gridSettings});
         });
         
-        // 6. EXPORT FOLDER
-        const exportFolder = pane.addFolder({
-          title: 'Export',
-          expanded: false
-        });
-
-        // Add export buttons to Export folder in Tweakpane
-        const exportButtons = [
-          { title: 'Export PNG', handler: () => {
-            if (!canvasRef.current) return;
-            
-            const now = new Date();
-            const dateStr = now.toISOString().replace(/:/g, '-').split('.')[0];
-            const imageInfo = {
-              title: `ImageTweaker Export ${dateStr}`,
-              description: 'Created with ImageTweaker',
-              effects: `${colorSettings.enabled ? 'Color' : ''}${halftoneSettings.enabled ? ' Halftone' : ''}${gridSettings.enabled ? ' Grid' : ''}`.trim()
-            };
-            
-            exportAsPng(canvasRef.current, `imagetweaker_${dateStr}.png`, imageInfo);
-          }},
-          { title: 'Export SVG', handler: () => {
-            if (!canvasRef.current) return;
-            
-            const now = new Date();
-            const dateStr = now.toISOString().replace(/:/g, '-').split('.')[0];
-            
-            // Create detailed imageInfo with all halftone parameters
-            const imageInfo = {
-              title: `ImageTweaker Vector Export ${dateStr}`,
-              description: 'Created with ImageTweaker',
-              timestamp: dateStr,
-              effects: `${colorSettings.enabled ? 'Color' : ''}${halftoneSettings.enabled ? ' Halftone' : ''}${gridSettings.enabled ? ' Grid' : ''}`.trim(),
-              // Add detailed halftone parameters
-              cellSize: halftoneSettings.cellSize.toString(),
-              dotScale: halftoneSettings.dotScaleFactor.toString(),
-              shape: halftoneSettings.shape,
-              pattern: halftoneSettings.arrangement,
-              sizeVariation: halftoneSettings.sizeVariation.toString(),
-              invertBrightness: halftoneSettings.invertBrightness.toString(),
-              colored: halftoneSettings.colored.toString(),
-              enableCMYK: halftoneSettings.enableCMYK.toString(),
-              spiralTightness: halftoneSettings.spiralTightness.toString(),
-              spiralExpansion: halftoneSettings.spiralExpansion.toString(),
-              spiralRotation: halftoneSettings.spiralRotation.toString(),
-              spiralCenterX: halftoneSettings.spiralCenterX.toString(),
-              spiralCenterY: halftoneSettings.spiralCenterY.toString(),
-              concentricRingSpacing: halftoneSettings.concentricRingSpacing.toString(),
-              concentricCenterX: halftoneSettings.concentricCenterX.toString(),
-              concentricCenterY: halftoneSettings.concentricCenterY.toString()
-            };
-            
-            // Use vector SVG export for all SVG exports to get true vectors with accurate dot sizes
-            if (halftoneSettings.enabled) {
-              // For halftone, we want to use the stored dots from the canvas rendering
-              exportAsVectorSvg(canvasRef.current, `imagetweaker_${dateStr}.svg`, imageInfo);
-            } else {
-              // For non-halftone use regular SVG export
-              exportAsSvg(canvasRef.current, `imagetweaker_${dateStr}.svg`, imageInfo);
-            }
-          }}
-        ];
-        
-        // Add all export buttons to the folder
-        exportButtons.forEach(button => {
-          exportFolder.addButton({
-            title: button.title
-          }).on('click', button.handler);
-        });
-        
-        // 7. ACTIONS FOLDER
-        const actionsFolder = pane.addFolder({
-          title: 'Actions',
-          expanded: true,
-        });
-        
-        // New image button
-        actionsFolder.addButton({
-          title: 'New Image'
-        }).on('click', () => {
-          setImage(null);
-          setOriginalImageDataRef(null);
-        });
-        
         // Store the pane and bindings
         paneRef.current = pane;
         (paneRef.current as any).bindings = bindings;
@@ -1182,7 +1018,7 @@ export default function AdvancedEditor() {
     }
   }, [image]); // Only depend on image, not other state variables
 
-  // Update Tweakpane bindings when canvas dimensions change
+  // Update Tweakpane bindings when states change
   useEffect(() => {
     if (!paneRef.current) return;
     
@@ -1190,17 +1026,6 @@ export default function AdvancedEditor() {
     if (!bindings) return;
     
     try {
-      // Update canvas dimensions
-      if (bindings.width?.controller_?.binding?.target) {
-        bindings.width.controller_.binding.target.width = canvasWidth;
-        bindings.width.refresh();
-      }
-      
-      if (bindings.height?.controller_?.binding?.target) {
-        bindings.height.controller_.binding.target.height = canvasHeight;
-        bindings.height.refresh();
-      }
-      
       // Update dithering settings if they exist
       if (bindings.ditherEnabled?.controller_?.binding?.target) {
         bindings.ditherEnabled.controller_.binding.target.enabled = ditherSettings.enabled;
@@ -1235,7 +1060,7 @@ export default function AdvancedEditor() {
     } catch (error) {
       console.error('Error updating Tweakpane bindings:', error);
     }
-  }, [canvasWidth, canvasHeight, ditherSettings]);
+  }, [ditherSettings]);
 
   // Handle file drop
   const onDrop = (acceptedFiles: File[]) => {
@@ -1834,6 +1659,15 @@ export default function AdvancedEditor() {
           <div className="bg-gray-100 p-2 rounded-lg mb-2 flex flex-wrap gap-2 items-center justify-between">
             <div className="flex flex-wrap gap-2 items-center">
               <button
+                onClick={() => {
+                  setImage(null);
+                  setOriginalImageDataRef(null);
+                }}
+                className="px-3 py-1 bg-black text-white text-sm rounded hover:bg-gray-800 transition-colors"
+              >
+                New Image
+              </button>
+              <button
                 onClick={loadRandomImage}
                 className="px-3 py-1 bg-black text-white text-sm rounded hover:bg-gray-800 transition-colors"
               >
@@ -1848,13 +1682,13 @@ export default function AdvancedEditor() {
             </div>
             <div className="flex flex-wrap gap-2 items-center">
               <button
-                onClick={() => canvasRef.current && exportAsPng(canvasRef.current)}
+                onClick={() => canvasRef.current && exportCanvasAsPng(canvasRef.current)}
                 className="px-3 py-1 bg-black text-white text-sm rounded hover:bg-gray-800 transition-colors"
               >
                 Export PNG
               </button>
               <button
-                onClick={() => canvasRef.current && exportAsSvg(canvasRef.current)}
+                onClick={() => canvasRef.current && exportCanvasAsSvg(canvasRef.current)}
                 className="px-3 py-1 bg-black text-white text-sm rounded hover:bg-gray-800 transition-colors"
               >
                 Export SVG

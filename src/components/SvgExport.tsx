@@ -126,6 +126,13 @@ export function exportAsPng(
   filename: string = 'imagetweaker-export.png',
   imageInfo: Record<string, string> = {}
 ): void {
+  // Generate a timestamp for the filename if not provided
+  if (filename === 'imagetweaker-export.png') {
+    const now = new Date();
+    const dateStr = now.toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    filename = `imagetweaker-${dateStr}.png`;
+  }
+
   // Create a temporary canvas to add metadata
   const tempCanvas = document.createElement('canvas');
   tempCanvas.width = canvas.width;
@@ -134,14 +141,8 @@ export function exportAsPng(
   
   if (!ctx) return;
   
-  // Draw the original canvas
+  // Draw the original canvas without adding timestamp text
   ctx.drawImage(canvas, 0, 0);
-  
-  // Add timestamp as small text in the bottom corner
-  const timestamp = new Date().toISOString();
-  ctx.font = '10px monospace';
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-  ctx.fillText(`Created: ${timestamp}`, 10, canvas.height - 10);
   
   // Convert the canvas to a data URL and download it
   const dataUrl = tempCanvas.toDataURL('image/png');
@@ -748,99 +749,4 @@ export function createVectorSvg(
       halftoneDotsStore.height === height &&
       halftoneDotsStore.settings) {
     
-    console.log(`Creating vector SVG using ${halftoneDotsStore.dots.length} stored dots`);
-    
-    // Make a deep copy of the settings to prevent modification of the original
-    const settings = { ...halftoneDotsStore.settings };
-    
-    // Shape-specific scaling correction to ensure size consistency in SVG
-    const shapeScaleCorrection: Record<HalftoneShape, number> = {
-      'circle': 1.0,    // Base reference
-      'square': 0.85,   // Squares need to be smaller
-      'diamond': 0.85,  // Diamonds need to be smaller
-      'line': 1.0,      
-      'cross': 1.0,
-      'ellipse': 1.0,
-      'triangle': 0.92, // Triangles need more adjustment
-      'hexagon': 0.9    // Hexagons need more adjustment
-    };
-    
-    // Apply shape correction to the dot scale factor
-    settings.dotScaleFactor *= (shapeScaleCorrection[settings.shape] || 1.0);
-    
-    // Use the stored halftone settings with corrected scaling
-    return createHalftoneVectorSvg(
-      ctx.getImageData(0, 0, width, height),
-      width,
-      height,
-      settings,
-      imageInfo
-    );
-  }
-  
-  // Fallback: If no stored dots are available, get image data and use default settings
-  const imageData = ctx.getImageData(0, 0, width, height);
-  
-  // Define reasonable default halftone settings
-  const halftoneSettings: HalftoneSettings = {
-    enabled: true,
-    cellSize: 8,
-    mix: 100,
-    colored: true,
-    enableCMYK: false,
-    arrangement: 'grid' as HalftoneArrangement,
-    shape: 'circle' as HalftoneShape,
-    angleOffset: 0,
-    sizeVariation: 0,
-    dotScaleFactor: 0.8,
-    invertBrightness: false,
-    spiralTightness: 0.1,
-    spiralExpansion: 1.0,
-    spiralRotation: 0,
-    spiralCenterX: 0,
-    spiralCenterY: 0,
-    concentricCenterX: 0,
-    concentricCenterY: 0,
-    concentricRingSpacing: 1.0,
-    channels: {
-      cyan: true,
-      magenta: true,
-      yellow: true,
-      black: true
-    },
-    cmykAngles: {
-      cyan: 15,
-      magenta: 75,
-      yellow: 0,
-      black: 45
-    }
-  };
-  
-  // Use the halftone vector export function to create the SVG
-  return createHalftoneVectorSvg(
-    imageData,
-    width,
-    height,
-    halftoneSettings,
-    imageInfo
-  );
-}
-
-/**
- * Exports the canvas as a true vector SVG file
- * Uses createVectorSvg for true vector paths
- */
-export function exportAsVectorSvg(
-  canvas: HTMLCanvasElement, 
-  filename: string = 'imagetweaker-vector-export.svg',
-  imageInfo: Record<string, string> = {}
-): void {
-  // Convert the canvas to vector SVG
-  const svgContent = createVectorSvg(canvas, imageInfo);
-  
-  // Create a blob with the SVG content
-  const blob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
-  
-  // Save the file using file-saver
-  saveAs(blob, filename);
-} 
+    console.log(`
