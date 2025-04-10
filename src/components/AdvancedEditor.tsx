@@ -115,9 +115,9 @@ export default function AdvancedEditor() {
   // Dither settings
   const [ditherSettings, setDitherSettings] = useState<DitherSettings>({
     enabled: false,
-    type: 'ordered',
+    type: 'ordered' as 'ordered',
     threshold: 128,
-    colorMode: 'grayscale',
+    colorMode: 'grayscale' as 'grayscale',
     resolution: 30,
     colorDepth: 2
   });
@@ -127,7 +127,7 @@ export default function AdvancedEditor() {
     text: 'MATRIX',
     fontSize: 12,
     fontFamily: 'monospace',
-    colorMode: 'monochrome',
+    colorMode: 'monochrome' as 'monochrome',
     contrast: 1,
     brightness: 0.5,
     invert: false,
@@ -166,12 +166,51 @@ export default function AdvancedEditor() {
       try {
         console.log('Initializing Tweakpane...');
         
-        // Create Tweakpane instance
+        if (!paneContainerRef.current) return;
+
+        // Create a new Tweakpane instance
         const pane = new Pane({
           container: paneContainerRef.current,
-          title: 'Image Editor Controls',
+          title: 'Image Controls',
+          expanded: true
         });
-        
+
+        // Add custom styles for mobile
+        const style = document.createElement('style');
+        style.textContent = `
+          .tp-dfwv {
+            --tp-base-background-color: rgba(255, 255, 255, 0.9) !important;
+            --tp-base-foreground-color: #333 !important;
+            --tp-container-background-color: rgba(255, 255, 255, 0.9) !important;
+            --tp-container-background-color-hover: rgba(255, 255, 255, 1) !important;
+            --tp-container-background-color-focus: rgba(255, 255, 255, 1) !important;
+            --tp-container-foreground-color: #333 !important;
+            --tp-button-background-color: #000 !important;
+            --tp-button-background-color-hover: #333 !important;
+            --tp-button-foreground-color: #fff !important;
+            --tp-folder-background-color: rgba(255, 255, 255, 0.9) !important;
+            --tp-folder-background-color-hover: rgba(255, 255, 255, 1) !important;
+            --tp-folder-background-color-focus: rgba(255, 255, 255, 1) !important;
+            --tp-folder-foreground-color: #333 !important;
+            --tp-input-background-color: #fff !important;
+            --tp-input-background-color-hover: #fff !important;
+            --tp-input-background-color-focus: #fff !important;
+            --tp-input-foreground-color: #333 !important;
+            --tp-label-foreground-color: #333 !important;
+            --tp-monitor-background-color: #fff !important;
+            --tp-monitor-foreground-color: #333 !important;
+          }
+
+          @media (max-width: 768px) {
+            .tp-dfwv {
+              --tp-base-padding: 8px !important;
+              --tp-base-font-size: 14px !important;
+              --tp-base-border-radius: 4px !important;
+            }
+          }
+        `;
+        document.head.appendChild(style);
+
         console.log('Pane created:', pane);
         
         // Store references to bindings so we can update them
@@ -1507,10 +1546,13 @@ export default function AdvancedEditor() {
 
   // Reset to original image
   const resetImage = () => {
+    console.log('Reset button clicked');
     if (!originalImageDataRef) return;
+    
+    // Reset image and all settings
     setImage(originalImageDataRef);
     
-    // Reset settings
+    // Reset all settings to defaults
     setColorSettings({
       enabled: false,
       hueShift: 0,
@@ -1521,7 +1563,7 @@ export default function AdvancedEditor() {
       invert: false,
       glitchIntensity: 0,
       glitchSeed: Math.random(),
-      blendMode: 'normal'
+      blendMode: 'normal' as 'normal'
     });
     
     setHalftoneSettings({
@@ -1530,8 +1572,8 @@ export default function AdvancedEditor() {
       mix: 100,
       colored: false,
       enableCMYK: false,
-      arrangement: 'grid',
-      shape: 'circle',
+      arrangement: 'grid' as HalftoneArrangement,
+      shape: 'circle' as HalftoneShape,
       angleOffset: 0,
       sizeVariation: 0,
       dotScaleFactor: 0.8,
@@ -1569,6 +1611,54 @@ export default function AdvancedEditor() {
       maxSplitLevels: 2,
       minCellSize: 50
     });
+
+    setThresholdSettings({
+      enabled: false,
+      mode: 'solid' as ThresholdMode,
+      threshold: 128,
+      darkColor: '#000000',
+      lightColor: '#FFFFFF',
+      darkColorStart: '#000000',
+      darkColorEnd: '#000066',
+      lightColorStart: '#FFFFFF',
+      lightColorEnd: '#FFFF66'
+    });
+
+    setDitherSettings({
+      enabled: false,
+      type: 'ordered' as 'ordered',
+      threshold: 128,
+      colorMode: 'grayscale' as 'grayscale',
+      resolution: 30,
+      colorDepth: 2
+    });
+
+    setTextDitherSettings({
+      enabled: false,
+      text: 'MATRIX',
+      fontSize: 12,
+      fontFamily: 'monospace',
+      colorMode: 'monochrome' as 'monochrome',
+      contrast: 1,
+      brightness: 0.5,
+      invert: false,
+      resolution: 2
+    });
+
+    // Force recreate Tweakpane instance
+    if (paneRef.current) {
+      paneRef.current.dispose();
+      paneRef.current = null;
+      
+      // Force a rerender by simulating an image change, which will recreate the pane
+      setImage(null);
+      setTimeout(() => {
+        setImage(originalImageDataRef);
+      }, 50);
+    } else {
+      // If there's no pane yet, just process the image with reset settings
+      processImage();
+    }
   };
 
   // Handle color setting changes
@@ -1737,61 +1827,72 @@ export default function AdvancedEditor() {
   }, [image, processImage]);
 
   return (
-    <div className="min-h-screen relative">
-      {!image ? (
-        <div 
-          {...getRootProps()} 
-          className={`border-4 border-dashed border-black p-10 text-center cursor-pointer ${
-            isDragActive ? 'bg-gray-100' : ''
-          }`}
-          style={{ minHeight: '200px' }}
-        >
-          <input {...getInputProps()} />
-          <div className="flex flex-col items-center justify-center h-32">
-            <p className="text-base uppercase font-bold">Drag or upload an image</p>
-            <button 
-              onClick={(e) => {
-                e.stopPropagation();
-                loadRandomImage();
-              }}
-              className="mt-4 px-3 py-1 bg-black text-white border border-black hover:bg-white hover:text-black transition"
-            >
-              Random Image
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="relative">
-          {/* Canvas Area */}
-          <div className="relative">
-            {processing && (
-              <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-70 z-10">
-                <div className="h-6 w-6 border-2 border-black border-t-transparent animate-spin"></div>
-              </div>
-            )}
-            <canvas 
-              ref={canvasRef} 
-              width={canvasWidth}
-              height={canvasHeight}
-              className="max-w-full border border-black"
-            />
+    <div className="flex flex-col lg:flex-row gap-4">
+      {/* Canvas Container */}
+      <div className="flex-1 min-w-0">
+        <div className="sticky top-20">
+          <div className="bg-gray-100 p-2 rounded-lg mb-2 flex flex-wrap gap-2 items-center justify-between">
+            <div className="flex flex-wrap gap-2 items-center">
+              <button
+                onClick={loadRandomImage}
+                className="px-3 py-1 bg-black text-white text-sm rounded hover:bg-gray-800 transition-colors"
+              >
+                Load Random
+              </button>
+              <button
+                onClick={resetImage}
+                className="px-3 py-1 bg-black text-white text-sm rounded hover:bg-gray-800 transition-colors"
+              >
+                Reset
+              </button>
+            </div>
+            <div className="flex flex-wrap gap-2 items-center">
+              <button
+                onClick={() => canvasRef.current && exportAsPng(canvasRef.current)}
+                className="px-3 py-1 bg-black text-white text-sm rounded hover:bg-gray-800 transition-colors"
+              >
+                Export PNG
+              </button>
+              <button
+                onClick={() => canvasRef.current && exportAsSvg(canvasRef.current)}
+                className="px-3 py-1 bg-black text-white text-sm rounded hover:bg-gray-800 transition-colors"
+              >
+                Export SVG
+              </button>
+            </div>
           </div>
           
-          {/* Tweakpane Container - Floating on right */}
-          <div 
-            ref={paneContainerRef} 
-            className="absolute top-0 right-0 mt-4"
-            style={{ 
-              position: 'fixed', 
-              top: '20px', 
-              right: '20px', 
-              maxHeight: 'calc(100vh - 40px)', 
-              overflowY: 'auto',
-              zIndex: 1000
-            }}
-          />
+          <div className="relative">
+            <div
+              {...getRootProps()}
+              className={`border-2 border-dashed ${
+                isDragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
+              } rounded-lg p-4 text-center cursor-pointer transition-colors`}
+            >
+              <input {...getInputProps()} />
+              {image ? (
+                <canvas
+                  ref={canvasRef}
+                  width={canvasWidth}
+                  height={canvasHeight}
+                  className="max-w-full h-auto mx-auto"
+                />
+              ) : (
+                <div className="py-12">
+                  <p className="text-gray-600">Drag & drop an image here, or click to select</p>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-      )}
+      </div>
+
+      {/* Controls Panel */}
+      <div className="lg:w-80 xl:w-96">
+        <div className="sticky top-20 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+          <div ref={paneContainerRef} className="tweakpane-container"></div>
+        </div>
+      </div>
     </div>
   );
 } 

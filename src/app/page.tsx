@@ -17,20 +17,20 @@ const AdvancedEditor = dynamic(() => import('@/components/AdvancedEditor'), {
 export default function Home() {
   return (
     <main className="min-h-screen bg-white">
-      <header className="bg-black text-white p-3 border-b-2 border-gray-700">
+      <header className="bg-black text-white p-3 border-b-2 border-gray-700 sticky top-0 z-50">
         <div className="container mx-auto">
-          <h1 className="text-xl font-mono uppercase">ImageTweaker</h1>
+          <h1 className="text-xl md:text-2xl font-mono uppercase">ImageTweaker</h1>
           <p className="text-xs font-mono">Image manipulation studio</p>
         </div>
       </header>
 
-      <div className="container mx-auto py-6 px-3">
-        <div className="border-2 border-black p-3">
+      <div className="container mx-auto py-4 md:py-6 px-2 md:px-3">
+        <div className="border-2 border-black p-2 md:p-3">
           <AdvancedEditor />
         </div>
       </div>
 
-      <footer className="bg-black text-white p-3 mt-8 border-t-2 border-gray-700">
+      <footer className="bg-black text-white p-3 mt-4 md:mt-8 border-t-2 border-gray-700">
         <div className="container mx-auto text-center">
           <p className="text-xs font-mono uppercase">ImageTweaker | Image manipulation app</p>
           <p className="text-xs text-gray-400 font-mono">

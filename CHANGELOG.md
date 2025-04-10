@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.6] - 2024-07-19
+
+### Added
+- Responsive mobile-friendly layout for better usability on smaller screens
+- Improved touch interactions for controls on mobile devices
+- Export buttons directly on the main interface for quicker access
+- Sticky header and control panel for better navigation while scrolling
+
+### Changed
+- Reorganized UI with more intuitive layout on both desktop and mobile 
+- Improved the drag-and-drop interface with better visual feedback
+- Enhanced Tweakpane controls with better styling and mobile-optimized dimensions
+- Refined canvas presentation with better scaling on different screen sizes
+
+### Fixed
+- Fixed reset functionality by completely recreating UI controls on reset
+- Improved reliability of export functions with proper null checking
+- Enhanced image loading and processing stability
+- Better error handling in control panel operations
+
 ## [0.1.5] - 2024-04-08
 
 ### Added
