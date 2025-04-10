@@ -153,9 +153,11 @@ export default function AdvancedEditor() {
 
   // Glitch settings
   const [glitchSettings, setGlitchSettings] = useState<GlitchSettings>({
+    masterEnabled: false,
     enabled: false,
     glitchIntensity: 50,
     glitchDensity: 50,
+    glitchDirection: 'horizontal' as 'horizontal' | 'vertical' | 'both',
     
     // Pixel sorting
     pixelSortingEnabled: false,
@@ -165,11 +167,13 @@ export default function AdvancedEditor() {
     // Channel shift
     channelShiftEnabled: false,
     channelShiftAmount: 1,
+    channelShiftMode: 'rgb' as 'rgb' | 'rb' | 'rg' | 'gb',
     
     // Scan lines
     scanLinesEnabled: false,
     scanLinesCount: 20,
     scanLinesIntensity: 50,
+    scanLinesDirection: 'horizontal' as 'horizontal' | 'vertical' | 'both',
     
     // Noise
     noiseEnabled: false,
@@ -771,6 +775,14 @@ export default function AdvancedEditor() {
           expanded: false
         });
         
+        // Master toggle for all glitch effects
+        bindings.masterGlitchEnabled = glitchFolder.addBinding(glitchSettings, 'masterEnabled', {
+          label: 'Enable All Effects'
+        }).on('change', (ev) => {
+          setGlitchSettings(prev => ({ ...prev, masterEnabled: ev.value }));
+          processImage();
+        });
+        
         // Create a subfolder for general glitch
         const generalGlitchFolder = glitchFolder.addFolder({
           title: 'General Glitch',
@@ -804,6 +816,19 @@ export default function AdvancedEditor() {
           step: 1
         }).on('change', (ev) => {
           setGlitchSettings(prev => ({ ...prev, glitchDensity: ev.value }));
+          processImage();
+        });
+
+        // Glitch direction
+        bindings.glitchDirection = generalGlitchFolder.addBinding(glitchSettings, 'glitchDirection', {
+          label: 'Direction',
+          options: {
+            'Horizontal': 'horizontal',
+            'Vertical': 'vertical',
+            'Both': 'both'
+          }
+        }).on('change', (ev) => {
+          setGlitchSettings(prev => ({ ...prev, glitchDirection: ev.value }));
           processImage();
         });
 
@@ -870,6 +895,20 @@ export default function AdvancedEditor() {
           processImage();
         });
         
+        // Channel shift mode
+        bindings.channelShiftMode = channelShiftFolder.addBinding(glitchSettings, 'channelShiftMode', {
+          label: 'Mode',
+          options: {
+            'All Channels (RGB)': 'rgb',
+            'Red & Blue': 'rb',
+            'Red & Green': 'rg',
+            'Green & Blue': 'gb'
+          }
+        }).on('change', (ev) => {
+          setGlitchSettings(prev => ({ ...prev, channelShiftMode: ev.value }));
+          processImage();
+        });
+        
         // Scan lines subfolder
         const scanLinesFolder = glitchFolder.addFolder({
           title: 'Scan Lines',
@@ -903,6 +942,19 @@ export default function AdvancedEditor() {
           step: 1
         }).on('change', (ev) => {
           setGlitchSettings(prev => ({ ...prev, scanLinesIntensity: ev.value }));
+          processImage();
+        });
+        
+        // Scan lines direction
+        bindings.scanLinesDirection = scanLinesFolder.addBinding(glitchSettings, 'scanLinesDirection', {
+          label: 'Direction',
+          options: {
+            'Horizontal': 'horizontal',
+            'Vertical': 'vertical',
+            'Both': 'both'
+          }
+        }).on('change', (ev) => {
+          setGlitchSettings(prev => ({ ...prev, scanLinesDirection: ev.value }));
           processImage();
         });
         
@@ -1717,9 +1769,11 @@ export default function AdvancedEditor() {
     
     // Reset glitch settings
     setGlitchSettings({
+      masterEnabled: false,
       enabled: false,
       glitchIntensity: 50,
       glitchDensity: 50,
+      glitchDirection: 'horizontal' as 'horizontal' | 'vertical' | 'both',
       
       // Pixel sorting
       pixelSortingEnabled: false,
@@ -1729,11 +1783,13 @@ export default function AdvancedEditor() {
       // Channel shift
       channelShiftEnabled: false,
       channelShiftAmount: 1,
+      channelShiftMode: 'rgb' as 'rgb' | 'rb' | 'rg' | 'gb',
       
       // Scan lines
       scanLinesEnabled: false,
       scanLinesCount: 20,
       scanLinesIntensity: 50,
+      scanLinesDirection: 'horizontal' as 'horizontal' | 'vertical' | 'both',
       
       // Noise
       noiseEnabled: false,
@@ -1903,7 +1959,7 @@ export default function AdvancedEditor() {
       }
       
       // Apply glitch effects
-      if (glitchSettings.enabled) {
+      if (glitchSettings.masterEnabled) {
         applyGlitch(sourceCtx, sourceCanvas, canvasWidth, canvasHeight, glitchSettings);
       }
       

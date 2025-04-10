@@ -4,11 +4,15 @@
  */
 
 export interface GlitchSettings {
+  // Master toggle for all effects
+  masterEnabled: boolean;
+  
   enabled: boolean;
   
   // Glitch intensity
   glitchIntensity: number;
   glitchDensity: number;  // New: Controls number of glitched areas
+  glitchDirection: 'horizontal' | 'vertical' | 'both';  // New: Direction for general glitch
   
   // Pixel sorting
   pixelSortingEnabled: boolean;
@@ -18,11 +22,13 @@ export interface GlitchSettings {
   // Channel shift
   channelShiftEnabled: boolean;
   channelShiftAmount: number;
+  channelShiftMode: 'rgb' | 'rb' | 'rg' | 'gb';  // New: Which channels to shift
   
   // Scan lines
   scanLinesEnabled: boolean;
   scanLinesCount: number;
   scanLinesIntensity: number;
+  scanLinesDirection: 'horizontal' | 'vertical' | 'both';  // New: Direction for scan lines
   
   // Noise
   noiseEnabled: boolean;
@@ -45,128 +51,66 @@ export function applyGlitch(
   height: number,
   settings: GlitchSettings
 ): void {
-  // Skip processing entirely if all effects are disabled
-  if (!settings.enabled && 
-      !settings.pixelSortingEnabled && 
-      !settings.channelShiftEnabled && 
-      !settings.scanLinesEnabled && 
-      !settings.noiseEnabled && 
-      !settings.blocksEnabled) {
+  // If master toggle is off, do nothing (leave the image as is)
+  if (!settings.masterEnabled) {
     return;
   }
-
-  // Get image data from the source canvas
-  const sourceCtx = sourceCanvas.getContext('2d');
-  if (!sourceCtx) return;
   
-  // Create temporary canvas for intermediate processing
+  // Check if any individual effects are enabled
+  const hasEnabledEffects = 
+    settings.enabled || 
+    settings.pixelSortingEnabled || 
+    settings.channelShiftEnabled || 
+    settings.scanLinesEnabled || 
+    settings.noiseEnabled || 
+    settings.blocksEnabled;
+  
+  // If no individual effects are enabled, do nothing (leave the image as is)
+  if (!hasEnabledEffects) {
+    return;
+  }
+  
+  // Create temporary canvas for processing the effects
   const tempCanvas = document.createElement('canvas');
   tempCanvas.width = width;
   tempCanvas.height = height;
   const tempCtx = tempCanvas.getContext('2d');
-  if (!tempCtx) return;
   
-  // Draw source to temp canvas as starting point
+  if (!tempCtx) {
+    return; // Fallback - if we can't create a context, just leave the image as is
+  }
+  
+  // Make a clean copy of the source image
+  tempCtx.clearRect(0, 0, width, height);
   tempCtx.drawImage(sourceCanvas, 0, 0);
   
-  // Create a single effect canvas that we'll reuse for each effect
-  const effectCanvas = document.createElement('canvas');
-  effectCanvas.width = width;
-  effectCanvas.height = height;
-  const effectCtx = effectCanvas.getContext('2d');
-  if (!effectCtx) {
-    // If we can't get a context, just copy the source and return
-    ctx.drawImage(sourceCanvas, 0, 0);
-    return;
-  }
-  
-  // Apply each effect independently based on its own enabled flag
-  
-  // Apply pixel sorting if enabled
-  if (settings.pixelSortingEnabled) {
-    // Copy from temp canvas to effect canvas
-    effectCtx.clearRect(0, 0, width, height);
-    effectCtx.drawImage(tempCanvas, 0, 0);
-    
-    // Apply effect
-    applyPixelSorting(effectCtx, width, height, settings);
-    
-    // Update temp canvas with this effect
-    tempCtx.clearRect(0, 0, width, height);
-    tempCtx.drawImage(effectCanvas, 0, 0);
-  }
-  
-  // Apply channel shift if enabled
-  if (settings.channelShiftEnabled) {
-    // Copy from temp canvas to effect canvas
-    effectCtx.clearRect(0, 0, width, height);
-    effectCtx.drawImage(tempCanvas, 0, 0);
-    
-    // Apply effect
-    applyChannelShift(effectCtx, width, height, settings);
-    
-    // Update temp canvas with this effect
-    tempCtx.clearRect(0, 0, width, height);
-    tempCtx.drawImage(effectCanvas, 0, 0);
-  }
-  
-  // Apply scan lines if enabled
-  if (settings.scanLinesEnabled) {
-    // Copy from temp canvas to effect canvas
-    effectCtx.clearRect(0, 0, width, height);
-    effectCtx.drawImage(tempCanvas, 0, 0);
-    
-    // Apply effect
-    applyScanLines(effectCtx, width, height, settings);
-    
-    // Update temp canvas with this effect
-    tempCtx.clearRect(0, 0, width, height);
-    tempCtx.drawImage(effectCanvas, 0, 0);
-  }
-  
-  // Apply noise if enabled
-  if (settings.noiseEnabled) {
-    // Copy from temp canvas to effect canvas
-    effectCtx.clearRect(0, 0, width, height);
-    effectCtx.drawImage(tempCanvas, 0, 0);
-    
-    // Apply effect
-    applyNoise(effectCtx, width, height, settings);
-    
-    // Update temp canvas with this effect
-    tempCtx.clearRect(0, 0, width, height);
-    tempCtx.drawImage(effectCanvas, 0, 0);
-  }
-  
-  // Apply blocks if enabled
-  if (settings.blocksEnabled) {
-    // Copy from temp canvas to effect canvas
-    effectCtx.clearRect(0, 0, width, height);
-    effectCtx.drawImage(tempCanvas, 0, 0);
-    
-    // Apply effect
-    applyBlocks(effectCtx, width, height, settings);
-    
-    // Update temp canvas with this effect
-    tempCtx.clearRect(0, 0, width, height);
-    tempCtx.drawImage(effectCanvas, 0, 0);
-  }
-  
-  // Apply general glitch effect only if specifically enabled
+  // Apply each enabled effect directly to the temp canvas
   if (settings.enabled) {
-    // Copy from temp canvas to effect canvas
-    effectCtx.clearRect(0, 0, width, height);
-    effectCtx.drawImage(tempCanvas, 0, 0);
-    
-    // Apply effect
-    applyGeneralGlitch(effectCtx, width, height, settings);
-    
-    // Update temp canvas with this effect
-    tempCtx.clearRect(0, 0, width, height);
-    tempCtx.drawImage(effectCanvas, 0, 0);
+    applyGeneralGlitch(tempCtx, width, height, settings);
   }
   
-  // Draw the final result back to the original context
+  if (settings.pixelSortingEnabled) {
+    applyPixelSorting(tempCtx, width, height, settings);
+  }
+  
+  if (settings.channelShiftEnabled) {
+    applyChannelShift(tempCtx, width, height, settings);
+  }
+  
+  if (settings.scanLinesEnabled) {
+    applyScanLines(tempCtx, width, height, settings);
+  }
+  
+  if (settings.noiseEnabled) {
+    applyNoise(tempCtx, width, height, settings);
+  }
+  
+  if (settings.blocksEnabled) {
+    applyBlocks(tempCtx, width, height, settings);
+  }
+  
+  // Draw the result to the output canvas
+  ctx.clearRect(0, 0, width, height);
   ctx.drawImage(tempCanvas, 0, 0);
 }
 
@@ -311,27 +255,58 @@ function applyChannelShift(
     tempPixels[i] = pixels[i];
   }
   
+  // Determine which channels to shift based on mode
+  const shiftRed = settings.channelShiftMode === 'rgb' || 
+                   settings.channelShiftMode === 'rb' || 
+                   settings.channelShiftMode === 'rg';
+                   
+  const shiftGreen = settings.channelShiftMode === 'rgb' || 
+                     settings.channelShiftMode === 'rg' || 
+                     settings.channelShiftMode === 'gb';
+                     
+  const shiftBlue = settings.channelShiftMode === 'rgb' || 
+                    settings.channelShiftMode === 'rb' || 
+                    settings.channelShiftMode === 'gb';
+  
   // Shift red channel to the right
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const sourceX = (x - amount + width) % width;
-      const sourceI = (y * width + sourceX) * 4;
-      const targetI = (y * width + x) * 4;
-      
-      // Only copy red channel
-      pixels[targetI] = tempPixels[sourceI];
+  if (shiftRed) {
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const sourceX = (x - amount + width) % width;
+        const sourceI = (y * width + sourceX) * 4;
+        const targetI = (y * width + x) * 4;
+        
+        // Only copy red channel
+        pixels[targetI] = tempPixels[sourceI];
+      }
+    }
+  }
+  
+  // Shift green channel upward
+  if (shiftGreen) {
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const sourceY = (y - amount + height) % height;
+        const sourceI = (sourceY * width + x) * 4;
+        const targetI = (y * width + x) * 4;
+        
+        // Only copy green channel
+        pixels[targetI + 1] = tempPixels[sourceI + 1];
+      }
     }
   }
   
   // Shift blue channel to the left
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const sourceX = (x + amount) % width;
-      const sourceI = (y * width + sourceX) * 4;
-      const targetI = (y * width + x) * 4;
-      
-      // Only copy blue channel
-      pixels[targetI + 2] = tempPixels[sourceI + 2];
+  if (shiftBlue) {
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const sourceX = (x + amount) % width;
+        const sourceI = (y * width + sourceX) * 4;
+        const targetI = (y * width + x) * 4;
+        
+        // Only copy blue channel
+        pixels[targetI + 2] = tempPixels[sourceI + 2];
+      }
     }
   }
   
@@ -339,7 +314,7 @@ function applyChannelShift(
 }
 
 /**
- * Apply scan lines effect - horizontal lines across the image
+ * Apply scan lines effect - horizontal or vertical lines across the image
  */
 function applyScanLines(
   ctx: CanvasRenderingContext2D,
@@ -355,18 +330,40 @@ function applyScanLines(
   const imageData = ctx.getImageData(0, 0, width, height);
   const pixels = imageData.data;
   
-  const lineHeight = Math.floor(height / count);
+  // Apply horizontal scan lines
+  if (settings.scanLinesDirection === 'horizontal' || settings.scanLinesDirection === 'both') {
+    const lineHeight = Math.floor(height / count);
+    
+    for (let y = 0; y < height; y++) {
+      // Apply scan line effect on every other line
+      if (y % lineHeight < lineHeight / 2) {
+        for (let x = 0; x < width; x++) {
+          const i = (y * width + x) * 4;
+          
+          // Darken the pixel
+          pixels[i] = pixels[i] * (1 - intensity);
+          pixels[i + 1] = pixels[i + 1] * (1 - intensity);
+          pixels[i + 2] = pixels[i + 2] * (1 - intensity);
+        }
+      }
+    }
+  }
   
-  for (let y = 0; y < height; y++) {
-    // Apply scan line effect on every other line
-    if (y % lineHeight < lineHeight / 2) {
-      for (let x = 0; x < width; x++) {
-        const i = (y * width + x) * 4;
-        
-        // Darken the pixel
-        pixels[i] = pixels[i] * (1 - intensity);
-        pixels[i + 1] = pixels[i + 1] * (1 - intensity);
-        pixels[i + 2] = pixels[i + 2] * (1 - intensity);
+  // Apply vertical scan lines
+  if (settings.scanLinesDirection === 'vertical' || settings.scanLinesDirection === 'both') {
+    const lineWidth = Math.floor(width / count);
+    
+    for (let x = 0; x < width; x++) {
+      // Apply scan line effect on every other column
+      if (x % lineWidth < lineWidth / 2) {
+        for (let y = 0; y < height; y++) {
+          const i = (y * width + x) * 4;
+          
+          // Darken the pixel
+          pixels[i] = pixels[i] * (1 - intensity);
+          pixels[i + 1] = pixels[i + 1] * (1 - intensity);
+          pixels[i + 2] = pixels[i + 2] * (1 - intensity);
+        }
       }
     }
   }
@@ -476,40 +473,84 @@ function applyGeneralGlitch(
   // Density factor controls how many lines/areas are affected
   const densityFactor = Math.max(0.01, Math.min(1, settings.glitchDensity / 100));
   
-  // Number of glitch lines - scaled by both intensity and density
-  const numGlitchLines = Math.max(1, Math.floor(height * intensity * densityFactor * 0.5));
-  
-  for (let i = 0; i < numGlitchLines; i++) {
-    // Pick a random line
-    const y = Math.floor(Math.random() * height);
+  // Apply horizontal glitch lines
+  if (settings.glitchDirection === 'horizontal' || settings.glitchDirection === 'both') {
+    // Number of glitch lines - scaled by both intensity and density
+    const numGlitchLines = Math.max(1, Math.floor(height * intensity * densityFactor * 0.5));
     
-    // Calculate line coordinates
-    const lineHeight = Math.max(1, Math.floor(Math.random() * 10));
-    
-    // Generate random offset
-    const offsetX = Math.floor(Math.random() * width * 0.1);
-    
-    // Shift this horizontal line by offsetX
-    for (let h = 0; h < lineHeight; h++) {
-      if (y + h >= height) continue;
+    for (let i = 0; i < numGlitchLines; i++) {
+      // Pick a random line
+      const y = Math.floor(Math.random() * height);
       
-      // Create a temporary array to hold the line
-      const tempLine = [];
-      for (let x = 0; x < width; x++) {
-        const i = ((y + h) * width + x) * 4;
-        tempLine.push([pixels[i], pixels[i+1], pixels[i+2], pixels[i+3]]);
-      }
+      // Calculate line coordinates
+      const lineHeight = Math.max(1, Math.floor(Math.random() * 10));
       
-      // Shift the line and write it back
-      for (let x = 0; x < width; x++) {
-        const sourceX = (x + offsetX) % width;
-        const sourcePixel = tempLine[sourceX];
-        const targetI = ((y + h) * width + x) * 4;
+      // Generate random offset
+      const offsetX = Math.floor(Math.random() * width * 0.1);
+      
+      // Shift this horizontal line by offsetX
+      for (let h = 0; h < lineHeight; h++) {
+        if (y + h >= height) continue;
         
-        pixels[targetI] = sourcePixel[0];
-        pixels[targetI+1] = sourcePixel[1];
-        pixels[targetI+2] = sourcePixel[2];
-        pixels[targetI+3] = sourcePixel[3];
+        // Create a temporary array to hold the line
+        const tempLine = [];
+        for (let x = 0; x < width; x++) {
+          const i = ((y + h) * width + x) * 4;
+          tempLine.push([pixels[i], pixels[i+1], pixels[i+2], pixels[i+3]]);
+        }
+        
+        // Shift the line and write it back
+        for (let x = 0; x < width; x++) {
+          const sourceX = (x + offsetX) % width;
+          const sourcePixel = tempLine[sourceX];
+          const targetI = ((y + h) * width + x) * 4;
+          
+          pixels[targetI] = sourcePixel[0];
+          pixels[targetI+1] = sourcePixel[1];
+          pixels[targetI+2] = sourcePixel[2];
+          pixels[targetI+3] = sourcePixel[3];
+        }
+      }
+    }
+  }
+  
+  // Apply vertical glitch lines
+  if (settings.glitchDirection === 'vertical' || settings.glitchDirection === 'both') {
+    // Number of glitch columns - scaled by both intensity and density
+    const numGlitchColumns = Math.max(1, Math.floor(width * intensity * densityFactor * 0.5));
+    
+    for (let i = 0; i < numGlitchColumns; i++) {
+      // Pick a random column
+      const x = Math.floor(Math.random() * width);
+      
+      // Calculate column coordinates
+      const columnWidth = Math.max(1, Math.floor(Math.random() * 10));
+      
+      // Generate random offset
+      const offsetY = Math.floor(Math.random() * height * 0.1);
+      
+      // Shift this vertical column by offsetY
+      for (let w = 0; w < columnWidth; w++) {
+        if (x + w >= width) continue;
+        
+        // Create a temporary array to hold the column
+        const tempColumn = [];
+        for (let y = 0; y < height; y++) {
+          const i = (y * width + (x + w)) * 4;
+          tempColumn.push([pixels[i], pixels[i+1], pixels[i+2], pixels[i+3]]);
+        }
+        
+        // Shift the column and write it back
+        for (let y = 0; y < height; y++) {
+          const sourceY = (y + offsetY) % height;
+          const sourcePixel = tempColumn[sourceY];
+          const targetI = (y * width + (x + w)) * 4;
+          
+          pixels[targetI] = sourcePixel[0];
+          pixels[targetI+1] = sourcePixel[1];
+          pixels[targetI+2] = sourcePixel[2];
+          pixels[targetI+3] = sourcePixel[3];
+        }
       }
     }
   }
