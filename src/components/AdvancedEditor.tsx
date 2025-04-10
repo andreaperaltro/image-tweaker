@@ -155,6 +155,7 @@ export default function AdvancedEditor() {
   const [glitchSettings, setGlitchSettings] = useState<GlitchSettings>({
     enabled: false,
     glitchIntensity: 50,
+    glitchDensity: 50,
     
     // Pixel sorting
     pixelSortingEnabled: false,
@@ -177,7 +178,8 @@ export default function AdvancedEditor() {
     // Blocks
     blocksEnabled: false,
     blocksSize: 20,
-    blocksOffset: 10
+    blocksOffset: 10,
+    blocksDensity: 20
   });
 
   // Initialize the source canvas
@@ -769,16 +771,22 @@ export default function AdvancedEditor() {
           expanded: false
         });
         
-        // Enable glitch effects
-        bindings.glitchEnabled = glitchFolder.addBinding(glitchSettings, 'enabled', {
+        // Create a subfolder for general glitch
+        const generalGlitchFolder = glitchFolder.addFolder({
+          title: 'General Glitch',
+          expanded: false
+        });
+
+        // Enable general glitch effects
+        bindings.glitchEnabled = generalGlitchFolder.addBinding(glitchSettings, 'enabled', {
           label: 'Enable'
         }).on('change', (ev) => {
           setGlitchSettings(prev => ({ ...prev, enabled: ev.value }));
           processImage();
         });
-        
+
         // Glitch intensity
-        bindings.glitchIntensity = glitchFolder.addBinding(glitchSettings, 'glitchIntensity', {
+        bindings.glitchIntensity = generalGlitchFolder.addBinding(glitchSettings, 'glitchIntensity', {
           label: 'Intensity',
           min: 0,
           max: 100,
@@ -787,7 +795,18 @@ export default function AdvancedEditor() {
           setGlitchSettings(prev => ({ ...prev, glitchIntensity: ev.value }));
           processImage();
         });
-        
+
+        // Glitch density
+        bindings.glitchDensity = generalGlitchFolder.addBinding(glitchSettings, 'glitchDensity', {
+          label: 'Density',
+          min: 1,
+          max: 100,
+          step: 1
+        }).on('change', (ev) => {
+          setGlitchSettings(prev => ({ ...prev, glitchDensity: ev.value }));
+          processImage();
+        });
+
         // Pixel sorting subfolder
         const pixelSortingFolder = glitchFolder.addFolder({
           title: 'Pixel Sorting',
@@ -945,6 +964,17 @@ export default function AdvancedEditor() {
           step: 1
         }).on('change', (ev) => {
           setGlitchSettings(prev => ({ ...prev, blocksOffset: ev.value }));
+          processImage();
+        });
+
+        // Block density
+        bindings.blocksDensity = blocksFolder.addBinding(glitchSettings, 'blocksDensity', {
+          label: 'Density',
+          min: 1,
+          max: 100,
+          step: 1
+        }).on('change', (ev) => {
+          setGlitchSettings(prev => ({ ...prev, blocksDensity: ev.value }));
           processImage();
         });
 
@@ -1689,6 +1719,7 @@ export default function AdvancedEditor() {
     setGlitchSettings({
       enabled: false,
       glitchIntensity: 50,
+      glitchDensity: 50,
       
       // Pixel sorting
       pixelSortingEnabled: false,
@@ -1711,7 +1742,8 @@ export default function AdvancedEditor() {
       // Blocks
       blocksEnabled: false,
       blocksSize: 20,
-      blocksOffset: 10
+      blocksOffset: 10,
+      blocksDensity: 20
     });
 
     // Force recreate Tweakpane instance

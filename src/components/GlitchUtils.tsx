@@ -8,6 +8,7 @@ export interface GlitchSettings {
   
   // Glitch intensity
   glitchIntensity: number;
+  glitchDensity: number;  // New: Controls number of glitched areas
   
   // Pixel sorting
   pixelSortingEnabled: boolean;
@@ -31,6 +32,7 @@ export interface GlitchSettings {
   blocksEnabled: boolean;
   blocksSize: number;
   blocksOffset: number;
+  blocksDensity: number;  // New: Controls number of blocks affected
 }
 
 /**
@@ -43,7 +45,15 @@ export function applyGlitch(
   height: number,
   settings: GlitchSettings
 ): void {
-  if (!settings.enabled) return;
+  // Skip processing entirely if all effects are disabled
+  if (!settings.enabled && 
+      !settings.pixelSortingEnabled && 
+      !settings.channelShiftEnabled && 
+      !settings.scanLinesEnabled && 
+      !settings.noiseEnabled && 
+      !settings.blocksEnabled) {
+    return;
+  }
 
   // Get image data from the source canvas
   const sourceCtx = sourceCanvas.getContext('2d');
@@ -84,8 +94,10 @@ export function applyGlitch(
     applyBlocks(tempCtx, width, height, settings);
   }
   
-  // Apply general glitch effect
-  applyGeneralGlitch(tempCtx, width, height, settings);
+  // Apply general glitch effect only if specifically enabled
+  if (settings.enabled) {
+    applyGeneralGlitch(tempCtx, width, height, settings);
+  }
   
   // Draw the result back to the original context
   ctx.drawImage(tempCanvas, 0, 0);
@@ -351,8 +363,9 @@ function applyBlocks(
   const numBlocksX = Math.ceil(width / blockSize);
   const numBlocksY = Math.ceil(height / blockSize);
   
-  // Number of blocks to glitch (10% of total blocks)
-  const numGlitchBlocks = Math.max(1, Math.floor(numBlocksX * numBlocksY * 0.05));
+  // Number of blocks to glitch - use blocksDensity to control
+  const density = Math.max(0.01, Math.min(1, settings.blocksDensity / 100));
+  const numGlitchBlocks = Math.max(1, Math.floor(numBlocksX * numBlocksY * density));
   
   for (let i = 0; i < numGlitchBlocks; i++) {
     // Pick a random block
@@ -393,8 +406,11 @@ function applyGeneralGlitch(
   const imageData = ctx.getImageData(0, 0, width, height);
   const pixels = imageData.data;
   
-  // Number of glitch lines
-  const numGlitchLines = Math.max(1, Math.floor(height * intensity * 0.2));
+  // Density factor controls how many lines/areas are affected
+  const densityFactor = Math.max(0.01, Math.min(1, settings.glitchDensity / 100));
+  
+  // Number of glitch lines - scaled by both intensity and density
+  const numGlitchLines = Math.max(1, Math.floor(height * intensity * densityFactor * 0.5));
   
   for (let i = 0; i < numGlitchLines; i++) {
     // Pick a random line
@@ -431,9 +447,10 @@ function applyGeneralGlitch(
     }
   }
   
-  // Random color distortions
-  if (intensity > 0.4) {
-    const numColorDistortions = Math.max(1, Math.floor(width * height * 0.001 * intensity));
+  // Random color distortions - use intensity and density
+  if (intensity > 0.2) {
+    // Scale by density for better control
+    const numColorDistortions = Math.max(1, Math.floor(width * height * 0.001 * intensity * densityFactor));
     
     for (let i = 0; i < numColorDistortions; i++) {
       const x = Math.floor(Math.random() * width);
