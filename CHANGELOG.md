@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.9] - 2024-04-11
+
+### Added
+- Advanced cropping functionality with interactive preview
+- Multiple aspect ratio presets (1:1, 4:3, 16:9, etc.)
+- Free-form cropping with draggable corners
+- Live preview of modified image in crop interface
+- Ability to reset effects after cropping while maintaining crop
+
+### Changed
+- Enhanced image processing workflow to separate cropping from effects
+- Improved UI feedback during cropping operations
+- Better handling of image dimensions and aspect ratios
+
 ## [0.1.8] - 2024-04-10
 
 ### Added
