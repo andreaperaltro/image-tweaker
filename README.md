@@ -5,14 +5,28 @@ A powerful web-based image editor built with Next.js that allows you to apply va
 ## Features
 
 - Upload or drag-and-drop images
-- Adjust canvas dimensions and aspect ratio
-- Color adjustments (hue, saturation, brightness, contrast, etc.)
-- Halftone effects with multiple options
-  - Different shapes (circle, square, diamond, etc.)
-  - Various arrangements (grid, hexagonal, spiral, etc.)
-  - CMYK mode with individual channel control
-- Grid effects with rotation and splitting
-- Download your edited images
+- Interactive image cropping
+  - Multiple aspect ratio presets (1:1, 4:3, 16:9, etc.)
+  - Free-form cropping with draggable corners
+  - Live preview with applied effects
+- Color adjustments (hue, saturation, brightness, contrast)
+- Advanced effects:
+  - Halftone with multiple patterns (circle, square, diamond)
+  - Grid effects with rotation and splitting
+  - Text dithering with customizable characters
+  - Threshold effects with gradient support
+  - Comprehensive glitch effects:
+    - Pixel sorting
+    - RGB channel shifting
+    - Scan lines
+    - Noise generation
+    - Block displacement
+- Export options:
+  - PNG export
+  - Vector SVG export with metadata
+  - Timestamp-based filenames
+- Mobile-friendly responsive design
+- Real-time preview of all effects
 
 ## Technologies Used
 
