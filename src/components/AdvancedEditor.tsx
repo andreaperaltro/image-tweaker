@@ -21,6 +21,7 @@ import type {
 import { applyDithering, DitherSettings } from '../components/DitherUtils'
 import { TextDitherSettings, applyTextDither } from './TextDitherUtils'
 import { ThresholdSettings, ThresholdMode, applyThreshold } from './ThresholdUtils'
+import CropEditor from './CropEditor'
 
 // Import Tweakpane types for development
 type TweakpanePane = Pane;
@@ -185,6 +186,9 @@ export default function AdvancedEditor() {
     blocksOffset: 10,
     blocksDensity: 20
   });
+
+  const [isCropping, setIsCropping] = useState(false);
+  const [cropImageData, setCropImageData] = useState<string | null>(null);
 
   // Initialize the source canvas
   useEffect(() => {
@@ -1303,6 +1307,19 @@ export default function AdvancedEditor() {
           updateConcentricControls();
         });
 
+        // Add crop button to the main folder
+        const mainFolder = pane.addFolder({
+          title: 'Image Controls',
+        });
+
+        mainFolder.addButton({
+          title: 'Crop Image',
+        }).on('click', () => {
+          if (image) {
+            setIsCropping(true);
+          }
+        });
+
         return () => {
           if (paneRef.current) {
             paneRef.current.dispose();
@@ -1965,6 +1982,10 @@ export default function AdvancedEditor() {
       
       // Copy final result to main canvas
       ctx.drawImage(sourceCanvas, 0, 0);
+      
+      // Store the processed image data for cropping
+      setCropImageData(canvas.toDataURL());
+      
       setProcessing(false);
     };
     
@@ -1988,6 +2009,24 @@ export default function AdvancedEditor() {
       processImage();
     }
   }, [image, processImage]);
+
+  const handleCropComplete = (croppedOriginal: string, croppedModified: string) => {
+    // Create a temporary image to get the dimensions
+    const img = new Image();
+    img.onload = () => {
+      // Update canvas dimensions to match the cropped image
+      setCanvasWidth(img.width);
+      setCanvasHeight(img.height);
+      
+      // Set the new original image (without effects)
+      setOriginalImageDataRef(croppedOriginal);
+      
+      // Set the new image (this will trigger processImage)
+      setImage(croppedOriginal);
+      setIsCropping(false);
+    };
+    img.src = croppedModified; // Use modified image dimensions
+  };
 
   return (
     <div className="flex flex-col lg:flex-row gap-4">
@@ -2065,6 +2104,15 @@ export default function AdvancedEditor() {
           <div ref={paneContainerRef} className="tweakpane-container"></div>
         </div>
       </div>
+
+      {isCropping && originalImageDataRef && canvasRef.current && (
+        <CropEditor
+          imageUrl={originalImageDataRef}
+          modifiedImageUrl={canvasRef.current.toDataURL()}
+          onCropComplete={handleCropComplete}
+          onCancel={() => setIsCropping(false)}
+        />
+      )}
     </div>
   );
 } 
