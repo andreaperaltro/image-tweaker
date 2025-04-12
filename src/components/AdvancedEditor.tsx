@@ -22,9 +22,9 @@ import { applyDithering, DitherSettings } from '../components/DitherUtils'
 import { TextDitherSettings, applyTextDither } from './TextDitherUtils'
 import { ThresholdSettings, ThresholdMode, applyThreshold } from './ThresholdUtils'
 import CropEditor from './CropEditor'
-import ImageCropper from './ImageCropper'
-import { StochasticSettings, applyStochastic } from './StochasticUtils'
+// import { StochasticSettings, applyStochastic } from './StochasticUtils' // Module not found
 import { GradientMapSettings, applyGradientMap, GradientMapBlendMode, GradientStop } from './GradientMapUtils'
+import { saveAs } from 'file-saver'
 
 // Import Tweakpane types for development
 type TweakpanePane = Pane;
