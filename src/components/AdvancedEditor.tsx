@@ -22,6 +22,9 @@ import { applyDithering, DitherSettings } from '../components/DitherUtils'
 import { TextDitherSettings, applyTextDither } from './TextDitherUtils'
 import { ThresholdSettings, ThresholdMode, applyThreshold } from './ThresholdUtils'
 import CropEditor from './CropEditor'
+import ImageCropper from './ImageCropper'
+import { StochasticSettings, applyStochastic } from './StochasticUtils'
+import { GradientMapSettings, applyGradientMap, GradientMapBlendMode, GradientStop } from './GradientMapUtils'
 
 // Import Tweakpane types for development
 type TweakpanePane = Pane;
@@ -150,6 +153,18 @@ export default function AdvancedEditor() {
     darkColorEnd: '#000066',
     lightColorStart: '#FFFFFF',
     lightColorEnd: '#FFFF66'
+  });
+
+  // Gradient map settings
+  const [gradientMapSettings, setGradientMapSettings] = useState<GradientMapSettings>({
+    enabled: false,
+    stops: [
+      { position: 0, color: '#000000' },
+      { position: 50, color: '#ff0000' },
+      { position: 100, color: '#ffffff' }
+    ],
+    blendMode: 'normal',
+    opacity: 1
   });
 
   // Glitch settings
@@ -348,7 +363,182 @@ export default function AdvancedEditor() {
           handleColorChange('glitchSeed', Math.random());
         });
         
-        // 1. THRESHOLD FOLDER
+        // 2. GRADIENT MAP FOLDER
+        const gradientMapFolder = pane.addFolder({
+          title: 'Gradient Map',
+          expanded: false,
+        });
+
+        // Enable gradient map
+        bindings.gradientMapEnabled = gradientMapFolder.addBinding(gradientMapSettings, 'enabled', {
+          label: 'Enable'
+        }).on('change', (ev) => {
+          setGradientMapSettings(prev => ({ ...prev, enabled: ev.value }));
+          processImage();
+        });
+
+        // Blend mode
+        bindings.gradientMapBlendMode = gradientMapFolder.addBinding(gradientMapSettings, 'blendMode', {
+          label: 'Blend Mode',
+          options: {
+            'Normal': 'normal',
+            'Multiply': 'multiply',
+            'Screen': 'screen',
+            'Overlay': 'overlay',
+            'Hard Light': 'hard-light',
+            'Soft Light': 'soft-light',
+            'Color': 'color',
+            'Luminosity': 'luminosity'
+          }
+        }).on('change', (ev) => {
+          setGradientMapSettings(prev => ({ ...prev, blendMode: ev.value }));
+          processImage();
+        });
+
+        // Opacity
+        bindings.gradientMapOpacity = gradientMapFolder.addBinding(gradientMapSettings, 'opacity', {
+          label: 'Opacity',
+          min: 0,
+          max: 1,
+          step: 0.01
+        }).on('change', (ev) => {
+          setGradientMapSettings(prev => ({ ...prev, opacity: ev.value }));
+          processImage();
+        });
+
+        // Gradient stops folder
+        const gradientStopsFolder = gradientMapFolder.addFolder({
+          title: 'Gradient Stops',
+          expanded: true
+        });
+
+        // Function to update gradient stops UI
+        const updateGradientStopsUI = () => {
+          console.log('Rebuilding gradient stops UI...');
+          
+          // Completely remove all children of the gradientStopsFolder
+          while (gradientStopsFolder.children.length > 0) {
+            try {
+              gradientStopsFolder.remove(gradientStopsFolder.children[0]);
+            } catch (error) {
+              console.error('Error removing control:', error);
+              break; // Break to avoid infinite loop if removal fails
+            }
+          }
+          
+          // Get fresh stops data directly from the state
+          let currentStops = [...gradientMapSettings.stops];
+          console.log('Current gradient stops:', currentStops);
+          
+          // Ensure we have exactly 3 stops at fixed positions (0, 50, 100)
+          const defaultPositions = [0, 50, 100];
+          const defaultColors = ['#000000', '#808080', '#ffffff'];
+          
+          if (currentStops.length < 3) {
+            // Add missing stops
+            const newStops = [...currentStops];
+            const existingPositions = currentStops.map(stop => stop.position);
+            
+            for (let i = 0; i < defaultPositions.length; i++) {
+              if (!existingPositions.includes(defaultPositions[i])) {
+                newStops.push({
+                  position: defaultPositions[i],
+                  color: defaultColors[i]
+                });
+              }
+            }
+            
+            // Update state with new stops
+            setGradientMapSettings(prev => ({
+              ...prev,
+              stops: newStops.sort((a, b) => a.position - b.position)
+            }));
+            
+            currentStops = newStops;
+          } else if (currentStops.length > 3) {
+            // Keep only the first 3 stops
+            const newStops = currentStops.slice(0, 3);
+            
+            // Make sure we have stops at positions 0, 50, and 100
+            const positions = newStops.map(stop => stop.position);
+            
+            if (!positions.includes(0)) {
+              newStops[0].position = 0;
+            }
+            if (!positions.includes(100)) {
+              newStops[2].position = 100;
+            }
+            if (!positions.includes(50)) {
+              newStops[1].position = 50;
+            }
+            
+            // Update state with new stops
+            setGradientMapSettings(prev => ({
+              ...prev,
+              stops: newStops.sort((a, b) => a.position - b.position)
+            }));
+            
+            currentStops = newStops;
+          }
+          
+          // Sort stops by position
+          const sortedStops = [...currentStops].sort((a, b) => a.position - b.position);
+          
+          // Add controls for each stop
+          sortedStops.forEach((stop, index) => {
+            const stopFolder = gradientStopsFolder.addFolder({
+              title: `Stop ${index + 1} (${stop.position}%)`
+            });
+            
+            // Color picker
+            const params = { color: stop.color };
+            stopFolder.addBinding(params, 'color', {
+              view: 'color',
+              label: 'Color'
+            }).on('change', (ev) => {
+              // Create a new array to ensure state change is detected
+              const newStops = [...sortedStops];
+              newStops[index].color = ev.value;
+              
+              // Update the state with the new stops
+              setGradientMapSettings(prev => ({
+                ...prev,
+                stops: newStops
+              }));
+              
+              processImage();
+            });
+            
+            // Don't allow position changes for first and last stops
+            if (index !== 0 && index !== sortedStops.length - 1) {
+              // Position slider (only for middle stops)
+              const posParams = { position: stop.position };
+              stopFolder.addBinding(posParams, 'position', {
+                label: 'Position',
+                min: 5,
+                max: 95,
+                step: 1
+              }).on('change', (ev) => {
+                // Create a new array to ensure state change is detected
+                const newStops = [...sortedStops];
+                newStops[index].position = ev.value;
+                
+                // Update the state with the new stops
+                setGradientMapSettings(prev => ({
+                  ...prev,
+                  stops: newStops
+                }));
+                
+                processImage();
+              });
+            }
+          });
+        };
+
+        // Initialize gradient stops UI
+        updateGradientStopsUI();
+        
+        // 3. THRESHOLD FOLDER
         const thresholdFolder = pane.addFolder({
           title: 'Threshold',
           expanded: false,
@@ -477,7 +667,7 @@ export default function AdvancedEditor() {
         // Initial setup of controls based on current mode
         updateThresholdControls(thresholdSettings.mode);
         
-        // 3. DITHERING FOLDER
+        // 4. DITHERING FOLDER
         const ditherFolder = pane.addFolder({
           title: 'Dithering',
           expanded: false,
@@ -546,7 +736,7 @@ export default function AdvancedEditor() {
           setDitherSettings(prev => ({ ...prev, colorMode: ev.value }));
         });
         
-        // 4. HALFTONE EFFECTS FOLDER
+        // 5. HALFTONE EFFECTS FOLDER
         const halftoneFolder = pane.addFolder({
           title: 'Halftone Effect',
           expanded: false,
@@ -1034,7 +1224,7 @@ export default function AdvancedEditor() {
           processImage();
         });
 
-        // 5. GRID EFFECTS FOLDER
+        // 6. GRID EFFECTS FOLDER
         const gridFolder = pane.addFolder({
           title: 'Grid Effects',
           expanded: false,
@@ -1949,6 +2139,11 @@ export default function AdvancedEditor() {
         applyColorAdjustments(sourceCtx, canvasWidth, canvasHeight, colorSettings);
       }
       
+      // Apply gradient map
+      if (gradientMapSettings.enabled) {
+        applyGradientMap(sourceCtx, sourceCanvas, canvasWidth, canvasHeight, gradientMapSettings);
+      }
+      
       // Apply threshold effect
       if (thresholdSettings.enabled) {
         applyThreshold(sourceCtx, canvasWidth, canvasHeight, thresholdSettings);
@@ -2000,7 +2195,8 @@ export default function AdvancedEditor() {
     gridSettings,
     ditherSettings,
     textDitherSettings,
-    glitchSettings
+    glitchSettings,
+    gradientMapSettings
   ]);
 
   // Process image when it changes

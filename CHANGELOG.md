@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2024-05-15
+
+### Added
+- Fixed gradient stops implementation with a simplified three-stop system
+- Improved color conversion with pure JavaScript calculations without DOM manipulation
+- Better support for gradient map color selection and visualization
+
+### Changed
+- Simplified gradient stops UI to use exactly 3 stops at fixed positions
+- Improved state management for gradient color stops to prevent UI issues
+- Replaced DOM-based color conversion with pure calculation approach
+
+### Fixed
+- Removed direct DOM manipulation for color conversion, improving security and reliability
+- Fixed potential memory leaks from temporary DOM elements
+- Resolved issues with gradient stops UI updating
+
 ## [0.1.9] - 2024-04-11
 
 ### Added

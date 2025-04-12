@@ -11,6 +11,7 @@ A powerful web-based image editor built with Next.js that allows you to apply va
   - Live preview with applied effects
 - Color adjustments (hue, saturation, brightness, contrast)
 - Advanced effects:
+  - Gradient map with customizable color stops and blend modes
   - Halftone with multiple patterns (circle, square, diamond)
   - Grid effects with rotation and splitting
   - Text dithering with customizable characters
