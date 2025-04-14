@@ -19,8 +19,8 @@ export default function Home() {
     <main className="min-h-screen bg-white">
       <header className="bg-black text-white p-3 border-b-2 border-gray-700 sticky top-0 z-50">
         <div className="container mx-auto">
-          <h1 className="text-xl md:text-2xl font-mono uppercase">ImageTweaker</h1>
-          <p className="text-xs font-mono">Image manipulation studio</p>
+          <h1 className="text-xl md:text-2xl pp-mondwest-font uppercase">ImageTweaker</h1>
+          <p className="text-xs pp-mondwest-font">Image manipulation studio</p>
         </div>
       </header>
 
@@ -32,9 +32,12 @@ export default function Home() {
 
       <footer className="bg-black text-white p-3 mt-4 md:mt-8 border-t-2 border-gray-700">
         <div className="container mx-auto text-center">
-          <p className="text-xs font-mono uppercase">ImageTweaker | Image manipulation app</p>
-          <p className="text-xs text-gray-400 font-mono">
+          <p className="text-xs pp-mondwest-font uppercase">ImageTweaker | Image manipulation app</p>
+          <p className="text-xs text-gray-400 pp-mondwest-font">
             All processing happens on your device
+          </p>
+          <p className="text-xs text-gray-400 pp-mondwest-font mt-2">
+            Created by <a href="https://andreaperato.com" target="_blank" rel="noopener noreferrer" className="text-white hover:underline">Andrea Perato</a> with AI assistance
           </p>
         </div>
       </footer>

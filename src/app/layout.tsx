@@ -1,13 +1,6 @@
 import React from 'react';
 import './globals.css';
 import type { Metadata, Viewport } from 'next';
-import { Space_Mono } from 'next/font/google';
-
-const spaceMono = Space_Mono({ 
-  weight: ['400', '700'],
-  subsets: ['latin'],
-  display: 'swap' 
-});
 
 export const metadata: Metadata = {
   title: 'ImageTweaker',
@@ -44,7 +37,7 @@ export default function RootLayout({
         <meta name="mobile-web-app-capable" content="yes" />
         <link rel="icon" href="/favicon.ico" />
       </head>
-      <body className={spaceMono.className}>{children}</body>
+      <body>{children}</body>
     </html>
   );
 } 

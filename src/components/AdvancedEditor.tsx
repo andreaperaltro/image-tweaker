@@ -25,6 +25,7 @@ import CropEditor from './CropEditor'
 // import { StochasticSettings, applyStochastic } from './StochasticUtils' // Module not found
 import { GradientMapSettings, applyGradientMap, GradientMapBlendMode, GradientStop } from './GradientMapUtils'
 import { saveAs } from 'file-saver'
+import MobileControls from './MobileControls'
 
 // Import Tweakpane types for development
 type TweakpanePane = Pane;
@@ -168,6 +169,18 @@ export default function AdvancedEditor() {
     blendMode: 'normal',
     opacity: 1
   });
+
+  // Effects order
+  const [effectsOrder, setEffectsOrder] = useState([
+    'color',
+    'gradient',
+    'threshold',
+    'dither',
+    'halftone',
+    'textDither',
+    'glitch',
+    'grid'
+  ]);
 
   // Glitch settings
   const [glitchSettings, setGlitchSettings] = useState<GlitchSettings>({
@@ -2206,46 +2219,59 @@ export default function AdvancedEditor() {
       // Draw image on source canvas
       sourceCtx.drawImage(img, 0, 0, canvasWidth, canvasHeight);
       
-      // Apply color adjustments
-      if (colorSettings.enabled) {
-        applyColorAdjustments(sourceCtx, canvasWidth, canvasHeight, colorSettings);
-      }
-      
-      // Apply gradient map
-      if (gradientMapSettings.enabled) {
-        applyGradientMap(sourceCtx, sourceCanvas, canvasWidth, canvasHeight, gradientMapSettings);
-      }
-      
-      // Apply threshold effect
-      if (thresholdSettings.enabled) {
-        applyThreshold(sourceCtx, canvasWidth, canvasHeight, thresholdSettings);
-      }
-      
-      // Apply halftone effect
-      if (halftoneSettings.enabled) {
-        applyHalftone(sourceCtx, sourceCanvas, canvasWidth, canvasHeight, halftoneSettings);
-      }
-      
-      // Apply grid effect
-      if (gridSettings.enabled) {
-        const grid = createGrid(canvasWidth, canvasHeight, gridSettings);
-        grid.forEach(cell => renderGridCell(sourceCtx, cell, sourceCanvas, gridSettings));
-      }
-      
-      // Apply dithering
-      if (ditherSettings.enabled) {
-        applyDithering(sourceCtx, sourceCanvas, canvasWidth, canvasHeight, ditherSettings);
-      }
-      
-      // Apply text dithering
-      if (textDitherSettings.enabled) {
-        applyTextDither(sourceCtx, canvasWidth, canvasHeight, textDitherSettings);
-      }
-      
-      // Apply glitch effects
-      if (glitchSettings.masterEnabled) {
-        applyGlitch(sourceCtx, sourceCanvas, canvasWidth, canvasHeight, glitchSettings);
-      }
+      // Apply effects in the order specified by effectsOrder
+      effectsOrder.forEach(effectType => {
+        switch (effectType) {
+          case 'color':
+            if (colorSettings.enabled) {
+              applyColorAdjustments(sourceCtx, canvasWidth, canvasHeight, colorSettings);
+            }
+            break;
+            
+          case 'gradient':
+            if (gradientMapSettings.enabled) {
+              applyGradientMap(sourceCtx, sourceCanvas, canvasWidth, canvasHeight, gradientMapSettings);
+            }
+            break;
+            
+          case 'threshold':
+            if (thresholdSettings.enabled) {
+              applyThreshold(sourceCtx, canvasWidth, canvasHeight, thresholdSettings);
+            }
+            break;
+            
+          case 'halftone':
+            if (halftoneSettings.enabled) {
+              applyHalftone(sourceCtx, sourceCanvas, canvasWidth, canvasHeight, halftoneSettings);
+            }
+            break;
+            
+          case 'grid':
+            if (gridSettings.enabled) {
+              const grid = createGrid(canvasWidth, canvasHeight, gridSettings);
+              grid.forEach(cell => renderGridCell(sourceCtx, cell, sourceCanvas, gridSettings));
+            }
+            break;
+            
+          case 'dither':
+            if (ditherSettings.enabled) {
+              applyDithering(sourceCtx, sourceCanvas, canvasWidth, canvasHeight, ditherSettings);
+            }
+            break;
+            
+          case 'textDither':
+            if (textDitherSettings.enabled) {
+              applyTextDither(sourceCtx, canvasWidth, canvasHeight, textDitherSettings);
+            }
+            break;
+            
+          case 'glitch':
+            if (glitchSettings.masterEnabled) {
+              applyGlitch(sourceCtx, sourceCanvas, canvasWidth, canvasHeight, glitchSettings);
+            }
+            break;
+        }
+      });
       
       // Copy final result to main canvas
       ctx.drawImage(sourceCanvas, 0, 0);
@@ -2268,7 +2294,8 @@ export default function AdvancedEditor() {
     ditherSettings,
     textDitherSettings,
     glitchSettings,
-    gradientMapSettings
+    gradientMapSettings,
+    effectsOrder
   ]);
 
   // Process image when it changes
@@ -2308,19 +2335,19 @@ export default function AdvancedEditor() {
                   setImage(null);
                   setOriginalImageDataRef(null);
                 }}
-                className="px-3 py-1 bg-black text-white text-sm rounded hover:bg-gray-800 transition-colors"
+                className="px-3 py-1 bg-black text-white text-sm rounded hover:bg-gray-800 transition-colors pp-mondwest-font"
               >
                 New Image
               </button>
               <button
                 onClick={loadRandomImage}
-                className="px-3 py-1 bg-black text-white text-sm rounded hover:bg-gray-800 transition-colors"
+                className="px-3 py-1 bg-black text-white text-sm rounded hover:bg-gray-800 transition-colors pp-mondwest-font"
               >
                 Load Random
               </button>
               <button
                 onClick={resetImage}
-                className="px-3 py-1 bg-black text-white text-sm rounded hover:bg-gray-800 transition-colors"
+                className="px-3 py-1 bg-black text-white text-sm rounded hover:bg-gray-800 transition-colors pp-mondwest-font"
               >
                 Reset
               </button>
@@ -2328,13 +2355,13 @@ export default function AdvancedEditor() {
             <div className="flex flex-wrap gap-2 items-center">
               <button
                 onClick={() => canvasRef.current && exportCanvasAsPng(canvasRef.current)}
-                className="px-3 py-1 bg-black text-white text-sm rounded hover:bg-gray-800 transition-colors"
+                className="px-3 py-1 bg-black text-white text-sm rounded hover:bg-gray-800 transition-colors pp-mondwest-font"
               >
                 Export PNG
               </button>
               <button
                 onClick={() => canvasRef.current && exportCanvasAsSvg(canvasRef.current)}
-                className="px-3 py-1 bg-black text-white text-sm rounded hover:bg-gray-800 transition-colors"
+                className="px-3 py-1 bg-black text-white text-sm rounded hover:bg-gray-800 transition-colors pp-mondwest-font"
               >
                 Export SVG
               </button>
@@ -2358,7 +2385,7 @@ export default function AdvancedEditor() {
                 />
               ) : (
                 <div className="py-12">
-                  <p className="text-gray-600">Drag & drop an image here, or click to select</p>
+                  <p className="text-gray-600 pp-mondwest-font">Drag & drop an image here, or click to select</p>
                 </div>
               )}
             </div>
@@ -2368,7 +2395,31 @@ export default function AdvancedEditor() {
 
       {/* Controls Panel */}
       <div className="lg:w-80 xl:w-96">
-        <div className="sticky top-20 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+        <div className="sticky top-20 bg-gray-800 p-4 rounded-lg border border-gray-700 shadow-sm">
+          <MobileControls 
+            ditherSettings={ditherSettings}
+            halftoneSettings={halftoneSettings}
+            colorSettings={colorSettings}
+            thresholdSettings={thresholdSettings}
+            glitchSettings={glitchSettings}
+            textDitherSettings={textDitherSettings}
+            gradientMapSettings={gradientMapSettings}
+            gridSettings={gridSettings}
+            updateDitherSettings={(settings) => setDitherSettings(prev => ({ ...prev, ...settings }))}
+            updateHalftoneSettings={handleHalftoneChange}
+            updateColorSettings={handleColorChange}
+            updateThresholdSettings={(settings) => setThresholdSettings(prev => ({ ...prev, ...settings }))}
+            updateGlitchSettings={(settings) => setGlitchSettings(prev => ({ ...prev, ...settings }))}
+            updateTextDitherSettings={(settings) => setTextDitherSettings(prev => ({ ...prev, ...settings }))}
+            updateGradientMapSettings={(settings) => setGradientMapSettings(prev => ({ ...prev, ...settings }))}
+            updateGridSettings={handleGridChange}
+            effectsOrder={effectsOrder}
+            updateEffectsOrder={setEffectsOrder}
+            onResetImage={resetImage}
+            onExportPng={() => canvasRef.current && exportCanvasAsPng(canvasRef.current)}
+            onExportSvg={() => canvasRef.current && exportCanvasAsSvg(canvasRef.current)}
+            onCropImage={() => setIsCropping(true)}
+          />
           <div ref={paneContainerRef} className="tweakpane-container"></div>
         </div>
       </div>
