@@ -1,0 +1,301 @@
+.mobile-controls {
+  display: block;
+  position: relative;
+  z-index: 9999;
+  font-family: 'PP Mondwest', sans-serif;
+}
+
+/* Hide the original Tweakpane */
+.tweakpane-container {
+  display: none !important;
+}
+
+/* Controls panel - consistent for all screen sizes */
+.mobile-controls-panel {
+  position: static;
+  background: #333;
+  color: white;
+  border-radius: 8px;
+  padding: 12px;
+  overflow-y: auto;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  font-size: 14px;
+  height: 100%;
+  max-height: calc(100vh - 40px);
+  border: 1px solid #444;
+}
+
+/* Hide mobile toggles since we're not using a drawer */
+.mobile-controls-button {
+  display: none;
+}
+
+.mobile-controls-close {
+  display: none;
+}
+
+.mobile-controls-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #444;
+  cursor: default;
+}
+
+.mobile-controls-title {
+  font-size: 16px;
+  font-weight: bold;
+  font-family: 'PP Mondwest', sans-serif;
+  color: white;
+}
+
+.mobile-effect-section {
+  margin-bottom: 12px;
+  border-bottom: 1px solid #444;
+  padding-bottom: 12px;
+}
+
+.mobile-effect-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 6px;
+  margin: 4px 0;
+  border-radius: 6px;
+  transition: background-color 0.3s ease;
+  cursor: pointer;
+}
+
+.mobile-effect-header:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Style for the effect order number */
+.effect-order-number {
+  background: #555;
+  color: white;
+  border-radius: 50%;
+  min-width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 10px;
+  font-weight: bold;
+  font-size: 12px;
+  border: 1px solid #666;
+}
+
+/* Style for reorder buttons */
+.reorder-buttons {
+  display: flex;
+  flex-direction: column;
+  margin-right: 10px;
+}
+
+.reorder-btn {
+  background: none;
+  border: none;
+  color: #ccc;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  padding: 8px;
+  transition: all 0.2s ease;
+  border-radius: 4px;
+  width: 35px;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.reorder-btn:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.reorder-btn:active {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(0.95);
+}
+
+.reorder-btn:disabled {
+  color: #666;
+  cursor: not-allowed;
+  background: none;
+  transform: none;
+}
+
+.mobile-effect-title {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  font-weight: bold;
+  font-family: 'PP Mondwest', sans-serif;
+  color: white;
+}
+
+/* Add expand indicator icon */
+.mobile-effect-title::after {
+  content: "≡";
+  display: inline-block;
+  margin-left: 8px;
+  transition: transform 0.3s ease;
+  font-size: 16px;
+}
+
+/* Rotate indicator when section is open */
+.section-open .mobile-effect-title::after {
+  transform: rotate(90deg);
+}
+
+.mobile-effect-toggle {
+  position: relative;
+  width: 40px;
+  height: 20px;
+}
+
+.mobile-effect-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.mobile-effect-toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #666;
+  transition: .3s;
+  border-radius: 34px;
+}
+
+.mobile-effect-toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  transition: .3s;
+  border-radius: 50%;
+}
+
+.mobile-effect-toggle input:checked + .mobile-effect-toggle-slider {
+  background-color: #4CAF50;
+}
+
+.mobile-effect-toggle input:checked + .mobile-effect-toggle-slider:before {
+  transform: translateX(20px);
+}
+
+.mobile-effect-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+
+.mobile-effect-content.open {
+  max-height: 500px;
+}
+
+.mobile-control-group {
+  margin-bottom: 10px;
+}
+
+.mobile-control-label {
+  display: block;
+  font-size: 12px;
+  margin-bottom: 3px;
+  font-family: 'PP Mondwest', sans-serif;
+  color: #ccc;
+}
+
+.mobile-slider {
+  width: 100%;
+  -webkit-appearance: none;
+  height: 6px;
+  border-radius: 3px;
+  background: #555;
+  outline: none;
+  margin: 6px 0;
+}
+
+.mobile-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #4CAF50;
+  cursor: pointer;
+}
+
+.mobile-color-picker {
+  width: 100%;
+  height: 32px;
+  border-radius: 3px;
+}
+
+.mobile-select {
+  width: 100%;
+  height: 32px;
+  border-radius: 3px;
+  border: 1px solid #555;
+  background: #444;
+  color: white;
+  padding: 0 8px;
+  font-size: 12px;
+  font-family: 'PP Mondwest', sans-serif;
+}
+
+.mobile-controls-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.mobile-action-button {
+  padding: 8px 12px;
+  background: #222;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: 'PP Mondwest', sans-serif !important;
+  font-weight: normal;
+  text-transform: uppercase;
+}
+
+.mobile-action-button:hover {
+  background: #444;
+}
+
+.mobile-controls-footer {
+  padding-top: 12px;
+  margin-top: 12px;
+  border-top: 1px solid #444;
+  font-size: 12px;
+  text-align: center;
+  color: #999;
+  font-family: 'PP Mondwest', sans-serif;
+}
+
+.mobile-controls-footer a {
+  color: #ccc;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.mobile-controls-footer a:hover {
+  text-decoration: underline;
+  color: white;
+} 

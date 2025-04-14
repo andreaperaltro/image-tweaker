@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0.0] - 2024-06-06
+
+### Added
+- Complete mobile UI controls for all effects including:
+  - Halftone effects with all parameter controls
+  - Text dithering with font size, resolution, and color mode settings
+  - Glitch effects with intensity and density controls
+  - Grid effects with full control over columns, rows, and splitting
+- Dynamic effect reordering functionality in mobile UI
+- Visual indicators showing processing order of effects
+
+### Changed
+- Improved mobile UI layout for better usability
+- Better responsiveness for mobile controls
+- Effects rendering order now matches the UI order
+- Development server configured to use port 3000 by default
+
+### Fixed
+- Fixed syntax error in MobileControls.tsx that caused compilation failures
+- Fixed issue where reordering effects would only change the number but not reposition controls
+- Improved effects panel organization and visual hierarchy
+
 ## [0.1.92] - 2024-05-06
 
 ### Added
