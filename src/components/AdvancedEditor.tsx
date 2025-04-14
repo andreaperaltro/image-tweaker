@@ -18,7 +18,7 @@ import type {
   BladeController,
   View
 } from '@tweakpane/core'
-import { applyDithering, DitherSettings } from '../components/DitherUtils'
+import { applyDithering, DitherSettings, DitherColorMode } from '../components/DitherUtils'
 import { TextDitherSettings, applyTextDither } from './TextDitherUtils'
 import { ThresholdSettings, ThresholdMode, applyThreshold } from './ThresholdUtils'
 import CropEditor from './CropEditor'
@@ -125,7 +125,9 @@ export default function AdvancedEditor() {
     threshold: 128,
     colorMode: 'grayscale' as 'grayscale',
     resolution: 30,
-    colorDepth: 2
+    colorDepth: 2,
+    darkColor: '#000000',
+    lightColor: '#FFFFFF'
   });
 
   const [textDitherSettings, setTextDitherSettings] = useState<TextDitherSettings>({
@@ -705,17 +707,7 @@ export default function AdvancedEditor() {
           setDitherSettings(prev => ({ ...prev, resolution: ev.value }));
         });
         
-        // Color depth
-        bindings.ditherColorDepth = ditherFolder.addBinding(ditherSettings, 'colorDepth', {
-          label: 'Color Depth',
-          min: 2,
-          max: 256,
-          step: 1,
-        }).on('change', (ev) => {
-          setDitherSettings(prev => ({ ...prev, colorDepth: ev.value }));
-        });
-        
-        // Threshold
+        // Threshold - MOVED HERE above Color Mode
         bindings.ditherThreshold = ditherFolder.addBinding(ditherSettings, 'threshold', {
           label: 'Threshold',
           min: 0,
@@ -730,11 +722,78 @@ export default function AdvancedEditor() {
           label: 'Color Mode',
           options: {
             'Color': 'color',
-            'Grayscale': 'grayscale'
+            'Grayscale': 'grayscale',
+            '2 Color Palette': '2-color'
           }
         }).on('change', (ev) => {
           setDitherSettings(prev => ({ ...prev, colorMode: ev.value }));
+          updateDitherColorControls(ev.value);
         });
+        
+        // Color depth - only shown for grayscale and color modes
+        bindings.ditherColorDepth = ditherFolder.addBinding(ditherSettings, 'colorDepth', {
+          label: 'Color Depth',
+          min: 2,
+          max: 256,
+          step: 1,
+        }).on('change', (ev) => {
+          setDitherSettings(prev => ({ ...prev, colorDepth: ev.value }));
+        });
+        
+        // Color pickers for 2-color mode - initially hidden
+        const twoColorParams = {
+          darkColor: ditherSettings.darkColor,
+          lightColor: ditherSettings.lightColor
+        };
+        
+        // These bindings won't be added to the UI until 2-color mode is selected
+        bindings.ditherDarkColor = {
+          binding: ditherFolder.addBinding(twoColorParams, 'darkColor', {
+            view: 'color',
+            label: 'Dark Color'
+          }).on('change', (ev) => {
+            setDitherSettings(prev => ({ ...prev, darkColor: ev.value }));
+          })
+        };
+        
+        bindings.ditherLightColor = {
+          binding: ditherFolder.addBinding(twoColorParams, 'lightColor', {
+            view: 'color',
+            label: 'Light Color'
+          }).on('change', (ev) => {
+            setDitherSettings(prev => ({ ...prev, lightColor: ev.value }));
+          })
+        };
+        
+        // Initially remove the color pickers since default mode is grayscale
+        ditherFolder.remove(bindings.ditherDarkColor.binding);
+        ditherFolder.remove(bindings.ditherLightColor.binding);
+        
+        // Function to update dithering color controls based on color mode
+        const updateDitherColorControls = (colorMode: DitherColorMode) => {
+          if (colorMode === '2-color') {
+            // Remove color depth control
+            ditherFolder.remove(bindings.ditherColorDepth);
+            
+            // Add color picker controls
+            ditherFolder.add(bindings.ditherDarkColor.binding);
+            ditherFolder.add(bindings.ditherLightColor.binding);
+          } else {
+            // Add color depth control
+            if (!ditherFolder.children.includes(bindings.ditherColorDepth)) {
+              ditherFolder.add(bindings.ditherColorDepth);
+            }
+            
+            // Remove color picker controls
+            if (ditherFolder.children.includes(bindings.ditherDarkColor.binding)) {
+              ditherFolder.remove(bindings.ditherDarkColor.binding);
+            }
+            
+            if (ditherFolder.children.includes(bindings.ditherLightColor.binding)) {
+              ditherFolder.remove(bindings.ditherLightColor.binding);
+            }
+          }
+        };
         
         // 5. HALFTONE EFFECTS FOLDER
         const halftoneFolder = pane.addFolder({
@@ -1561,6 +1620,17 @@ export default function AdvancedEditor() {
         bindings.ditherColorMode.refresh();
       }
       
+      // Update 2-color mode color pickers if they exist
+      if (bindings.ditherDarkColor?.binding?.controller_?.binding?.target) {
+        bindings.ditherDarkColor.binding.controller_.binding.target.darkColor = ditherSettings.darkColor;
+        bindings.ditherDarkColor.binding.refresh();
+      }
+      
+      if (bindings.ditherLightColor?.binding?.controller_?.binding?.target) {
+        bindings.ditherLightColor.binding.controller_.binding.target.lightColor = ditherSettings.lightColor;
+        bindings.ditherLightColor.binding.refresh();
+      }
+      
     } catch (error) {
       console.error('Error updating Tweakpane bindings:', error);
     }
@@ -1959,7 +2029,9 @@ export default function AdvancedEditor() {
       threshold: 128,
       colorMode: 'grayscale' as 'grayscale',
       resolution: 30,
-      colorDepth: 2
+      colorDepth: 2,
+      darkColor: '#000000',
+      lightColor: '#FFFFFF'
     });
 
     setTextDitherSettings({

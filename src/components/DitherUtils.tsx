@@ -82,7 +82,7 @@ const BAYER_MATRICES: Record<number, number[][]> = {
 };
 
 export type DitherType = 'ordered' | 'floyd-steinberg' | 'jarvis' | 'judice-ninke' | 'stucki' | 'burkes';
-export type DitherColorMode = 'grayscale' | 'color';
+export type DitherColorMode = 'grayscale' | 'color' | '2-color';
 
 export interface DitherSettings {
   enabled: boolean;
@@ -91,6 +91,8 @@ export interface DitherSettings {
   colorMode: DitherColorMode;
   resolution: number; // 1-100, where 100 is full resolution
   colorDepth: number; // 2-256 colors
+  darkColor: string;  // Color for dark areas when using 2-color mode
+  lightColor: string; // Color for light areas when using 2-color mode
 }
 
 /**
@@ -157,6 +159,16 @@ function applyOrderedDithering(
   // Generate a fixed color palette for color mode
   const palette = settings.colorMode === 'color' ? generateColorPalette(imageData, colorSteps) : null;
   
+  // Parse custom colors for 2-color mode
+  let darkColor: number[] = [0, 0, 0];
+  let lightColor: number[] = [255, 255, 255];
+  
+  if (settings.colorMode === '2-color') {
+    // Parse hex colors to RGB
+    darkColor = hexToRgb(settings.darkColor) || darkColor;
+    lightColor = hexToRgb(settings.lightColor) || lightColor;
+  }
+  
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const i = (y * width + x) * 4;
@@ -170,6 +182,20 @@ function applyOrderedDithering(
         data[i] = value;     // R
         data[i + 1] = value; // G
         data[i + 2] = value; // B
+      } else if (settings.colorMode === '2-color') {
+        // Convert to grayscale using weighted average
+        const gray = (data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114);
+        
+        // Apply threshold to determine if pixel should be dark or light
+        if (gray < threshold * 255) {
+          data[i] = darkColor[0];       // R
+          data[i + 1] = darkColor[1];   // G
+          data[i + 2] = darkColor[2];   // B
+        } else {
+          data[i] = lightColor[0];      // R
+          data[i + 1] = lightColor[1];  // G
+          data[i + 2] = lightColor[2];  // B
+        }
       } else if (palette) {
         // Find the closest color in the palette
         const r = data[i];
@@ -224,6 +250,16 @@ function applyErrorDiffusionDithering(
   // Generate color palette based on the actual image colors
   const palette = settings.colorMode === 'color' ? generateColorPalette(imageData, colorSteps) : null;
   
+  // Parse custom colors for 2-color mode
+  let darkColor: number[] = [0, 0, 0];
+  let lightColor: number[] = [255, 255, 255];
+  
+  if (settings.colorMode === '2-color') {
+    // Parse hex colors to RGB
+    darkColor = hexToRgb(settings.darkColor) || darkColor;
+    lightColor = hexToRgb(settings.lightColor) || lightColor;
+  }
+  
   // Create a copy of the image data to work with
   const workingData = new Uint8ClampedArray(data);
   
@@ -256,6 +292,52 @@ function applyErrorDiffusionDithering(
                 workingData[ni] = Math.min(255, Math.max(0, workingData[ni] + error * factor));
                 workingData[ni + 1] = Math.min(255, Math.max(0, workingData[ni + 1] + error * factor));
                 workingData[ni + 2] = Math.min(255, Math.max(0, workingData[ni + 2] + error * factor));
+              }
+            }
+          }
+        }
+      } else if (settings.colorMode === '2-color') {
+        // Convert to grayscale using weighted average
+        const gray = (workingData[i] * 0.299 + workingData[i + 1] * 0.587 + workingData[i + 2] * 0.114);
+        
+        let newValue: number;
+        let newR: number, newG: number, newB: number;
+        
+        // Apply threshold to determine if pixel should be dark or light
+        if (gray < threshold * 255) {
+          newR = darkColor[0];
+          newG = darkColor[1];
+          newB = darkColor[2];
+          newValue = 0; // Use this for error calculation
+        } else {
+          newR = lightColor[0];
+          newG = lightColor[1];
+          newB = lightColor[2];
+          newValue = 255; // Use this for error calculation
+        }
+        
+        data[i] = newR;     // R
+        data[i + 1] = newG; // G
+        data[i + 2] = newB; // B
+        
+        // Calculate error based on grayscale value
+        const error = gray - newValue;
+        
+        // Distribute error to neighboring pixels
+        if (ditherMatrix) {
+          for (let dy = 0; dy < matrixHeight; dy++) {
+            for (let dx = -Math.floor(matrixWidth/2); dx <= Math.floor(matrixWidth/2); dx++) {
+              if (dy === 0 && dx <= 0) continue;
+              const nx = x + dx;
+              const ny = y + dy;
+              if (nx >= 0 && nx < width && ny < height) {
+                const ni = (ny * width + nx) * 4;
+                const factor = ditherMatrix.matrix[dy][dx + Math.floor(matrixWidth/2)];
+                // Only adjust the gray value for error diffusion
+                const errorFactor = error * factor;
+                workingData[ni] = Math.min(255, Math.max(0, workingData[ni] + errorFactor));
+                workingData[ni + 1] = Math.min(255, Math.max(0, workingData[ni + 1] + errorFactor));
+                workingData[ni + 2] = Math.min(255, Math.max(0, workingData[ni + 2] + errorFactor));
               }
             }
           }
@@ -423,4 +505,12 @@ function hslToRgb(h: number, s: number, l: number): number[] {
   }
 
   return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+}
+
+// Helper function to convert hex color to RGB
+function hexToRgb(hex: string): number[] | undefined {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return r !== undefined && g !== undefined && b !== undefined ? [r, g, b] : undefined;
 } 

@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.92] - 2024-05-06
+
+### Added
+- New "2 Color Palette" mode for dithering effects
+- Custom color pickers for dark and light colors in 2-color mode
+- Improved dithering algorithms to support custom color pairs
+- Dynamic UI controls that adapt based on selected color mode
+
+### Changed
+- Reorganized dithering controls for better usability
+- Moved Color Mode control between Resolution and Color Depth
+- Moved Threshold control above Color Mode
+- Enhanced error diffusion for custom colors to maintain dithering quality
+
 ## [0.1.91] - 2024-04-12
 
 ### Added
