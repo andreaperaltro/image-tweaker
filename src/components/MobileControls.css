@@ -203,10 +203,42 @@
 }
 
 .mobile-effect-content.open {
-  max-height: 500px;
+  max-height: unset;
+  padding: 10px 0;
+}
+
+/* Sub-section styling for grouped controls within effects */
+.mobile-sub-section {
+  margin: 10px 0 15px 0;
+  padding: 10px;
+  background-color: rgba(255, 255, 255, 0.03);
+  border-radius: 6px;
+  border-left: 3px solid rgba(255, 255, 255, 0.1);
+}
+
+.mobile-sub-section-title {
+  font-size: 13px;
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: #ccc;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 5px;
+}
+
+.mobile-sub-section .mobile-control-group:first-of-type {
+  margin-top: 5px;
+}
+
+.mobile-sub-section .mobile-control-group:last-of-type {
+  margin-bottom: 0;
 }
 
 .mobile-control-group {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 10px;
 }
 

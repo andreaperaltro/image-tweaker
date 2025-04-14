@@ -677,28 +677,274 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               (enabled) => updateGlitchSettings({ masterEnabled: enabled })
             )}
             <div className={`mobile-effect-content ${openSection === 'glitch' ? 'open' : ''}`}>
-              <div className="mobile-control-group">
-                <label className="mobile-control-label">Intensity ({glitchSettings.glitchIntensity})</label>
-                <input 
-                  type="range" 
-                  className="mobile-slider"
-                  min={0}
-                  max={100}
-                  value={glitchSettings.glitchIntensity}
-                  onChange={(e) => updateGlitchSettings({ glitchIntensity: parseInt(e.target.value) })}
-                />
+              {/* General Glitch Controls */}
+              <div className="mobile-sub-section">
+                <h4 className="mobile-sub-section-title">General Glitch</h4>
+                <div className="mobile-control-group">
+                  <label className="mobile-control-label">Enabled</label>
+                  <label className="mobile-effect-toggle">
+                    <input 
+                      type="checkbox" 
+                      checked={glitchSettings.enabled}
+                      onChange={(e) => updateGlitchSettings({ enabled: e.target.checked })}
+                    />
+                    <span className="mobile-effect-toggle-slider"></span>
+                  </label>
+                </div>
+                
+                <div className="mobile-control-group">
+                  <label className="mobile-control-label">Intensity ({glitchSettings.glitchIntensity})</label>
+                  <input 
+                    type="range" 
+                    className="mobile-slider"
+                    min={0}
+                    max={100}
+                    value={glitchSettings.glitchIntensity}
+                    onChange={(e) => updateGlitchSettings({ glitchIntensity: parseInt(e.target.value) })}
+                  />
+                </div>
+                
+                <div className="mobile-control-group">
+                  <label className="mobile-control-label">Density ({glitchSettings.glitchDensity})</label>
+                  <input 
+                    type="range" 
+                    className="mobile-slider"
+                    min={0}
+                    max={100}
+                    value={glitchSettings.glitchDensity}
+                    onChange={(e) => updateGlitchSettings({ glitchDensity: parseInt(e.target.value) })}
+                  />
+                </div>
+                
+                <div className="mobile-control-group">
+                  <label className="mobile-control-label">Direction</label>
+                  <select 
+                    className="mobile-select"
+                    value={glitchSettings.glitchDirection}
+                    onChange={(e) => updateGlitchSettings({ glitchDirection: e.target.value as 'horizontal' | 'vertical' | 'both' })}
+                  >
+                    <option value="horizontal">Horizontal</option>
+                    <option value="vertical">Vertical</option>
+                    <option value="both">Both</option>
+                  </select>
+                </div>
               </div>
               
-              <div className="mobile-control-group">
-                <label className="mobile-control-label">Density ({glitchSettings.glitchDensity})</label>
-                <input 
-                  type="range" 
-                  className="mobile-slider"
-                  min={0}
-                  max={100}
-                  value={glitchSettings.glitchDensity}
-                  onChange={(e) => updateGlitchSettings({ glitchDensity: parseInt(e.target.value) })}
-                />
+              {/* Pixel Sorting */}
+              <div className="mobile-sub-section">
+                <h4 className="mobile-sub-section-title">Pixel Sorting</h4>
+                <div className="mobile-control-group">
+                  <label className="mobile-control-label">Enabled</label>
+                  <label className="mobile-effect-toggle">
+                    <input 
+                      type="checkbox" 
+                      checked={glitchSettings.pixelSortingEnabled}
+                      onChange={(e) => updateGlitchSettings({ pixelSortingEnabled: e.target.checked })}
+                    />
+                    <span className="mobile-effect-toggle-slider"></span>
+                  </label>
+                </div>
+                
+                <div className="mobile-control-group">
+                  <label className="mobile-control-label">Threshold ({glitchSettings.pixelSortingThreshold})</label>
+                  <input 
+                    type="range" 
+                    className="mobile-slider"
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    value={glitchSettings.pixelSortingThreshold}
+                    onChange={(e) => updateGlitchSettings({ pixelSortingThreshold: parseFloat(e.target.value) })}
+                  />
+                </div>
+                
+                <div className="mobile-control-group">
+                  <label className="mobile-control-label">Direction</label>
+                  <select 
+                    className="mobile-select"
+                    value={glitchSettings.pixelSortingDirection}
+                    onChange={(e) => updateGlitchSettings({ pixelSortingDirection: e.target.value as 'horizontal' | 'vertical' | 'both' })}
+                  >
+                    <option value="horizontal">Horizontal</option>
+                    <option value="vertical">Vertical</option>
+                    <option value="both">Both</option>
+                  </select>
+                </div>
+              </div>
+              
+              {/* Channel Shift */}
+              <div className="mobile-sub-section">
+                <h4 className="mobile-sub-section-title">Channel Shift</h4>
+                <div className="mobile-control-group">
+                  <label className="mobile-control-label">Enabled</label>
+                  <label className="mobile-effect-toggle">
+                    <input 
+                      type="checkbox" 
+                      checked={glitchSettings.channelShiftEnabled}
+                      onChange={(e) => updateGlitchSettings({ channelShiftEnabled: e.target.checked })}
+                    />
+                    <span className="mobile-effect-toggle-slider"></span>
+                  </label>
+                </div>
+                
+                <div className="mobile-control-group">
+                  <label className="mobile-control-label">Amount ({glitchSettings.channelShiftAmount})</label>
+                  <input 
+                    type="range" 
+                    className="mobile-slider"
+                    min={0}
+                    max={50}
+                    value={glitchSettings.channelShiftAmount}
+                    onChange={(e) => updateGlitchSettings({ channelShiftAmount: parseInt(e.target.value) })}
+                  />
+                </div>
+                
+                <div className="mobile-control-group">
+                  <label className="mobile-control-label">Channels</label>
+                  <select 
+                    className="mobile-select"
+                    value={glitchSettings.channelShiftMode}
+                    onChange={(e) => updateGlitchSettings({ channelShiftMode: e.target.value as 'rgb' | 'rb' | 'rg' | 'gb' })}
+                  >
+                    <option value="rgb">RGB</option>
+                    <option value="rb">RB</option>
+                    <option value="rg">RG</option>
+                    <option value="gb">GB</option>
+                  </select>
+                </div>
+              </div>
+              
+              {/* Scan Lines */}
+              <div className="mobile-sub-section">
+                <h4 className="mobile-sub-section-title">Scan Lines</h4>
+                <div className="mobile-control-group">
+                  <label className="mobile-control-label">Enabled</label>
+                  <label className="mobile-effect-toggle">
+                    <input 
+                      type="checkbox" 
+                      checked={glitchSettings.scanLinesEnabled}
+                      onChange={(e) => updateGlitchSettings({ scanLinesEnabled: e.target.checked })}
+                    />
+                    <span className="mobile-effect-toggle-slider"></span>
+                  </label>
+                </div>
+                
+                <div className="mobile-control-group">
+                  <label className="mobile-control-label">Count ({glitchSettings.scanLinesCount})</label>
+                  <input 
+                    type="range" 
+                    className="mobile-slider"
+                    min={1}
+                    max={100}
+                    value={glitchSettings.scanLinesCount}
+                    onChange={(e) => updateGlitchSettings({ scanLinesCount: parseInt(e.target.value) })}
+                  />
+                </div>
+                
+                <div className="mobile-control-group">
+                  <label className="mobile-control-label">Intensity ({glitchSettings.scanLinesIntensity})</label>
+                  <input 
+                    type="range" 
+                    className="mobile-slider"
+                    min={0}
+                    max={100}
+                    value={glitchSettings.scanLinesIntensity}
+                    onChange={(e) => updateGlitchSettings({ scanLinesIntensity: parseInt(e.target.value) })}
+                  />
+                </div>
+                
+                <div className="mobile-control-group">
+                  <label className="mobile-control-label">Direction</label>
+                  <select 
+                    className="mobile-select"
+                    value={glitchSettings.scanLinesDirection}
+                    onChange={(e) => updateGlitchSettings({ scanLinesDirection: e.target.value as 'horizontal' | 'vertical' | 'both' })}
+                  >
+                    <option value="horizontal">Horizontal</option>
+                    <option value="vertical">Vertical</option>
+                    <option value="both">Both</option>
+                  </select>
+                </div>
+              </div>
+              
+              {/* Noise */}
+              <div className="mobile-sub-section">
+                <h4 className="mobile-sub-section-title">Noise</h4>
+                <div className="mobile-control-group">
+                  <label className="mobile-control-label">Enabled</label>
+                  <label className="mobile-effect-toggle">
+                    <input 
+                      type="checkbox" 
+                      checked={glitchSettings.noiseEnabled}
+                      onChange={(e) => updateGlitchSettings({ noiseEnabled: e.target.checked })}
+                    />
+                    <span className="mobile-effect-toggle-slider"></span>
+                  </label>
+                </div>
+                
+                <div className="mobile-control-group">
+                  <label className="mobile-control-label">Amount ({glitchSettings.noiseAmount})</label>
+                  <input 
+                    type="range" 
+                    className="mobile-slider"
+                    min={0}
+                    max={100}
+                    value={glitchSettings.noiseAmount}
+                    onChange={(e) => updateGlitchSettings({ noiseAmount: parseInt(e.target.value) })}
+                  />
+                </div>
+              </div>
+              
+              {/* Blocks */}
+              <div className="mobile-sub-section">
+                <h4 className="mobile-sub-section-title">Blocks</h4>
+                <div className="mobile-control-group">
+                  <label className="mobile-control-label">Enabled</label>
+                  <label className="mobile-effect-toggle">
+                    <input 
+                      type="checkbox" 
+                      checked={glitchSettings.blocksEnabled}
+                      onChange={(e) => updateGlitchSettings({ blocksEnabled: e.target.checked })}
+                    />
+                    <span className="mobile-effect-toggle-slider"></span>
+                  </label>
+                </div>
+                
+                <div className="mobile-control-group">
+                  <label className="mobile-control-label">Size ({glitchSettings.blocksSize})</label>
+                  <input 
+                    type="range" 
+                    className="mobile-slider"
+                    min={1}
+                    max={50}
+                    value={glitchSettings.blocksSize}
+                    onChange={(e) => updateGlitchSettings({ blocksSize: parseInt(e.target.value) })}
+                  />
+                </div>
+                
+                <div className="mobile-control-group">
+                  <label className="mobile-control-label">Offset ({glitchSettings.blocksOffset})</label>
+                  <input 
+                    type="range" 
+                    className="mobile-slider"
+                    min={0}
+                    max={50}
+                    value={glitchSettings.blocksOffset}
+                    onChange={(e) => updateGlitchSettings({ blocksOffset: parseInt(e.target.value) })}
+                  />
+                </div>
+                
+                <div className="mobile-control-group">
+                  <label className="mobile-control-label">Density ({glitchSettings.blocksDensity})</label>
+                  <input 
+                    type="range" 
+                    className="mobile-slider"
+                    min={0}
+                    max={100}
+                    value={glitchSettings.blocksDensity}
+                    onChange={(e) => updateGlitchSettings({ blocksDensity: parseInt(e.target.value) })}
+                  />
+                </div>
               </div>
             </div>
           </div>
