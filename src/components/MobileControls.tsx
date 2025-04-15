@@ -189,7 +189,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
           aria-label="Move effect up"
           title="Move up in processing order"
         >
-          ◀
+          ▲
         </button>
         <button
           className="reorder-btn"
@@ -201,7 +201,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
           aria-label="Move effect down"
           title="Move down in processing order"
         >
-          ▶
+          ▼
         </button>
       </div>
     )
