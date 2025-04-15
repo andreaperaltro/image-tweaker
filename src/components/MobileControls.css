@@ -61,8 +61,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 6px;
-  margin: 4px 0;
+  padding: 6px 4px;
+  margin: 2px 0;
   border-radius: 6px;
   transition: background-color 0.3s ease;
   cursor: pointer;
@@ -77,22 +77,23 @@
   background: #555;
   color: white;
   border-radius: 50%;
-  min-width: 24px;
-  height: 24px;
+  min-width: 20px;
+  height: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 10px;
+  margin-right: 8px;
   font-weight: bold;
-  font-size: 12px;
+  font-size: 11px;
   border: 1px solid #666;
 }
 
 /* Style for reorder buttons */
 .reorder-buttons {
   display: flex;
-  flex-direction: column;
-  margin-right: 10px;
+  flex-direction: row;
+  margin-right: 6px;
+  gap: 2px;
 }
 
 .reorder-btn {
@@ -100,13 +101,13 @@
   border: none;
   color: #ccc;
   cursor: pointer;
-  font-size: 18px;
+  font-size: 14px;
   line-height: 1;
-  padding: 8px;
+  padding: 5px;
   transition: all 0.2s ease;
   border-radius: 4px;
-  width: 35px;
-  height: 35px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;

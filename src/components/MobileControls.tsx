@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useRef, useCallback } from 'react'
 import './MobileControls.css'
 import { DitherSettings, DitherColorMode, DitherType } from './DitherUtils'
 import { HalftoneSettings, HalftoneShape, HalftoneArrangement } from './Halftone'
@@ -36,6 +36,21 @@ interface MobileControlsProps {
   onCropImage: () => void
 }
 
+// Debounce function to limit update frequency
+const useDebounce = (callback: (...args: any[]) => void, delay: number) => {
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  return useCallback((...args: any[]) => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    
+    timeoutRef.current = setTimeout(() => {
+      callback(...args);
+    }, delay);
+  }, [callback, delay]);
+};
+
 const MobileControls: React.FC<MobileControlsProps> = ({
   ditherSettings,
   halftoneSettings,
@@ -61,6 +76,66 @@ const MobileControls: React.FC<MobileControlsProps> = ({
   onCropImage
 }) => {
   const [openSection, setOpenSection] = useState<string | null>(null)
+
+  // Create debounced versions of update functions for color pickers
+  const debouncedUpdateGradientMapSettings = useDebounce(updateGradientMapSettings, 100);
+  const debouncedUpdateThresholdSettings = useDebounce(updateThresholdSettings, 100);
+  const debouncedUpdateDitherSettings = useDebounce(updateDitherSettings, 100);
+  
+  // Helper function to handle color changes with debounce
+  const handleColorChange = (
+    updateFn: (settings: any) => void, 
+    colorKey: string, 
+    newColor: string
+  ) => {
+    // Update UI immediately for better feedback
+    const inputElement = document.activeElement as HTMLInputElement;
+    if (inputElement && inputElement.type === 'color') {
+      inputElement.value = newColor;
+    }
+    
+    // Debounce the actual state update
+    if (colorKey.startsWith('stops')) {
+      // Special handling for gradient stops array
+      setTimeout(() => {
+        updateFn({ [colorKey]: newColor });
+      }, 100);
+    } else {
+      // Simple property update
+      setTimeout(() => {
+        updateFn({ [colorKey]: newColor });
+      }, 100);
+    }
+  };
+
+  // Special handler for gradient stops which need array manipulation
+  const handleGradientStopChange = (index: number, newColor: string) => {
+    // Update immediately for responsive UI
+    const inputElement = document.activeElement as HTMLInputElement;
+    if (inputElement && inputElement.type === 'color') {
+      inputElement.value = newColor;
+    }
+    
+    // Use setTimeout for debounce
+    setTimeout(() => {
+      const newStops = [...gradientMapSettings.stops];
+      
+      if (index === 1 && newStops.length <= 1) {
+        // If updating middle stop but it doesn't exist
+        newStops.push({ position: 50, color: newColor });
+      } else {
+        // Update existing stop
+        if (index < newStops.length) {
+          newStops[index] = { ...newStops[index], color: newColor };
+        } else if (index === 2 && newStops.length === 2) {
+          // If updating last stop (index 2) but we only have 2 stops
+          newStops.push({ position: 100, color: newColor });
+        }
+      }
+      
+      updateGradientMapSettings({ stops: newStops });
+    }, 100);
+  };
 
   const toggleSection = (section: string) => {
     setOpenSection(openSection === section ? null : section)
@@ -114,7 +189,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
           aria-label="Move effect up"
           title="Move up in processing order"
         >
-          ▲
+          ◀
         </button>
         <button
           className="reorder-btn"
@@ -126,7 +201,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
           aria-label="Move effect down"
           title="Move down in processing order"
         >
-          ▼
+          ▶
         </button>
       </div>
     )
@@ -302,11 +377,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                   type="color" 
                   className="mobile-color-picker"
                   value={gradientMapSettings.stops[0]?.color || '#000000'}
-                  onChange={(e) => {
-                    const newStops = [...gradientMapSettings.stops];
-                    newStops[0] = { ...newStops[0], color: e.target.value };
-                    updateGradientMapSettings({ stops: newStops });
-                  }}
+                  onChange={(e) => handleGradientStopChange(0, e.target.value)}
                 />
               </div>
               
@@ -316,15 +387,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                   type="color" 
                   className="mobile-color-picker"
                   value={gradientMapSettings.stops[1]?.color || '#808080'}
-                  onChange={(e) => {
-                    const newStops = [...gradientMapSettings.stops];
-                    if (newStops.length > 1) {
-                      newStops[1] = { ...newStops[1], color: e.target.value };
-                    } else {
-                      newStops.push({ position: 50, color: e.target.value });
-                    }
-                    updateGradientMapSettings({ stops: newStops });
-                  }}
+                  onChange={(e) => handleGradientStopChange(1, e.target.value)}
                 />
               </div>
               
@@ -334,14 +397,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                   type="color" 
                   className="mobile-color-picker"
                   value={gradientMapSettings.stops[gradientMapSettings.stops.length - 1]?.color || '#ffffff'}
-                  onChange={(e) => {
-                    const newStops = [...gradientMapSettings.stops];
-                    const lastIndex = newStops.length - 1;
-                    if (lastIndex >= 0) {
-                      newStops[lastIndex] = { ...newStops[lastIndex], color: e.target.value };
-                      updateGradientMapSettings({ stops: newStops });
-                    }
-                  }}
+                  onChange={(e) => handleGradientStopChange(gradientMapSettings.stops.length - 1, e.target.value)}
                 />
               </div>
             </div>
@@ -391,7 +447,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                       type="color" 
                       className="mobile-color-picker"
                       value={thresholdSettings.darkColor}
-                      onChange={(e) => updateThresholdSettings({ darkColor: e.target.value })}
+                      onChange={(e) => handleColorChange(updateThresholdSettings, 'darkColor', e.target.value)}
                     />
                   </div>
                   
@@ -401,7 +457,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                       type="color" 
                       className="mobile-color-picker"
                       value={thresholdSettings.lightColor}
-                      onChange={(e) => updateThresholdSettings({ lightColor: e.target.value })}
+                      onChange={(e) => handleColorChange(updateThresholdSettings, 'lightColor', e.target.value)}
                     />
                   </div>
                 </>
@@ -415,7 +471,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                       type="color" 
                       className="mobile-color-picker"
                       value={thresholdSettings.darkColorStart}
-                      onChange={(e) => updateThresholdSettings({ darkColorStart: e.target.value })}
+                      onChange={(e) => handleColorChange(updateThresholdSettings, 'darkColorStart', e.target.value)}
                     />
                   </div>
                   
@@ -425,7 +481,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                       type="color" 
                       className="mobile-color-picker"
                       value={thresholdSettings.darkColorEnd}
-                      onChange={(e) => updateThresholdSettings({ darkColorEnd: e.target.value })}
+                      onChange={(e) => handleColorChange(updateThresholdSettings, 'darkColorEnd', e.target.value)}
                     />
                   </div>
                   
@@ -435,7 +491,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                       type="color" 
                       className="mobile-color-picker"
                       value={thresholdSettings.lightColorStart}
-                      onChange={(e) => updateThresholdSettings({ lightColorStart: e.target.value })}
+                      onChange={(e) => handleColorChange(updateThresholdSettings, 'lightColorStart', e.target.value)}
                     />
                   </div>
                   
@@ -445,7 +501,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                       type="color" 
                       className="mobile-color-picker"
                       value={thresholdSettings.lightColorEnd}
-                      onChange={(e) => updateThresholdSettings({ lightColorEnd: e.target.value })}
+                      onChange={(e) => handleColorChange(updateThresholdSettings, 'lightColorEnd', e.target.value)}
                     />
                   </div>
                 </>
@@ -540,7 +596,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                       type="color" 
                       className="mobile-color-picker"
                       value={ditherSettings.darkColor}
-                      onChange={(e) => updateDitherSettings({ darkColor: e.target.value })}
+                      onChange={(e) => handleColorChange(updateDitherSettings, 'darkColor', e.target.value)}
                     />
                   </div>
                   
@@ -550,7 +606,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                       type="color" 
                       className="mobile-color-picker"
                       value={ditherSettings.lightColor}
-                      onChange={(e) => updateDitherSettings({ lightColor: e.target.value })}
+                      onChange={(e) => handleColorChange(updateDitherSettings, 'lightColor', e.target.value)}
                     />
                   </div>
                 </>
