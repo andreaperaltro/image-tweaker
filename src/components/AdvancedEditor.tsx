@@ -8,30 +8,18 @@ import { HalftoneSettings, HalftoneArrangement, HalftoneShape, applyHalftone } f
 import { exportAsPng, exportAsSvg } from './SvgExport'
 import { exportCanvasAsPng, exportCanvasAsSvg } from './ExportUtils'
 import { GlitchSettings, applyGlitch } from './GlitchUtils'
-import { Pane } from 'tweakpane'
-import type { 
-  ButtonApi, 
-  FolderApi, 
-  TabApi,
-  BladeApi,
-  InputBindingApi,
-  BladeController,
-  View
-} from '@tweakpane/core'
-import { applyDithering, DitherSettings, DitherColorMode } from '../components/DitherUtils'
+import { Pane, FolderApi } from 'tweakpane';
+import { BladeApi, BladeController, View } from '@tweakpane/core';
+import { applyDithering, DitherSettings, DitherType, DitherColorMode } from '../components/DitherUtils'
 import { TextDitherSettings, applyTextDither } from './TextDitherUtils'
 import { ThresholdSettings, ThresholdMode, applyThreshold } from './ThresholdUtils'
 import CropEditor from './CropEditor'
-// import { StochasticSettings, applyStochastic } from './StochasticUtils' // Module not found
 import { GradientMapSettings, applyGradientMap, GradientMapBlendMode, GradientStop } from './GradientMapUtils'
 import { saveAs } from 'file-saver'
 import MobileControls from './MobileControls'
+import { TweakpaneBladeApi, TpChangeEvent } from '../types'
 
-// Import Tweakpane types for development
-type TweakpanePane = Pane;
-type TweakpaneBladeApi = BladeApi<BladeController<View>>;
-
-// Define aspect ratio presets
+// Define types
 type AspectRatioPreset = '1:1' | '4:3' | '16:9' | '3:2' | '5:4' | '2:1' | '3:4' | '9:16' | '2:3' | '4:5' | '1:2' | 'custom';
 type Orientation = 'landscape' | 'portrait';
 
@@ -41,6 +29,7 @@ export default function AdvancedEditor() {
   const [originalImageDataRef, setOriginalImageDataRef] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [processing, setProcessing] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   
   // Tweakpane references - use 'any' type to avoid TypeScript errors
   const paneRef = useRef<Pane | null>(null);
@@ -189,6 +178,7 @@ export default function AdvancedEditor() {
     glitchIntensity: 50,
     glitchDensity: 50,
     glitchDirection: 'horizontal' as 'horizontal' | 'vertical' | 'both',
+    glitchSize: 10,  // Default size value
     
     // Pixel sorting
     pixelSortingEnabled: false,
@@ -285,7 +275,7 @@ export default function AdvancedEditor() {
         console.log('Pane created:', pane);
         
         // Store references to bindings so we can update them
-        const bindings: Record<string, any> = {};
+        // const bindings: Record<string, any> = {};
         
         // 1. COLOR ADJUSTMENTS FOLDER
         const colorFolder = pane.addFolder({
@@ -293,89 +283,50 @@ export default function AdvancedEditor() {
           expanded: false,
         });
         
-        // Enable color adjustments
-        bindings.colorEnabled = colorFolder.addBinding(colorSettings, 'enabled', {
+        colorFolder.addBinding(colorSettings, 'enabled', {
           label: 'Enable'
-        }).on('change', (ev) => {
-          handleColorChange('enabled', ev.value);
         });
         
-        // Hue shift
-        bindings.hueShift = colorFolder.addBinding(colorSettings, 'hueShift', {
-          label: 'Hue Shift',
-          min: -180,
-          max: 180,
-          step: 1,
-        }).on('change', (ev) => {
-          handleColorChange('hueShift', ev.value);
-        });
-        
-        // Saturation
-        bindings.saturation = colorFolder.addBinding(colorSettings, 'saturation', {
-          label: 'Saturation',
-          min: 0,
-          max: 200,
-          step: 1,
-        }).on('change', (ev) => {
-          handleColorChange('saturation', ev.value);
-        });
-        
-        // Brightness
-        bindings.brightness = colorFolder.addBinding(colorSettings, 'brightness', {
+        colorFolder.addBinding(colorSettings, 'brightness', {
           label: 'Brightness',
           min: 0,
           max: 200,
           step: 1,
-        }).on('change', (ev) => {
+        }).on('change', (ev: any) => {
           handleColorChange('brightness', ev.value);
         });
         
-        // Contrast
-        bindings.contrast = colorFolder.addBinding(colorSettings, 'contrast', {
+        colorFolder.addBinding(colorSettings, 'contrast', {
           label: 'Contrast',
           min: 0,
           max: 200,
           step: 1,
-        }).on('change', (ev) => {
+        }).on('change', (ev: any) => {
           handleColorChange('contrast', ev.value);
         });
         
-        // Posterize
-        bindings.posterize = colorFolder.addBinding(colorSettings, 'posterize', {
-          label: 'Posterize',
+        colorFolder.addBinding(colorSettings, 'saturation', {
+          label: 'Saturation',
           min: 0,
-          max: 32,
+          max: 200,
           step: 1,
-        }).on('change', (ev) => {
-          handleColorChange('posterize', ev.value);
+        }).on('change', (ev: TpChangeEvent<number>) => {
+          handleColorChange('saturation', ev.value);
         });
         
-        // Invert
-        bindings.invert = colorFolder.addBinding(colorSettings, 'invert', {
-          label: 'Invert'
-        }).on('change', (ev) => {
+        colorFolder.addBinding(colorSettings, 'hueShift', {
+          label: 'Hue Shift',
+          min: -180,
+          max: 180,
+          step: 1,
+        }).on('change', (ev: TpChangeEvent<number>) => {
+          handleColorChange('hueShift', ev.value);
+        });
+        
+        colorFolder.addBinding(colorSettings, 'invert', {
+          label: 'Invert Colors'
+        }).on('change', (ev: TpChangeEvent<boolean>) => {
           handleColorChange('invert', ev.value);
-        });
-        
-        // Glitch intensity
-        bindings.glitchIntensity = colorFolder.addBinding(colorSettings, 'glitchIntensity', {
-          label: 'Glitch',
-          min: 0,
-          max: 100,
-          step: 1,
-        }).on('change', (ev) => {
-          handleColorChange('glitchIntensity', ev.value);
-          if (ev.value > 0 && colorSettings.glitchIntensity === 0) {
-            // Generate new seed when enabling glitch
-            handleColorChange('glitchSeed', Math.random());
-          }
-        });
-        
-        // Randomize glitch button
-        colorFolder.addButton({
-          title: 'Randomize Glitch'
-        }).on('click', () => {
-          handleColorChange('glitchSeed', Math.random());
         });
         
         // 2. GRADIENT MAP FOLDER
@@ -385,15 +336,15 @@ export default function AdvancedEditor() {
         });
 
         // Enable gradient map
-        bindings.gradientMapEnabled = gradientMapFolder.addBinding(gradientMapSettings, 'enabled', {
+        gradientMapFolder.addBinding(gradientMapSettings, 'enabled', {
           label: 'Enable'
-        }).on('change', (ev) => {
+        }).on('change', (ev: TpChangeEvent<boolean>) => {
           setGradientMapSettings(prev => ({ ...prev, enabled: ev.value }));
           processImage();
         });
 
         // Blend mode
-        bindings.gradientMapBlendMode = gradientMapFolder.addBinding(gradientMapSettings, 'blendMode', {
+        gradientMapFolder.addBinding(gradientMapSettings, 'blendMode', {
           label: 'Blend Mode',
           options: {
             'Normal': 'normal',
@@ -405,18 +356,21 @@ export default function AdvancedEditor() {
             'Color': 'color',
             'Luminosity': 'luminosity'
           }
-        }).on('change', (ev) => {
+        }).on('change', (ev: TpChangeEvent<GradientMapBlendMode>) => {
           setGradientMapSettings(prev => ({ ...prev, blendMode: ev.value }));
           processImage();
         });
 
-        // Opacity
-        bindings.gradientMapOpacity = gradientMapFolder.addBinding(gradientMapSettings, 'opacity', {
+        // Gradient map opacity
+        const gradientMapOpacityContainer = document.createElement('div');
+        gradientMapFolder.element.appendChild(gradientMapOpacityContainer);
+        gradientMapFolder.addBinding(gradientMapSettings, 'opacity', {
           label: 'Opacity',
+          value: gradientMapSettings.opacity,
           min: 0,
           max: 1,
-          step: 0.01
-        }).on('change', (ev) => {
+          step: 0.01,
+        }).on('change', (ev: TpChangeEvent<number>) => {
           setGradientMapSettings(prev => ({ ...prev, opacity: ev.value }));
           processImage();
         });
@@ -510,7 +464,7 @@ export default function AdvancedEditor() {
             stopFolder.addBinding(params, 'color', {
               view: 'color',
               label: 'Color'
-            }).on('change', (ev) => {
+            }).on('change', (ev: TpChangeEvent<string>) => {
               // Create a new array to ensure state change is detected
               const newStops = [...sortedStops];
               newStops[index].color = ev.value;
@@ -533,7 +487,7 @@ export default function AdvancedEditor() {
                 min: 5,
                 max: 95,
                 step: 1
-              }).on('change', (ev) => {
+              }).on('change', (ev: TpChangeEvent<number>) => {
                 // Create a new array to ensure state change is detected
                 const newStops = [...sortedStops];
                 newStops[index].position = ev.value;
@@ -572,32 +526,35 @@ export default function AdvancedEditor() {
         };
 
         // Enable threshold
-        bindings.thresholdEnabled = thresholdFolder.addBinding(thresholdParams, 'enabled', {
+        thresholdFolder.addBinding(thresholdParams, 'enabled', {
           label: 'Enable'
-        }).on('change', (ev) => {
+        }).on('change', (ev: TpChangeEvent<boolean>) => {
           setThresholdSettings(prev => ({ ...prev, enabled: ev.value }));
           processImage();
         });
 
-        // Threshold value (moved up)
-        bindings.threshold = thresholdFolder.addBinding(thresholdParams, 'threshold', {
+        // Threshold
+        const thresholdContainer = document.createElement('div');
+        thresholdFolder.element.appendChild(thresholdContainer);
+        thresholdFolder.addBinding(thresholdParams, 'threshold', {
           label: 'Threshold',
+          value: thresholdSettings.threshold,
           min: 0,
           max: 255,
-          step: 1
-        }).on('change', (ev) => {
+          step: 1,
+        }).on('change', (ev: TpChangeEvent<number>) => {
           setThresholdSettings(prev => ({ ...prev, threshold: ev.value }));
           processImage();
         });
 
         // Threshold mode
-        bindings.thresholdMode = thresholdFolder.addBinding(thresholdParams, 'mode', {
+        thresholdFolder.addBinding(thresholdParams, 'mode', {
           label: 'Mode',
           options: {
             'Solid': 'solid',
             'Gradient': 'gradient'
           }
-        }).on('change', (ev) => {
+        }).on('change', (ev: TpChangeEvent<ThresholdMode>) => {
           setThresholdSettings(prev => ({ ...prev, mode: ev.value }));
           updateThresholdControls(ev.value);
           processImage();
@@ -615,55 +572,55 @@ export default function AdvancedEditor() {
         });
 
         // Dark color (solid)
-        bindings.darkColor = solidColorsFolder.addBinding(thresholdParams, 'darkColor', {
+        solidColorsFolder.addBinding(thresholdParams, 'darkColor', {
           view: 'color',
           label: 'Dark Color'
-        }).on('change', (ev) => {
+        }).on('change', (ev: TpChangeEvent<string>) => {
           setThresholdSettings(prev => ({ ...prev, darkColor: ev.value }));
           processImage();
         });
 
         // Light color (solid)
-        bindings.lightColor = solidColorsFolder.addBinding(thresholdParams, 'lightColor', {
+        solidColorsFolder.addBinding(thresholdParams, 'lightColor', {
           view: 'color',
           label: 'Light Color'
-        }).on('change', (ev) => {
+        }).on('change', (ev: TpChangeEvent<string>) => {
           setThresholdSettings(prev => ({ ...prev, lightColor: ev.value }));
           processImage();
         });
 
         // Dark color start (gradient)
-        bindings.darkColorStart = gradientColorsFolder.addBinding(thresholdParams, 'darkColorStart', {
+        gradientColorsFolder.addBinding(thresholdParams, 'darkColorStart', {
           view: 'color',
           label: 'Dark Start'
-        }).on('change', (ev) => {
+        }).on('change', (ev: TpChangeEvent<string>) => {
           setThresholdSettings(prev => ({ ...prev, darkColorStart: ev.value }));
           processImage();
         });
 
         // Dark color end (gradient)
-        bindings.darkColorEnd = gradientColorsFolder.addBinding(thresholdParams, 'darkColorEnd', {
+        gradientColorsFolder.addBinding(thresholdParams, 'darkColorEnd', {
           view: 'color',
           label: 'Dark End'
-        }).on('change', (ev) => {
+        }).on('change', (ev: TpChangeEvent<string>) => {
           setThresholdSettings(prev => ({ ...prev, darkColorEnd: ev.value }));
           processImage();
         });
 
         // Light color start (gradient)
-        bindings.lightColorStart = gradientColorsFolder.addBinding(thresholdParams, 'lightColorStart', {
+        gradientColorsFolder.addBinding(thresholdParams, 'lightColorStart', {
           view: 'color',
           label: 'Light Start'
-        }).on('change', (ev) => {
+        }).on('change', (ev: TpChangeEvent<string>) => {
           setThresholdSettings(prev => ({ ...prev, lightColorStart: ev.value }));
           processImage();
         });
 
         // Light color end (gradient)
-        bindings.lightColorEnd = gradientColorsFolder.addBinding(thresholdParams, 'lightColorEnd', {
+        gradientColorsFolder.addBinding(thresholdParams, 'lightColorEnd', {
           view: 'color',
           label: 'Light End'
-        }).on('change', (ev) => {
+        }).on('change', (ev: TpChangeEvent<string>) => {
           setThresholdSettings(prev => ({ ...prev, lightColorEnd: ev.value }));
           processImage();
         });
@@ -689,14 +646,14 @@ export default function AdvancedEditor() {
         });
         
         // Enable dithering
-        bindings.ditherEnabled = ditherFolder.addBinding(ditherSettings, 'enabled', {
+        ditherFolder.addBinding(ditherSettings, 'enabled', {
           label: 'Enable'
-        }).on('change', (ev) => {
+        }).on('change', (ev: TpChangeEvent<boolean>) => {
           setDitherSettings(prev => ({ ...prev, enabled: ev.value }));
         });
         
         // Dithering type
-        bindings.ditherType = ditherFolder.addBinding(ditherSettings, 'type', {
+        ditherFolder.addBinding(ditherSettings, 'type', {
           label: 'Type',
           options: {
             'Ordered': 'ordered',
@@ -706,50 +663,60 @@ export default function AdvancedEditor() {
             'Stucki': 'stucki',
             'Burkes': 'burkes'
           }
-        }).on('change', (ev) => {
+        }).on('change', (ev: TpChangeEvent<DitherType>) => {
           setDitherSettings(prev => ({ ...prev, type: ev.value }));
+          processImage();
         });
         
-        // Resolution
-        bindings.ditherResolution = ditherFolder.addBinding(ditherSettings, 'resolution', {
+        // Dither resolution
+        const ditherResolutionContainer = document.createElement('div');
+        ditherFolder.element.appendChild(ditherResolutionContainer);
+        ditherFolder.addBinding(ditherSettings, 'resolution', {
           label: 'Resolution',
+          value: ditherSettings.resolution,
           min: 1,
           max: 100,
           step: 1,
-        }).on('change', (ev) => {
+        }).on('change', (ev: TpChangeEvent<number>) => {
           setDitherSettings(prev => ({ ...prev, resolution: ev.value }));
+          processImage();
         });
         
-        // Threshold - MOVED HERE above Color Mode
-        bindings.ditherThreshold = ditherFolder.addBinding(ditherSettings, 'threshold', {
+        // Dither threshold
+        const ditherThresholdContainer = document.createElement('div');
+        ditherFolder.element.appendChild(ditherThresholdContainer);
+        ditherFolder.addBinding(ditherSettings, 'threshold', {
           label: 'Threshold',
+          value: ditherSettings.threshold,
           min: 0,
           max: 255,
           step: 1,
-        }).on('change', (ev) => {
+        }).on('change', (ev: TpChangeEvent<number>) => {
           setDitherSettings(prev => ({ ...prev, threshold: ev.value }));
+          processImage();
         });
         
         // Color mode
-        bindings.ditherColorMode = ditherFolder.addBinding(ditherSettings, 'colorMode', {
+        ditherFolder.addBinding(ditherSettings, 'colorMode', {
           label: 'Color Mode',
           options: {
             'Color': 'color',
             'Grayscale': 'grayscale',
             '2 Color Palette': '2-color'
           }
-        }).on('change', (ev) => {
+        }).on('change', (ev: TpChangeEvent<DitherColorMode>) => {
           setDitherSettings(prev => ({ ...prev, colorMode: ev.value }));
           updateDitherColorControls(ev.value);
+          processImage();
         });
         
         // Color depth - only shown for grayscale and color modes
-        bindings.ditherColorDepth = ditherFolder.addBinding(ditherSettings, 'colorDepth', {
+        ditherFolder.addBinding(ditherSettings, 'colorDepth', {
           label: 'Color Depth',
           min: 2,
           max: 256,
           step: 1,
-        }).on('change', (ev) => {
+        }).on('change', (ev: TpChangeEvent<number>) => {
           setDitherSettings(prev => ({ ...prev, colorDepth: ev.value }));
         });
         
@@ -760,50 +727,46 @@ export default function AdvancedEditor() {
         };
         
         // These bindings won't be added to the UI until 2-color mode is selected
-        bindings.ditherDarkColor = {
-          binding: ditherFolder.addBinding(twoColorParams, 'darkColor', {
-            view: 'color',
-            label: 'Dark Color'
-          }).on('change', (ev) => {
-            setDitherSettings(prev => ({ ...prev, darkColor: ev.value }));
-          })
-        };
+        ditherFolder.addBinding(twoColorParams, 'darkColor', {
+          view: 'color',
+          label: 'Dark Color'
+        }).on('change', (ev: TpChangeEvent<string>) => {
+          setDitherSettings(prev => ({ ...prev, darkColor: ev.value }));
+        });
         
-        bindings.ditherLightColor = {
-          binding: ditherFolder.addBinding(twoColorParams, 'lightColor', {
-            view: 'color',
-            label: 'Light Color'
-          }).on('change', (ev) => {
-            setDitherSettings(prev => ({ ...prev, lightColor: ev.value }));
-          })
-        };
+        ditherFolder.addBinding(twoColorParams, 'lightColor', {
+          view: 'color',
+          label: 'Light Color'
+        }).on('change', (ev: TpChangeEvent<string>) => {
+          setDitherSettings(prev => ({ ...prev, lightColor: ev.value }));
+        });
         
         // Initially remove the color pickers since default mode is grayscale
-        ditherFolder.remove(bindings.ditherDarkColor.binding);
-        ditherFolder.remove(bindings.ditherLightColor.binding);
+        ditherFolder.remove(ditherFolder.children[0]);
+        ditherFolder.remove(ditherFolder.children[1]);
         
         // Function to update dithering color controls based on color mode
         const updateDitherColorControls = (colorMode: DitherColorMode) => {
           if (colorMode === '2-color') {
             // Remove color depth control
-            ditherFolder.remove(bindings.ditherColorDepth);
+            ditherFolder.remove(ditherFolder.children[2]);
             
             // Add color picker controls
-            ditherFolder.add(bindings.ditherDarkColor.binding);
-            ditherFolder.add(bindings.ditherLightColor.binding);
+            ditherFolder.add(ditherFolder.children[0]);
+            ditherFolder.add(ditherFolder.children[1]);
           } else {
             // Add color depth control
-            if (!ditherFolder.children.includes(bindings.ditherColorDepth)) {
-              ditherFolder.add(bindings.ditherColorDepth);
+            if (!ditherFolder.children.includes(ditherFolder.children[2])) {
+              ditherFolder.add(ditherFolder.children[2]);
             }
             
             // Remove color picker controls
-            if (ditherFolder.children.includes(bindings.ditherDarkColor.binding)) {
-              ditherFolder.remove(bindings.ditherDarkColor.binding);
+            if (ditherFolder.children.includes(ditherFolder.children[0])) {
+              ditherFolder.remove(ditherFolder.children[0]);
             }
             
-            if (ditherFolder.children.includes(bindings.ditherLightColor.binding)) {
-              ditherFolder.remove(bindings.ditherLightColor.binding);
+            if (ditherFolder.children.includes(ditherFolder.children[1])) {
+              ditherFolder.remove(ditherFolder.children[1]);
             }
           }
         };
@@ -814,52 +777,39 @@ export default function AdvancedEditor() {
           expanded: false,
         });
         
-        // Enable halftone
-        bindings.halftoneEnabled = halftoneFolder.addBinding(halftoneSettings, 'enabled', {
+        halftoneFolder.addBinding(halftoneSettings, 'enabled', {
           label: 'Enable'
-        }).on('change', (ev) => {
+        }).on('change', (ev: TpChangeEvent<boolean>) => {
           handleHalftoneChange('enabled', ev.value);
         });
         
-        // Cell size
-        bindings.cellSize = halftoneFolder.addBinding(halftoneSettings, 'cellSize', {
+        halftoneFolder.addBinding(halftoneSettings, 'cellSize', {
           label: 'Cell Size',
-          min: 2,
-          max: 30,
+          min: 1,
+          max: 50,
           step: 1,
-        }).on('change', (ev) => {
+        }).on('change', (ev: TpChangeEvent<number>) => {
           handleHalftoneChange('cellSize', ev.value);
         });
         
-        // Dot scale factor
-        bindings.dotScaleFactor = halftoneFolder.addBinding(halftoneSettings, 'dotScaleFactor', {
-          label: 'Dot Scale',
-          min: 0.1,
-          max: 1.5,
-          step: 0.05,
-        }).on('change', (ev) => {
-          handleHalftoneChange('dotScaleFactor', ev.value);
-        });
-        
-        // Mix amount
-        bindings.mix = halftoneFolder.addBinding(halftoneSettings, 'mix', {
-          label: 'Mix Amount',
+        halftoneFolder.addBinding(halftoneSettings, 'mix', {
+          label: 'Mix',
           min: 0,
           max: 100,
           step: 1,
-        }).on('change', (ev) => {
+        }).on('change', (ev: TpChangeEvent<number>) => {
           handleHalftoneChange('mix', ev.value);
         });
         
         // Colored halftone
-        bindings.colored = halftoneFolder.addBinding(halftoneSettings, 'colored', {
+        halftoneFolder.addBinding(halftoneSettings, 'colored', {
           label: 'Colored'
-        }).on('change', (ev) => {
+        }).on('change', (ev: TpChangeEvent<boolean>) => {
           handleHalftoneChange('colored', ev.value);
         });
         
         // Shape options - moved ABOVE pattern
-        bindings.shape = halftoneFolder.addBinding(halftoneSettings, 'shape', {
+        halftoneFolder.addBinding(halftoneSettings, 'shape', {
           label: 'Shape',
           options: {
             'Circle': 'circle',
@@ -871,12 +821,12 @@ export default function AdvancedEditor() {
             'Triangle': 'triangle',
             'Hexagon': 'hexagon',
           }
-        }).on('change', (ev) => {
+        }).on('change', (ev: TpChangeEvent<string>) => {
           handleHalftoneChange('shape', ev.value);
         });
         
         // Pattern options (renamed from "Arrangement")
-        bindings.arrangement = halftoneFolder.addBinding(halftoneSettings, 'arrangement', {
+        halftoneFolder.addBinding(halftoneSettings, 'arrangement', {
           label: 'Pattern',
           options: {
             'Grid': 'grid',
@@ -885,26 +835,26 @@ export default function AdvancedEditor() {
             'Concentric': 'concentric',
             'Random': 'random'
           }
-        }).on('change', (ev) => {
+        }).on('change', (ev: TpChangeEvent<string>) => {
           handleHalftoneChange('arrangement', ev.value);
           updateSpiralControls();
           updateConcentricControls();
         });
         
         // Size variation
-        bindings.sizeVariation = halftoneFolder.addBinding(halftoneSettings, 'sizeVariation', {
+        halftoneFolder.addBinding(halftoneSettings, 'sizeVariation', {
           label: 'Size Variation',
           min: 0,
           max: 1,
           step: 0.05,
-        }).on('change', (ev) => {
+        }).on('change', (ev: TpChangeEvent<number>) => {
           handleHalftoneChange('sizeVariation', ev.value);
         });
         
         // Invert brightness
-        bindings.invertBrightness = halftoneFolder.addBinding(halftoneSettings, 'invertBrightness', {
+        halftoneFolder.addBinding(halftoneSettings, 'invertBrightness', {
           label: 'Invert'
-        }).on('change', (ev) => {
+        }).on('change', (ev: TpChangeEvent<boolean>) => {
           handleHalftoneChange('invertBrightness', ev.value);
         });
 
@@ -915,385 +865,77 @@ export default function AdvancedEditor() {
         });
         
         // Enable CMYK mode checkbox
-        bindings.enableCMYK = cmykFolder.addBinding(halftoneSettings, 'enableCMYK', {
+        cmykFolder.addBinding(halftoneSettings, 'enableCMYK', {
           label: 'Enable CMYK'
-        }).on('change', (ev) => {
+        }).on('change', (ev: TpChangeEvent<boolean>) => {
           handleHalftoneChange('enableCMYK', ev.value);
         });
         
         // Cyan channel
-        bindings.cyan = cmykFolder.addBinding(halftoneSettings.channels, 'cyan', {
+        cmykFolder.addBinding(halftoneSettings.channels, 'cyan', {
           label: 'Cyan'
-        }).on('change', (ev) => {
+        }).on('change', (ev: TpChangeEvent<boolean>) => {
           handleHalftoneChannelChange('cyan', ev.value);
         });
         
         // Magenta channel
-        bindings.magenta = cmykFolder.addBinding(halftoneSettings.channels, 'magenta', {
+        cmykFolder.addBinding(halftoneSettings.channels, 'magenta', {
           label: 'Magenta'
-        }).on('change', (ev) => {
+        }).on('change', (ev: TpChangeEvent<boolean>) => {
           handleHalftoneChannelChange('magenta', ev.value);
         });
         
         // Yellow channel
-        bindings.yellow = cmykFolder.addBinding(halftoneSettings.channels, 'yellow', {
+        cmykFolder.addBinding(halftoneSettings.channels, 'yellow', {
           label: 'Yellow'
-        }).on('change', (ev) => {
+        }).on('change', (ev: TpChangeEvent<boolean>) => {
           handleHalftoneChannelChange('yellow', ev.value);
         });
         
         // Black channel
-        bindings.black = cmykFolder.addBinding(halftoneSettings.channels, 'black', {
+        cmykFolder.addBinding(halftoneSettings.channels, 'black', {
           label: 'Black'
-        }).on('change', (ev) => {
+        }).on('change', (ev: TpChangeEvent<boolean>) => {
           handleHalftoneChannelChange('black', ev.value);
         });
 
-        // Text dither settings
-        const textDitherFolder = pane.addFolder({
-          title: 'Text Dither Effect',
-          expanded: false
-        });
-
-        // Enable text dithering
-        textDitherFolder.addBinding(textDitherSettings, 'enabled', {
-          label: 'Enable'
-        }).on('change', (ev) => {
-          setTextDitherSettings(prev => ({ ...prev, enabled: ev.value }));
-          processImage();
-        });
-
-        // Text input
-        textDitherFolder.addBinding(textDitherSettings, 'text', {
-          label: 'Text Pattern'
-        }).on('change', (ev) => {
-          setTextDitherSettings(prev => ({ ...prev, text: ev.value }));
-          processImage();
-        });
-
-        // Font size
-        textDitherFolder.addBinding(textDitherSettings, 'fontSize', {
-          label: 'Font Size',
-          min: 6,
-          max: 24,
-          step: 1
-        }).on('change', (ev) => {
-          setTextDitherSettings(prev => ({ ...prev, fontSize: ev.value }));
-          processImage();
-        });
-
-        // Resolution
-        textDitherFolder.addBinding(textDitherSettings, 'resolution', {
-          label: 'Resolution',
-          min: 0.5,
-          max: 4,
-          step: 0.1
-        }).on('change', (ev) => {
-          setTextDitherSettings(prev => ({ ...prev, resolution: ev.value }));
-          processImage();
-        });
-
-        // Color mode
-        textDitherFolder.addBinding(textDitherSettings, 'colorMode', {
-          label: 'Color Mode',
-          options: {
-            'Monochrome': 'monochrome',
-            'Colored': 'colored'
-          }
-        }).on('change', (ev) => {
-          setTextDitherSettings(prev => ({ ...prev, colorMode: ev.value }));
-          processImage();
-        });
-
-        // Contrast
-        textDitherFolder.addBinding(textDitherSettings, 'contrast', {
-          label: 'Contrast',
-          min: 0.5,
-          max: 2,
-          step: 0.1
-        }).on('change', (ev) => {
-          setTextDitherSettings(prev => ({ ...prev, contrast: ev.value }));
-          processImage();
-        });
-
-        // Brightness
-        textDitherFolder.addBinding(textDitherSettings, 'brightness', {
-          label: 'Brightness',
+        // Halftone angle offset
+        const halftoneAngleOffsetContainer = document.createElement('div');
+        halftoneFolder.element.appendChild(halftoneAngleOffsetContainer);
+        halftoneFolder.addBinding(halftoneSettings, 'angleOffset', {
+          label: 'Angle Offset',
+          value: halftoneSettings.angleOffset,
           min: 0,
+          max: 360,
+          step: 1,
+        }).on('change', (ev: TpChangeEvent<number>) => {
+          handleHalftoneChange('angleOffset', ev.value);
+        });
+
+        // Halftone size variation
+        const halftoneSizeVariationContainer = document.createElement('div');
+        halftoneFolder.element.appendChild(halftoneSizeVariationContainer);
+        halftoneFolder.addBinding(halftoneSettings, 'sizeVariation', {
+          label: 'Size Variation',
+          value: halftoneSettings.sizeVariation,
+          min: 0,
+          max: 100,
+          step: 1,
+        }).on('change', (ev: TpChangeEvent<number>) => {
+          handleHalftoneChange('sizeVariation', ev.value);
+        });
+
+        // Halftone dot scale factor
+        const halftoneDotScaleFactorContainer = document.createElement('div');
+        halftoneFolder.element.appendChild(halftoneDotScaleFactorContainer);
+        halftoneFolder.addBinding(halftoneSettings, 'dotScaleFactor', {
+          label: 'Dot Scale',
+          value: halftoneSettings.dotScaleFactor,
+          min: 0.1,
           max: 1,
-          step: 0.1
-        }).on('change', (ev) => {
-          setTextDitherSettings(prev => ({ ...prev, brightness: ev.value }));
-          processImage();
-        });
-
-        // Invert
-        textDitherFolder.addBinding(textDitherSettings, 'invert', {
-          label: 'Invert'
-        }).on('change', (ev) => {
-          setTextDitherSettings(prev => ({ ...prev, invert: ev.value }));
-          processImage();
-        });
-
-        // Glitch effects settings
-        const glitchFolder = pane.addFolder({
-          title: 'Glitch Effects',
-          expanded: false
-        });
-        
-        // Master toggle for all glitch effects
-        bindings.masterGlitchEnabled = glitchFolder.addBinding(glitchSettings, 'masterEnabled', {
-          label: 'Enable All Effects'
-        }).on('change', (ev) => {
-          setGlitchSettings(prev => ({ ...prev, masterEnabled: ev.value }));
-          processImage();
-        });
-        
-        // Create a subfolder for general glitch
-        const generalGlitchFolder = glitchFolder.addFolder({
-          title: 'General Glitch',
-          expanded: false
-        });
-
-        // Enable general glitch effects
-        bindings.glitchEnabled = generalGlitchFolder.addBinding(glitchSettings, 'enabled', {
-          label: 'Enable'
-        }).on('change', (ev) => {
-          setGlitchSettings(prev => ({ ...prev, enabled: ev.value }));
-          processImage();
-        });
-
-        // Glitch intensity
-        bindings.glitchIntensity = generalGlitchFolder.addBinding(glitchSettings, 'glitchIntensity', {
-          label: 'Intensity',
-          min: 0,
-          max: 100,
-          step: 1
-        }).on('change', (ev) => {
-          setGlitchSettings(prev => ({ ...prev, glitchIntensity: ev.value }));
-          processImage();
-        });
-
-        // Glitch density
-        bindings.glitchDensity = generalGlitchFolder.addBinding(glitchSettings, 'glitchDensity', {
-          label: 'Density',
-          min: 1,
-          max: 100,
-          step: 1
-        }).on('change', (ev) => {
-          setGlitchSettings(prev => ({ ...prev, glitchDensity: ev.value }));
-          processImage();
-        });
-
-        // Glitch direction
-        bindings.glitchDirection = generalGlitchFolder.addBinding(glitchSettings, 'glitchDirection', {
-          label: 'Direction',
-          options: {
-            'Horizontal': 'horizontal',
-            'Vertical': 'vertical',
-            'Both': 'both'
-          }
-        }).on('change', (ev) => {
-          setGlitchSettings(prev => ({ ...prev, glitchDirection: ev.value }));
-          processImage();
-        });
-
-        // Pixel sorting subfolder
-        const pixelSortingFolder = glitchFolder.addFolder({
-          title: 'Pixel Sorting',
-          expanded: false
-        });
-        
-        // Enable pixel sorting
-        bindings.pixelSortingEnabled = pixelSortingFolder.addBinding(glitchSettings, 'pixelSortingEnabled', {
-          label: 'Enable'
-        }).on('change', (ev) => {
-          setGlitchSettings(prev => ({ ...prev, pixelSortingEnabled: ev.value }));
-          processImage();
-        });
-        
-        // Pixel sorting threshold
-        bindings.pixelSortingThreshold = pixelSortingFolder.addBinding(glitchSettings, 'pixelSortingThreshold', {
-          label: 'Threshold',
-          min: 0,
-          max: 1,
-          step: 0.01
-        }).on('change', (ev) => {
-          setGlitchSettings(prev => ({ ...prev, pixelSortingThreshold: ev.value }));
-          processImage();
-        });
-        
-        // Pixel sorting direction
-        bindings.pixelSortingDirection = pixelSortingFolder.addBinding(glitchSettings, 'pixelSortingDirection', {
-          label: 'Direction',
-          options: {
-            'Horizontal': 'horizontal',
-            'Vertical': 'vertical',
-            'Both': 'both'
-          }
-        }).on('change', (ev) => {
-          setGlitchSettings(prev => ({ ...prev, pixelSortingDirection: ev.value }));
-          processImage();
-        });
-        
-        // Channel shift subfolder
-        const channelShiftFolder = glitchFolder.addFolder({
-          title: 'Channel Shift',
-          expanded: false
-        });
-        
-        // Enable channel shift
-        bindings.channelShiftEnabled = channelShiftFolder.addBinding(glitchSettings, 'channelShiftEnabled', {
-          label: 'Enable'
-        }).on('change', (ev) => {
-          setGlitchSettings(prev => ({ ...prev, channelShiftEnabled: ev.value }));
-          processImage();
-        });
-        
-        // Channel shift amount
-        bindings.channelShiftAmount = channelShiftFolder.addBinding(glitchSettings, 'channelShiftAmount', {
-          label: 'Amount',
-          min: 0,
-          max: 10,
-          step: 0.1
-        }).on('change', (ev) => {
-          setGlitchSettings(prev => ({ ...prev, channelShiftAmount: ev.value }));
-          processImage();
-        });
-        
-        // Channel shift mode
-        bindings.channelShiftMode = channelShiftFolder.addBinding(glitchSettings, 'channelShiftMode', {
-          label: 'Mode',
-          options: {
-            'All Channels (RGB)': 'rgb',
-            'Red & Blue': 'rb',
-            'Red & Green': 'rg',
-            'Green & Blue': 'gb'
-          }
-        }).on('change', (ev) => {
-          setGlitchSettings(prev => ({ ...prev, channelShiftMode: ev.value }));
-          processImage();
-        });
-        
-        // Scan lines subfolder
-        const scanLinesFolder = glitchFolder.addFolder({
-          title: 'Scan Lines',
-          expanded: false
-        });
-        
-        // Enable scan lines
-        bindings.scanLinesEnabled = scanLinesFolder.addBinding(glitchSettings, 'scanLinesEnabled', {
-          label: 'Enable'
-        }).on('change', (ev) => {
-          setGlitchSettings(prev => ({ ...prev, scanLinesEnabled: ev.value }));
-          processImage();
-        });
-        
-        // Scan lines count
-        bindings.scanLinesCount = scanLinesFolder.addBinding(glitchSettings, 'scanLinesCount', {
-          label: 'Count',
-          min: 1,
-          max: 100,
-          step: 1
-        }).on('change', (ev) => {
-          setGlitchSettings(prev => ({ ...prev, scanLinesCount: ev.value }));
-          processImage();
-        });
-        
-        // Scan lines intensity
-        bindings.scanLinesIntensity = scanLinesFolder.addBinding(glitchSettings, 'scanLinesIntensity', {
-          label: 'Intensity',
-          min: 0,
-          max: 100,
-          step: 1
-        }).on('change', (ev) => {
-          setGlitchSettings(prev => ({ ...prev, scanLinesIntensity: ev.value }));
-          processImage();
-        });
-        
-        // Scan lines direction
-        bindings.scanLinesDirection = scanLinesFolder.addBinding(glitchSettings, 'scanLinesDirection', {
-          label: 'Direction',
-          options: {
-            'Horizontal': 'horizontal',
-            'Vertical': 'vertical',
-            'Both': 'both'
-          }
-        }).on('change', (ev) => {
-          setGlitchSettings(prev => ({ ...prev, scanLinesDirection: ev.value }));
-          processImage();
-        });
-        
-        // Noise subfolder
-        const noiseFolder = glitchFolder.addFolder({
-          title: 'Noise',
-          expanded: false
-        });
-        
-        // Enable noise
-        bindings.noiseEnabled = noiseFolder.addBinding(glitchSettings, 'noiseEnabled', {
-          label: 'Enable'
-        }).on('change', (ev) => {
-          setGlitchSettings(prev => ({ ...prev, noiseEnabled: ev.value }));
-          processImage();
-        });
-        
-        // Noise amount
-        bindings.noiseAmount = noiseFolder.addBinding(glitchSettings, 'noiseAmount', {
-          label: 'Amount',
-          min: 0,
-          max: 100,
-          step: 1
-        }).on('change', (ev) => {
-          setGlitchSettings(prev => ({ ...prev, noiseAmount: ev.value }));
-          processImage();
-        });
-        
-        // Blocks subfolder
-        const blocksFolder = glitchFolder.addFolder({
-          title: 'Blocks',
-          expanded: false
-        });
-        
-        // Enable blocks
-        bindings.blocksEnabled = blocksFolder.addBinding(glitchSettings, 'blocksEnabled', {
-          label: 'Enable'
-        }).on('change', (ev) => {
-          setGlitchSettings(prev => ({ ...prev, blocksEnabled: ev.value }));
-          processImage();
-        });
-        
-        // Block size
-        bindings.blocksSize = blocksFolder.addBinding(glitchSettings, 'blocksSize', {
-          label: 'Size',
-          min: 5,
-          max: 100,
-          step: 1
-        }).on('change', (ev) => {
-          setGlitchSettings(prev => ({ ...prev, blocksSize: ev.value }));
-          processImage();
-        });
-        
-        // Block offset
-        bindings.blocksOffset = blocksFolder.addBinding(glitchSettings, 'blocksOffset', {
-          label: 'Offset',
-          min: 1,
-          max: 50,
-          step: 1
-        }).on('change', (ev) => {
-          setGlitchSettings(prev => ({ ...prev, blocksOffset: ev.value }));
-          processImage();
-        });
-
-        // Block density
-        bindings.blocksDensity = blocksFolder.addBinding(glitchSettings, 'blocksDensity', {
-          label: 'Density',
-          min: 1,
-          max: 100,
-          step: 1
-        }).on('change', (ev) => {
-          setGlitchSettings(prev => ({ ...prev, blocksDensity: ev.value }));
-          processImage();
+          step: 0.01,
+        }).on('change', (ev: TpChangeEvent<number>) => {
+          handleHalftoneChange('dotScaleFactor', ev.value);
         });
 
         // 6. GRID EFFECTS FOLDER
@@ -1302,85 +944,93 @@ export default function AdvancedEditor() {
           expanded: false,
         });
         
-        // Enable grid
-        bindings.gridEnabled = gridFolder.addBinding(gridSettings, 'enabled', {
+        gridFolder.addBinding(gridSettings, 'enabled', {
           label: 'Enable'
-        }).on('change', (ev) => {
+        }).on('change', (ev: TpChangeEvent<boolean>) => {
           handleGridChange('enabled', ev.value);
         });
         
-        // Columns
-        bindings.columns = gridFolder.addBinding(gridSettings, 'columns', {
+        gridFolder.addBinding(gridSettings, 'columns', {
           label: 'Columns',
           min: 1,
-          max: 10,
+          max: 20,
           step: 1,
-        }).on('change', (ev) => {
+        }).on('change', (ev: TpChangeEvent<number>) => {
           handleGridChange('columns', ev.value);
         });
         
-        // Rows
-        bindings.rows = gridFolder.addBinding(gridSettings, 'rows', {
+        gridFolder.addBinding(gridSettings, 'rows', {
           label: 'Rows',
           min: 1,
-          max: 10,
+          max: 20,
           step: 1,
-        }).on('change', (ev) => {
+        }).on('change', (ev: TpChangeEvent<number>) => {
           handleGridChange('rows', ev.value);
         });
         
         // Apply rotation
-        bindings.applyRotation = gridFolder.addBinding(gridSettings, 'applyRotation', {
+        gridFolder.addBinding(gridSettings, 'applyRotation', {
           label: 'Apply Rotation'
-        }).on('change', (ev) => {
+        }).on('change', (ev: TpChangeEvent<boolean>) => {
           handleGridChange('applyRotation', ev.value);
         });
         
-        // Max rotation
-        bindings.maxRotation = gridFolder.addBinding(gridSettings, 'maxRotation', {
+        // Grid max rotation
+        const gridMaxRotationContainer = document.createElement('div');
+        gridFolder.element.appendChild(gridMaxRotationContainer);
+        gridFolder.addBinding(gridSettings, 'maxRotation', {
           label: 'Max Rotation',
-          min: 1,
+          value: gridSettings.maxRotation,
+          min: 0,
           max: 45,
           step: 1,
-        }).on('change', (ev) => {
+        }).on('change', (ev: TpChangeEvent<number>) => {
           handleGridChange('maxRotation', ev.value);
         });
         
         // Split enabled
-        bindings.splitEnabled = gridFolder.addBinding(gridSettings, 'splitEnabled', {
+        gridFolder.addBinding(gridSettings, 'splitEnabled', {
           label: 'Enable Splitting'
-        }).on('change', (ev) => {
+        }).on('change', (ev: TpChangeEvent<boolean>) => {
           handleGridChange('splitEnabled', ev.value);
         });
         
-        // Split probability (convert to percentage for UI)
-        const splitObj = { splitProb: gridSettings.splitProbability * 100 };
-        bindings.splitProb = gridFolder.addBinding(splitObj, 'splitProb', {
+        // Grid split probability
+        const gridSplitProbabilityContainer = document.createElement('div');
+        gridFolder.element.appendChild(gridSplitProbabilityContainer);
+        gridFolder.addBinding(gridSettings, 'splitProbability', {
           label: 'Split Probability',
+          value: gridSettings.splitProbability,
           min: 0,
-          max: 100,
-          step: 1,
-        }).on('change', (ev) => {
-          handleGridChange('splitProbability', ev.value / 100);
+          max: 1,
+          step: 0.01,
+        }).on('change', (ev: TpChangeEvent<number>) => {
+          handleGridChange('splitProbability', ev.value);
         });
         
         // Max split levels
-        bindings.maxSplitLevels = gridFolder.addBinding(gridSettings, 'maxSplitLevels', {
+        const gridMaxSplitLevelsContainer = document.createElement('div');
+        gridFolder.element.appendChild(gridMaxSplitLevelsContainer);
+        gridFolder.addBinding(gridSettings, 'maxSplitLevels', {
           label: 'Max Split Levels',
+          value: gridSettings.maxSplitLevels,
           min: 1,
-          max: 4,
+          max: 5,
           step: 1,
-        }).on('change', (ev) => {
+        }).on('change', (ev: TpChangeEvent<number>) => {
           handleGridChange('maxSplitLevels', ev.value);
         });
         
         // Min cell size
-        bindings.minCellSize = gridFolder.addBinding(gridSettings, 'minCellSize', {
+        const gridMinCellSizeContainer = document.createElement('div');
+        gridFolder.element.appendChild(gridMinCellSizeContainer);
+        gridFolder.addBinding(gridSettings, 'minCellSize', {
           label: 'Min Cell Size',
-          min: 20,
+          value: gridSettings.minCellSize,
+          min: 10,
           max: 200,
           step: 1,
-        }).on('change', (ev) => {
+        }).on('change', (ev: TpChangeEvent<number>) => {
           handleGridChange('minCellSize', ev.value);
         });
         
@@ -1393,7 +1043,6 @@ export default function AdvancedEditor() {
         
         // Store the pane and bindings
         paneRef.current = pane;
-        (paneRef.current as any).bindings = bindings;
         
         // Define the updateSpiralControls function
         const updateSpiralControls = () => {
@@ -1403,25 +1052,25 @@ export default function AdvancedEditor() {
           // Remove all spiral controls if they exist but shouldn't be visible
           if (!isSpiralVisible) {
             allSpiralBindings.forEach(key => {
-              if (bindings[key]) {
-                halftoneFolder.remove(bindings[key]);
-                bindings[key] = null;
+              if (paneRef.current?.getBlade(key)) {
+                halftoneFolder.remove(paneRef.current.getBlade(key));
+                paneRef.current?.removeBlade(key);
               }
             });
             return;
           }
           
           // Add spiral controls if they should be visible but don't exist yet
-          if (!bindings.spiralTightness) {
+          if (!paneRef.current?.getBlade('spiralTightness')) {
             // First, remove all controls after arrangement to reinsert them later
             const controlsToRemove: TweakpaneBladeApi[] = [];
             let foundArrangement = false;
             
             halftoneFolder.children.forEach(control => {
-              if (foundArrangement && control !== bindings.arrangement) {
+              if (foundArrangement && control !== paneRef.current?.getBlade('arrangement')) {
                 controlsToRemove.push(control as TweakpaneBladeApi);
               }
-              if (control === bindings.arrangement) {
+              if (control === paneRef.current?.getBlade('arrangement')) {
                 foundArrangement = true;
               }
             });
@@ -1434,16 +1083,16 @@ export default function AdvancedEditor() {
             });
             
             // Add spiral controls
-            bindings.spiralTightness = halftoneFolder.addBinding(halftoneSettings, 'spiralTightness', {
+            paneRef.current?.addBlade(halftoneSettings, 'spiralTightness', {
               label: 'Spiral Tightness',
               min: 0.01,
               max: 0.2,
               step: 0.01
-            }).on('change', (ev) => {
+            }).on('change', (ev: TpChangeEvent<number>) => {
               handleHalftoneChange('spiralTightness', ev.value);
             });
             
-            bindings.spiralExpansion = halftoneFolder.addBinding(halftoneSettings, 'spiralExpansion', {
+            paneRef.current?.addBlade(halftoneSettings, 'spiralExpansion', {
               label: 'Spiral Growth',
               min: 0.5,
               max: 3.0,
@@ -1452,7 +1101,7 @@ export default function AdvancedEditor() {
               handleHalftoneChange('spiralExpansion', ev.value);
             });
             
-            bindings.spiralRotation = halftoneFolder.addBinding(halftoneSettings, 'spiralRotation', {
+            paneRef.current?.addBlade(halftoneSettings, 'spiralRotation', {
               label: 'Spiral Rotation',
               min: -180,
               max: 180,
@@ -1461,7 +1110,7 @@ export default function AdvancedEditor() {
               handleHalftoneChange('spiralRotation', ev.value);
             });
             
-            bindings.spiralCenterX = halftoneFolder.addBinding(halftoneSettings, 'spiralCenterX', {
+            paneRef.current?.addBlade(halftoneSettings, 'spiralCenterX', {
               label: 'Center X Offset',
               min: -500,
               max: 500,
@@ -1470,7 +1119,7 @@ export default function AdvancedEditor() {
               handleHalftoneChange('spiralCenterX', ev.value);
             });
             
-            bindings.spiralCenterY = halftoneFolder.addBinding(halftoneSettings, 'spiralCenterY', {
+            paneRef.current?.addBlade(halftoneSettings, 'spiralCenterY', {
               label: 'Center Y Offset',
               min: -500,
               max: 500,
@@ -1494,25 +1143,25 @@ export default function AdvancedEditor() {
           // Remove all concentric controls if they exist but shouldn't be visible
           if (!isConcentricVisible) {
             allConcentricBindings.forEach(key => {
-              if (bindings[key]) {
-                halftoneFolder.remove(bindings[key]);
-                bindings[key] = null;
+              if (paneRef.current?.getBlade(key)) {
+                halftoneFolder.remove(paneRef.current.getBlade(key));
+                paneRef.current?.removeBlade(key);
               }
             });
             return;
           }
           
           // Add concentric controls if they should be visible but don't exist yet
-          if (!bindings.concentricRingSpacing) {
+          if (!paneRef.current?.getBlade('concentricRingSpacing')) {
             // First, remove all controls after arrangement to reinsert them later
             const controlsToRemove: TweakpaneBladeApi[] = [];
             let foundArrangement = false;
             
             halftoneFolder.children.forEach(control => {
-              if (foundArrangement && control !== bindings.arrangement) {
+              if (foundArrangement && control !== paneRef.current?.getBlade('arrangement')) {
                 controlsToRemove.push(control as TweakpaneBladeApi);
               }
-              if (control === bindings.arrangement) {
+              if (control === paneRef.current?.getBlade('arrangement')) {
                 foundArrangement = true;
               }
             });
@@ -1525,7 +1174,7 @@ export default function AdvancedEditor() {
             });
             
             // Add concentric controls
-            bindings.concentricRingSpacing = halftoneFolder.addBinding(halftoneSettings, 'concentricRingSpacing', {
+            paneRef.current?.addBlade(halftoneSettings, 'concentricRingSpacing', {
               label: 'Ring Spacing',
               min: 0.5,
               max: 3.0,
@@ -1534,7 +1183,7 @@ export default function AdvancedEditor() {
               handleHalftoneChange('concentricRingSpacing', ev.value);
             });
             
-            bindings.concentricCenterX = halftoneFolder.addBinding(halftoneSettings, 'concentricCenterX', {
+            paneRef.current?.addBlade(halftoneSettings, 'concentricCenterX', {
               label: 'Center X Offset',
               min: -500,
               max: 500,
@@ -1543,7 +1192,7 @@ export default function AdvancedEditor() {
               handleHalftoneChange('concentricCenterX', ev.value);
             });
             
-            bindings.concentricCenterY = halftoneFolder.addBinding(halftoneSettings, 'concentricCenterY', {
+            paneRef.current?.addBlade(halftoneSettings, 'concentricCenterY', {
               label: 'Center Y Offset',
               min: -500,
               max: 500,
@@ -1564,7 +1213,16 @@ export default function AdvancedEditor() {
         updateConcentricControls();
         
         // Update when arrangement changes
-        bindings.arrangement.on('change', () => {
+        paneRef.current?.addBlade(halftoneSettings, 'arrangement', {
+          label: 'Pattern',
+          options: {
+            'Grid': 'grid',
+            'Hexagonal': 'hexagonal',
+            'Spiral': 'spiral',
+            'Concentric': 'concentric',
+            'Random': 'random'
+          }
+        }).on('change', () => {
           updateSpiralControls();
           updateConcentricControls();
         });
@@ -1598,50 +1256,36 @@ export default function AdvancedEditor() {
   useEffect(() => {
     if (!paneRef.current) return;
     
-    const bindings = (paneRef.current as any).bindings;
-    if (!bindings) return;
-    
     try {
       // Update dithering settings if they exist
-      if (bindings.ditherEnabled?.controller_?.binding?.target) {
-        bindings.ditherEnabled.controller_.binding.target.enabled = ditherSettings.enabled;
-        bindings.ditherEnabled.refresh();
+      if (paneRef.current.getBlade('ditherEnabled')) {
+        paneRef.current.getBlade('ditherEnabled').controller_.binding.target.enabled = ditherSettings.enabled;
+        paneRef.current.getBlade('ditherEnabled').refresh();
       }
       
-      if (bindings.ditherType?.controller_?.binding?.target) {
-        bindings.ditherType.controller_.binding.target.type = ditherSettings.type;
-        bindings.ditherType.refresh();
+      if (paneRef.current.getBlade('ditherType')) {
+        paneRef.current.getBlade('ditherType').controller_.binding.target.type = ditherSettings.type;
+        paneRef.current.getBlade('ditherType').refresh();
       }
       
-      if (bindings.ditherResolution?.controller_?.binding?.target) {
-        bindings.ditherResolution.controller_.binding.target.resolution = ditherSettings.resolution;
-        bindings.ditherResolution.refresh();
+      if (paneRef.current.getBlade('ditherResolution')) {
+        paneRef.current.getBlade('ditherResolution').controller_.binding.target.resolution = ditherSettings.resolution;
+        paneRef.current.getBlade('ditherResolution').refresh();
       }
       
-      if (bindings.ditherColorDepth?.controller_?.binding?.target) {
-        bindings.ditherColorDepth.controller_.binding.target.colorDepth = ditherSettings.colorDepth;
-        bindings.ditherColorDepth.refresh();
+      if (paneRef.current.getBlade('ditherColorDepth')) {
+        paneRef.current.getBlade('ditherColorDepth').controller_.binding.target.colorDepth = ditherSettings.colorDepth;
+        paneRef.current.getBlade('ditherColorDepth').refresh();
       }
       
-      if (bindings.ditherThreshold?.controller_?.binding?.target) {
-        bindings.ditherThreshold.controller_.binding.target.threshold = ditherSettings.threshold;
-        bindings.ditherThreshold.refresh();
+      if (paneRef.current.getBlade('ditherThreshold')) {
+        paneRef.current.getBlade('ditherThreshold').controller_.binding.target.threshold = ditherSettings.threshold;
+        paneRef.current.getBlade('ditherThreshold').refresh();
       }
       
-      if (bindings.ditherColorMode?.controller_?.binding?.target) {
-        bindings.ditherColorMode.controller_.binding.target.colorMode = ditherSettings.colorMode;
-        bindings.ditherColorMode.refresh();
-      }
-      
-      // Update 2-color mode color pickers if they exist
-      if (bindings.ditherDarkColor?.binding?.controller_?.binding?.target) {
-        bindings.ditherDarkColor.binding.controller_.binding.target.darkColor = ditherSettings.darkColor;
-        bindings.ditherDarkColor.binding.refresh();
-      }
-      
-      if (bindings.ditherLightColor?.binding?.controller_?.binding?.target) {
-        bindings.ditherLightColor.binding.controller_.binding.target.lightColor = ditherSettings.lightColor;
-        bindings.ditherLightColor.binding.refresh();
+      if (paneRef.current.getBlade('ditherColorMode')) {
+        paneRef.current.getBlade('ditherColorMode').controller_.binding.target.colorMode = ditherSettings.colorMode;
+        paneRef.current.getBlade('ditherColorMode').refresh();
       }
       
     } catch (error) {
@@ -1900,61 +1544,59 @@ export default function AdvancedEditor() {
     }
   };
 
-  // Load a random image
-  const loadRandomImage = () => {
-    // Use a standard size for initial fetching
-    const randomId = Math.floor(Math.random() * 1000);
-    const imageUrl = `https://picsum.photos/1200/800?random=${randomId}`;
+  // Load random image
+  const loadRandomImage = useCallback(() => {
+    setIsLoading(true);
     
-    // Fetch the image
-    fetch(imageUrl)
-      .then(response => response.blob())
+    // Use picsum.photos instead of Unsplash
+    fetch('https://picsum.photos/1200/800')
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Failed to fetch image');
+        }
+        return response.blob();
+      })
       .then(blob => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          if (e.target?.result) {
-            const imageData = e.target.result as string;
-            setImage(imageData);
-            setOriginalImageDataRef(imageData);
-            
-            // Adjust canvas to match image aspect ratio while fitting viewport
+        return new Promise<{ width: number; height: number }>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const imageData = reader.result as string;
             const img = new Image();
             img.onload = () => {
-              // Get viewport dimensions
-              const viewportWidth = window.innerWidth - 80; // Account for margins/padding
-              const viewportHeight = window.innerHeight - 200; // Account for header/footer/margins
+              const viewportWidth = window.innerWidth - 200;
+              const viewportHeight = window.innerHeight - 200;
               
-              // Calculate dimensions to maintain aspect ratio while fitting viewport
-              let newWidth = img.width;
-              let newHeight = img.height;
+              // Calculate dimensions to maintain aspect ratio
+              const scale = Math.min(
+                viewportWidth / img.width,
+                viewportHeight / img.height
+              );
               
-              // Scale down if larger than viewport
-              if (newWidth > viewportWidth) {
-                const ratio = viewportWidth / newWidth;
-                newWidth = viewportWidth;
-                newHeight = newHeight * ratio;
-              }
+              setImage(imageData);
+              setOriginalImageDataRef(imageData);
               
-              if (newHeight > viewportHeight) {
-                const ratio = viewportHeight / newHeight;
-                newHeight = viewportHeight;
-                newWidth = newWidth * ratio;
-              }
-              
-              // Update canvas dimensions
-              setCanvasWidth(Math.round(newWidth));
-              setCanvasHeight(Math.round(newHeight));
-              setAspectRatio('custom');
+              resolve({
+                width: Math.round(img.width * scale),
+                height: Math.round(img.height * scale)
+              });
             };
             img.src = imageData;
-          }
-        };
-        reader.readAsDataURL(blob);
+          };
+          reader.readAsDataURL(blob);
+        });
+      })
+      .then(({ width, height }) => {
+        setCanvasWidth(width);
+        setCanvasHeight(height);
+        setAspectRatio('custom');
       })
       .catch(error => {
         console.error('Error loading random image:', error);
+      })
+      .finally(() => {
+        setIsLoading(false);
       });
-  };
+  }, [setCanvasWidth, setCanvasHeight, setAspectRatio, setImage, setOriginalImageDataRef, setIsLoading]);
 
   // Reset to original image
   const resetImage = () => {
@@ -2341,9 +1983,10 @@ export default function AdvancedEditor() {
               </button>
               <button
                 onClick={loadRandomImage}
-                className="px-3 py-1 bg-black text-white text-sm rounded hover:bg-gray-800 transition-colors pp-mondwest-font"
+                disabled={isLoading}
+                className={`px-3 py-1 bg-black text-white text-sm rounded hover:bg-gray-800 transition-colors pp-mondwest-font ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
-                Load Random
+                {isLoading ? 'Loading...' : 'Load Random'}
               </button>
               <button
                 onClick={resetImage}
@@ -2385,7 +2028,9 @@ export default function AdvancedEditor() {
                 />
               ) : (
                 <div className="py-12">
-                  <p className="text-gray-600 pp-mondwest-font">Drag & drop an image here, or click to select</p>
+                  <p className="text-gray-600 pp-mondwest-font">
+                    {isLoading ? 'Loading random image...' : 'Drag & drop an image here, or click to select'}
+                  </p>
                 </div>
               )}
             </div>

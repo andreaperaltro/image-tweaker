@@ -13,6 +13,7 @@ export interface GlitchSettings {
   glitchIntensity: number;
   glitchDensity: number;  // New: Controls number of glitched areas
   glitchDirection: 'horizontal' | 'vertical' | 'both';  // New: Direction for general glitch
+  glitchSize: number;     // New: Controls size of glitch lines/areas
   
   // Pixel sorting
   pixelSortingEnabled: boolean;
@@ -482,11 +483,11 @@ function applyGeneralGlitch(
       // Pick a random line
       const y = Math.floor(Math.random() * height);
       
-      // Calculate line coordinates
-      const lineHeight = Math.max(1, Math.floor(Math.random() * 10));
+      // Calculate line coordinates using glitchSize
+      const lineHeight = Math.max(1, Math.floor(settings.glitchSize * Math.random()));
       
-      // Generate random offset
-      const offsetX = Math.floor(Math.random() * width * 0.1);
+      // Generate random offset scaled by glitchSize
+      const offsetX = Math.floor(Math.random() * width * (settings.glitchSize / 100));
       
       // Shift this horizontal line by offsetX
       for (let h = 0; h < lineHeight; h++) {
@@ -523,11 +524,11 @@ function applyGeneralGlitch(
       // Pick a random column
       const x = Math.floor(Math.random() * width);
       
-      // Calculate column coordinates
-      const columnWidth = Math.max(1, Math.floor(Math.random() * 10));
+      // Calculate column coordinates using glitchSize
+      const columnWidth = Math.max(1, Math.floor(settings.glitchSize * Math.random()));
       
-      // Generate random offset
-      const offsetY = Math.floor(Math.random() * height * 0.1);
+      // Generate random offset scaled by glitchSize
+      const offsetY = Math.floor(Math.random() * height * (settings.glitchSize / 100));
       
       // Shift this vertical column by offsetY
       for (let w = 0; w < columnWidth; w++) {
@@ -563,8 +564,8 @@ function applyGeneralGlitch(
     for (let i = 0; i < numColorDistortions; i++) {
       const x = Math.floor(Math.random() * width);
       const y = Math.floor(Math.random() * height);
-      const w = Math.min(Math.floor(Math.random() * 30) + 5, width - x);
-      const h = Math.min(Math.floor(Math.random() * 30) + 5, height - y);
+      const w = Math.min(Math.floor(settings.glitchSize * 3 * Math.random()) + 5, width - x);
+      const h = Math.min(Math.floor(settings.glitchSize * 3 * Math.random()) + 5, height - y);
       
       const channel = Math.floor(Math.random() * 3); // 0 = red, 1 = green, 2 = blue
       const amount = Math.floor(Math.random() * 100) - 50;

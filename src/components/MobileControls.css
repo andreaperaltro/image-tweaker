@@ -23,6 +23,7 @@
   height: 100%;
   max-height: calc(100vh - 40px);
   border: 1px solid #444;
+  font-family: 'PP Mondwest', sans-serif;
 }
 
 /* Hide mobile toggles since we're not using a drawer */
@@ -45,10 +46,10 @@
 }
 
 .mobile-controls-title {
-  font-size: 16px;
-  font-weight: bold;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0;
   font-family: 'PP Mondwest', sans-serif;
-  color: white;
 }
 
 .mobile-effect-section {
@@ -131,12 +132,11 @@
 }
 
 .mobile-effect-title {
-  display: flex;
-  align-items: center;
-  font-size: 14px;
-  font-weight: bold;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0;
+  cursor: pointer;
   font-family: 'PP Mondwest', sans-serif;
-  color: white;
 }
 
 /* Add expand indicator icon */
@@ -218,14 +218,9 @@
 }
 
 .mobile-sub-section-title {
-  font-size: 13px;
-  font-weight: bold;
-  margin-bottom: 10px;
-  color: #ccc;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  padding-bottom: 5px;
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 12px 0;
 }
 
 .mobile-sub-section .mobile-control-group:first-of-type {
@@ -240,53 +235,159 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
+  gap: 12px;
 }
 
 .mobile-control-label {
   display: block;
-  font-size: 12px;
-  margin-bottom: 3px;
-  font-family: 'PP Mondwest', sans-serif;
+  font-size: 14px;
+  min-width: 120px;
   color: #ccc;
+  font-family: 'PP Mondwest', sans-serif;
 }
 
-.mobile-slider {
-  width: 100%;
-  -webkit-appearance: none;
-  height: 6px;
-  border-radius: 3px;
-  background: #555;
-  outline: none;
-  margin: 6px 0;
-}
-
-.mobile-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
+.mobile-select {
+  flex: 1;
+  height: 36px;
+  border-radius: 6px;
+  border: 1px solid #555;
+  background: #444;
+  color: white;
+  padding: 0 32px 0 12px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
   appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M2.5 4.5L6 8L9.5 4.5' stroke='%23999' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  font-family: 'PP Mondwest', sans-serif;
+}
+
+.mobile-select:hover {
+  background-color: #4a4a4a;
+  border-color: #666;
+}
+
+.mobile-select:focus {
+  outline: none;
+  border-color: #10b981;
+  box-shadow: 0 0 0 1px #10b981;
+}
+
+.mobile-select option {
+  background: #333;
+  color: white;
+  padding: 8px;
+  font-size: 14px;
+}
+
+/* Mobile-specific slider styles */
+.mobile-effect-section .slider-container {
+  margin-bottom: 12px;
+}
+
+.mobile-effect-section .slider-label-container {
+  margin-bottom: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.mobile-effect-section .slider-label {
+  color: #ccc;
+  font-size: 14px;
+  min-width: 120px;
+  font-family: 'PP Mondwest', sans-serif;
+}
+
+.mobile-effect-section .slider-value {
+  color: #ccc;
+  font-size: 14px;
+  min-width: 50px;
+  text-align: right;
+}
+
+.mobile-effect-section .slider-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mobile-effect-section input[type="range"] {
+  flex: 1;
+  height: 2px;
+  background-color: #555;
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.mobile-effect-section input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: #4CAF50;
+  background-color: #10b981;
   cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mobile-effect-section input[type="range"]::-webkit-slider-thumb:hover {
+  background-color: #059669;
+  transform: scale(1.1);
+}
+
+.mobile-effect-section input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border: none;
+  border-radius: 50%;
+  background-color: #10b981;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mobile-effect-section input[type="range"]::-moz-range-thumb:hover {
+  background-color: #059669;
+  transform: scale(1.1);
+}
+
+.mobile-effect-section .slider-button {
+  width: 28px;
+  height: 28px;
+  background-color: #444;
+  color: #ccc;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mobile-effect-section .slider-button:hover {
+  background-color: #555;
+}
+
+.mobile-effect-section .slider-button:active {
+  background-color: #666;
+  transform: scale(0.95);
+}
+
+.mobile-effect-section .slider-button:disabled {
+  background-color: #333;
+  color: #666;
+  cursor: not-allowed;
 }
 
 .mobile-color-picker {
   width: 100%;
   height: 32px;
   border-radius: 3px;
-}
-
-.mobile-select {
-  width: 100%;
-  height: 32px;
-  border-radius: 3px;
-  border: 1px solid #555;
-  background: #444;
-  color: white;
-  padding: 0 8px;
-  font-size: 12px;
-  font-family: 'PP Mondwest', sans-serif;
 }
 
 .mobile-controls-actions {
@@ -303,9 +404,9 @@
   border-radius: 4px;
   font-size: 12px;
   cursor: pointer;
-  font-family: 'PP Mondwest', sans-serif !important;
   font-weight: normal;
   text-transform: uppercase;
+  font-family: 'PP Mondwest', sans-serif;
 }
 
 .mobile-action-button:hover {
@@ -319,7 +420,6 @@
   font-size: 12px;
   text-align: center;
   color: #999;
-  font-family: 'PP Mondwest', sans-serif;
 }
 
 .mobile-controls-footer a {

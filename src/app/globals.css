@@ -1,32 +1,136 @@
+@import './fonts.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /* Use PP Mondwest with fallbacks */
 :root {
-  --font-mondwest: 'PP Mondwest', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  --foreground-rgb: 255, 255, 255;
+  --background-start-rgb: 0, 0, 0;
+  --background-end-rgb: 0, 0, 0;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+  font-family: 'PP Mondwest', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'PP Mondwest', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+button, 
+input, 
+select, 
+textarea {
+  font-family: 'PP Mondwest', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 .font-mondwest {
   font-family: var(--font-mondwest);
 }
 
-@font-face {
-  font-family: 'PP Mondwest';
-  src: url('/fonts/PPMondwest-Regular.otf') format('opentype');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'PP Mondwest';
-  src: url('/fonts/PPMondwest-Bold.otf') format('opentype');
-  font-weight: bold;
-  font-style: normal;
-  font-display: swap;
-}
-
 .pp-mondwest-font {
-  font-family: 'PP Mondwest', sans-serif;
+  font-family: 'PP Mondwest', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
+/* Slider component styles */
+.slider-container {
+  @apply flex flex-col gap-2 w-full;
+}
+
+.slider-label-container {
+  @apply flex justify-between items-center min-h-[24px];
+}
+
+.slider-label {
+  @apply text-sm font-medium text-gray-700 min-w-[100px];
+}
+
+.slider-value {
+  @apply text-sm text-gray-600 min-w-[40px] text-right;
+}
+
+.slider-controls {
+  @apply flex items-center gap-2;
+}
+
+input[type="range"] {
+  @apply w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  @apply appearance-none w-4 h-4 rounded-full bg-emerald-500 cursor-pointer;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  @apply bg-emerald-600;
+}
+
+input[type="range"]::-moz-range-thumb {
+  @apply w-4 h-4 rounded-full bg-emerald-500 cursor-pointer border-0;
+}
+
+input[type="range"]::-moz-range-thumb:hover {
+  @apply bg-emerald-600;
+}
+
+.slider-button {
+  @apply flex items-center justify-center w-6 h-6 rounded bg-gray-100 text-gray-700 hover:bg-gray-200 active:bg-gray-300 transition-colors;
+}
+
+/* Tweakpane custom styles */
+.tp-dfwv {
+  min-width: 350px !important;
+}
+
+.tp-rotv {
+  background-color: rgb(31 41 55) !important;
+}
+
+.tp-lblv_l {
+  color: rgb(209 213 219) !important;
+}
+
+.tp-sldv_k {
+  background-color: rgb(30 41 59) !important;
+}
+
+.tp-sldv_v {
+  background-color: rgb(52 211 153) !important;
+}
+
+.tp-sldv_v:hover {
+  background-color: rgb(16 185 129) !important;
+}
+
+.tp-rotv_t {
+  color: rgb(209 213 219) !important;
+}
+
+/* Custom scrollbar styles */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #222;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
 } 

@@ -3,6 +3,7 @@
 import React from 'react';
 import { ImageParams } from './ImageEditor';
 import { HalftoneArrangement, HalftoneShape } from '@/utils/imageUtils';
+import Slider from './Slider';
 
 interface ControlPanelProps {
   params: ImageParams;
@@ -10,43 +11,6 @@ interface ControlPanelProps {
 }
 
 const ControlPanel: React.FC<ControlPanelProps> = ({ params, onChange }) => {
-  // Helper function to create a slider control
-  const Slider = ({
-    label,
-    value,
-    onChange,
-    min = 0,
-    max = 100,
-    step = 1
-  }: {
-    label: string;
-    value: number;
-    onChange: (value: number) => void;
-    min?: number;
-    max?: number;
-    step?: number;
-  }) => (
-    <div className="mb-4">
-      <label className="block text-sm font-medium text-gray-700 mb-1">
-        {label}
-      </label>
-      <div className="flex items-center gap-2">
-        <input
-          type="range"
-          min={min}
-          max={max}
-          step={step}
-          value={value}
-          onChange={(e) => onChange(parseFloat(e.target.value))}
-          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-        />
-        <span className="text-sm text-gray-600 w-12 text-right">
-          {value.toFixed(step < 1 ? 2 : 0)}
-        </span>
-      </div>
-    </div>
-  );
-
   // Helper function to create a color picker control
   const ColorPicker = ({
     label,
@@ -150,6 +114,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ params, onChange }) => {
               min={100}
               max={4096}
               step={1}
+              unit="px"
             />
             <Slider
               label="Height"
@@ -158,6 +123,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ params, onChange }) => {
               min={100}
               max={4096}
               step={1}
+              unit="px"
             />
             <Checkbox
               label="Lock Aspect Ratio"
@@ -199,6 +165,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ params, onChange }) => {
           min={-100}
           max={100}
           step={1}
+          unit="px"
         />
         <Slider
           label="Y Displacement"
@@ -207,6 +174,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ params, onChange }) => {
           min={-100}
           max={100}
           step={1}
+          unit="px"
         />
       </div>
 
@@ -220,6 +188,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ params, onChange }) => {
           min={-180}
           max={180}
           step={1}
+          unit="°"
         />
         <Slider
           label="Saturation Variation"
@@ -370,6 +339,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ params, onChange }) => {
               min={0}
               max={360}
               step={1}
+              unit="°"
             />
           </>
         )}

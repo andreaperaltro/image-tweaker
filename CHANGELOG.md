@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1.0] - 2024-03-26
+
+### Changed
+- Switched from Unsplash to Picsum.photos for random image service
+- Improved error handling in image loading
+- Enhanced development server configuration with dynamic port assignment
+- Removed unused HelpModal component and related files
+- Streamlined mobile controls implementation
+
+### Fixed
+- Fixed port conflict issues in development server
+- Resolved font loading issues with PP Mondwest
+- Fixed syntax errors in AdvancedEditor component
+- Improved error handling in image processing pipeline
+
 ## [0.2.0.0] - 2024-06-06
 
 ### Added

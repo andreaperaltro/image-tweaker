@@ -10,6 +10,7 @@ import { GlitchSettings } from './GlitchUtils'
 import { TextDitherSettings } from './TextDitherUtils'
 import { GradientMapSettings, GradientMapBlendMode } from './GradientMapUtils'
 import { GridSettings } from './Grid'
+import Slider from './Slider'
 
 interface MobileControlsProps {
   ditherSettings: DitherSettings
@@ -258,54 +259,42 @@ const MobileControls: React.FC<MobileControlsProps> = ({
             )}
             <div className={`mobile-effect-content ${openSection === 'color' ? 'open' : ''}`}>
               {/* Color settings content */}
-              <div className="mobile-control-group">
-                <label className="mobile-control-label">Brightness ({colorSettings.brightness}%)</label>
-                <input 
-                  type="range" 
-                  className="mobile-slider"
-                  min={0}
-                  max={200}
-                  value={colorSettings.brightness}
-                  onChange={(e) => updateColorSettings('brightness', parseInt(e.target.value))}
-                />
-              </div>
-              
-              <div className="mobile-control-group">
-                <label className="mobile-control-label">Contrast ({colorSettings.contrast}%)</label>
-                <input 
-                  type="range" 
-                  className="mobile-slider"
-                  min={0}
-                  max={200}
-                  value={colorSettings.contrast}
-                  onChange={(e) => updateColorSettings('contrast', parseInt(e.target.value))}
-                />
-              </div>
-              
-              <div className="mobile-control-group">
-                <label className="mobile-control-label">Saturation ({colorSettings.saturation}%)</label>
-                <input 
-                  type="range" 
-                  className="mobile-slider"
-                  min={0}
-                  max={200}
-                  value={colorSettings.saturation}
-                  onChange={(e) => updateColorSettings('saturation', parseInt(e.target.value))}
-                />
-              </div>
-              
-              <div className="mobile-control-group">
-                <label className="mobile-control-label">Hue Shift ({colorSettings.hueShift}°)</label>
-                <input 
-                  type="range" 
-                  className="mobile-slider"
-                  min={-180}
-                  max={180}
-                  value={colorSettings.hueShift}
-                  onChange={(e) => updateColorSettings('hueShift', parseInt(e.target.value))}
-                />
-              </div>
-              
+              <Slider
+                label="Brightness"
+                value={colorSettings.brightness}
+                onChange={(value) => updateColorSettings('brightness', value)}
+                min={0}
+                max={200}
+                step={1}
+                unit="%"
+              />
+              <Slider
+                label="Contrast"
+                value={colorSettings.contrast}
+                onChange={(value) => updateColorSettings('contrast', value)}
+                min={0}
+                max={200}
+                step={1}
+                unit="%"
+              />
+              <Slider
+                label="Saturation"
+                value={colorSettings.saturation}
+                onChange={(value) => updateColorSettings('saturation', value)}
+                min={0}
+                max={200}
+                step={1}
+                unit="%"
+              />
+              <Slider
+                label="Hue Shift"
+                value={colorSettings.hueShift}
+                onChange={(value) => updateColorSettings('hueShift', value)}
+                min={-180}
+                max={180}
+                step={1}
+                unit="°"
+              />
               <div className="mobile-control-group">
                 <label className="mobile-control-label">Invert Colors</label>
                 <label className="mobile-effect-toggle">
@@ -426,86 +415,14 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                   <option value="gradient">Gradient</option>
                 </select>
               </div>
-              
-              <div className="mobile-control-group">
-                <label className="mobile-control-label">Threshold ({thresholdSettings.threshold})</label>
-                <input 
-                  type="range" 
-                  className="mobile-slider"
-                  min={0}
-                  max={255}
-                  value={thresholdSettings.threshold}
-                  onChange={(e) => updateThresholdSettings({ threshold: parseInt(e.target.value) })}
-                />
-              </div>
-              
-              {thresholdSettings.mode === 'solid' && (
-                <>
-                  <div className="mobile-control-group">
-                    <label className="mobile-control-label">Dark Color</label>
-                    <input 
-                      type="color" 
-                      className="mobile-color-picker"
-                      value={thresholdSettings.darkColor}
-                      onChange={(e) => handleColorChange(updateThresholdSettings, 'darkColor', e.target.value)}
-                    />
-                  </div>
-                  
-                  <div className="mobile-control-group">
-                    <label className="mobile-control-label">Light Color</label>
-                    <input 
-                      type="color" 
-                      className="mobile-color-picker"
-                      value={thresholdSettings.lightColor}
-                      onChange={(e) => handleColorChange(updateThresholdSettings, 'lightColor', e.target.value)}
-                    />
-                  </div>
-                </>
-              )}
-              
-              {thresholdSettings.mode === 'gradient' && (
-                <>
-                  <div className="mobile-control-group">
-                    <label className="mobile-control-label">Dark Color Start</label>
-                    <input 
-                      type="color" 
-                      className="mobile-color-picker"
-                      value={thresholdSettings.darkColorStart}
-                      onChange={(e) => handleColorChange(updateThresholdSettings, 'darkColorStart', e.target.value)}
-                    />
-                  </div>
-                  
-                  <div className="mobile-control-group">
-                    <label className="mobile-control-label">Dark Color End</label>
-                    <input 
-                      type="color" 
-                      className="mobile-color-picker"
-                      value={thresholdSettings.darkColorEnd}
-                      onChange={(e) => handleColorChange(updateThresholdSettings, 'darkColorEnd', e.target.value)}
-                    />
-                  </div>
-                  
-                  <div className="mobile-control-group">
-                    <label className="mobile-control-label">Light Color Start</label>
-                    <input 
-                      type="color" 
-                      className="mobile-color-picker"
-                      value={thresholdSettings.lightColorStart}
-                      onChange={(e) => handleColorChange(updateThresholdSettings, 'lightColorStart', e.target.value)}
-                    />
-                  </div>
-                  
-                  <div className="mobile-control-group">
-                    <label className="mobile-control-label">Light Color End</label>
-                    <input 
-                      type="color" 
-                      className="mobile-color-picker"
-                      value={thresholdSettings.lightColorEnd}
-                      onChange={(e) => handleColorChange(updateThresholdSettings, 'lightColorEnd', e.target.value)}
-                    />
-                  </div>
-                </>
-              )}
+              <Slider
+                label="Threshold"
+                value={thresholdSettings.threshold}
+                onChange={(value) => updateThresholdSettings({ threshold: value })}
+                min={0}
+                max={255}
+                step={1}
+              />
             </div>
           </div>
         );
@@ -522,6 +439,19 @@ const MobileControls: React.FC<MobileControlsProps> = ({
             <div className={`mobile-effect-content ${openSection === 'dither' ? 'open' : ''}`}>
               {/* Dithering content */}
               <div className="mobile-control-group">
+                <label className="mobile-control-label">Color Mode</label>
+                <select 
+                  className="mobile-select"
+                  value={ditherSettings.colorMode}
+                  onChange={(e) => updateDitherSettings({ colorMode: e.target.value as DitherColorMode })}
+                >
+                  <option value="grayscale">Grayscale</option>
+                  <option value="color">Color</option>
+                  <option value="2-color">2 Color Palette</option>
+                </select>
+              </div>
+
+              <div className="mobile-control-group">
                 <label className="mobile-control-label">Type</label>
                 <select 
                   className="mobile-select"
@@ -536,80 +466,34 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                   <option value="burkes">Burkes</option>
                 </select>
               </div>
-              
-              <div className="mobile-control-group">
-                <label className="mobile-control-label">Resolution ({ditherSettings.resolution})</label>
-                <input 
-                  type="range" 
-                  className="mobile-slider"
-                  min={1}
-                  max={100}
-                  value={ditherSettings.resolution}
-                  onChange={(e) => updateDitherSettings({ resolution: parseInt(e.target.value) })}
-                />
-              </div>
-              
-              <div className="mobile-control-group">
-                <label className="mobile-control-label">Threshold ({ditherSettings.threshold})</label>
-                <input 
-                  type="range" 
-                  className="mobile-slider"
-                  min={0}
-                  max={255}
-                  value={ditherSettings.threshold}
-                  onChange={(e) => updateDitherSettings({ threshold: parseInt(e.target.value) })}
-                />
-              </div>
-              
-              <div className="mobile-control-group">
-                <label className="mobile-control-label">Color Mode</label>
-                <select 
-                  className="mobile-select"
-                  value={ditherSettings.colorMode}
-                  onChange={(e) => updateDitherSettings({ colorMode: e.target.value as DitherColorMode })}
-                >
-                  <option value="grayscale">Grayscale</option>
-                  <option value="color">Color</option>
-                  <option value="2-color">2 Color Palette</option>
-                </select>
-              </div>
+
+              <Slider
+                label="Resolution"
+                value={ditherSettings.resolution}
+                onChange={(value) => updateDitherSettings({ resolution: value })}
+                min={1}
+                max={100}
+                step={1}
+              />
+
+              <Slider
+                label="Threshold"
+                value={ditherSettings.threshold}
+                onChange={(value) => updateDitherSettings({ threshold: value })}
+                min={0}
+                max={255}
+                step={1}
+              />
               
               {ditherSettings.colorMode !== '2-color' && (
-                <div className="mobile-control-group">
-                  <label className="mobile-control-label">Color Depth ({ditherSettings.colorDepth})</label>
-                  <input 
-                    type="range" 
-                    className="mobile-slider"
-                    min={2}
-                    max={256}
-                    value={ditherSettings.colorDepth}
-                    onChange={(e) => updateDitherSettings({ colorDepth: parseInt(e.target.value) })}
-                  />
-                </div>
-              )}
-              
-              {ditherSettings.colorMode === '2-color' && (
-                <>
-                  <div className="mobile-control-group">
-                    <label className="mobile-control-label">Dark Color</label>
-                    <input 
-                      type="color" 
-                      className="mobile-color-picker"
-                      value={ditherSettings.darkColor}
-                      onChange={(e) => handleColorChange(updateDitherSettings, 'darkColor', e.target.value)}
-                    />
-                  </div>
-                  
-                  <div className="mobile-control-group">
-                    <label className="mobile-control-label">Light Color</label>
-                    <input 
-                      type="color" 
-                      className="mobile-color-picker"
-                      value={ditherSettings.lightColor}
-                      onChange={(e) => handleColorChange(updateDitherSettings, 'lightColor', e.target.value)}
-                    />
-                  </div>
-                </>
+                <Slider
+                  label="Color Depth"
+                  value={ditherSettings.colorDepth}
+                  onChange={(value) => updateDitherSettings({ colorDepth: value })}
+                  min={2}
+                  max={256}
+                  step={1}
+                />
               )}
             </div>
           </div>
@@ -626,43 +510,32 @@ const MobileControls: React.FC<MobileControlsProps> = ({
             )}
             <div className={`mobile-effect-content ${openSection === 'halftone' ? 'open' : ''}`}>
               {/* Halftone content */}
-              <div className="mobile-control-group">
-                <label className="mobile-control-label">Cell Size ({halftoneSettings.cellSize})</label>
-                <input 
-                  type="range" 
-                  className="mobile-slider"
-                  min={2}
-                  max={30}
-                  value={halftoneSettings.cellSize}
-                  onChange={(e) => updateHalftoneSettings('cellSize', parseInt(e.target.value))}
-                />
-              </div>
-              
-              <div className="mobile-control-group">
-                <label className="mobile-control-label">Dot Scale ({halftoneSettings.dotScaleFactor.toFixed(2)})</label>
-                <input 
-                  type="range" 
-                  className="mobile-slider"
-                  min={0.1}
-                  max={1.5}
-                  step={0.05}
-                  value={halftoneSettings.dotScaleFactor}
-                  onChange={(e) => updateHalftoneSettings('dotScaleFactor', parseFloat(e.target.value))}
-                />
-              </div>
-              
-              <div className="mobile-control-group">
-                <label className="mobile-control-label">Mix Amount ({halftoneSettings.mix}%)</label>
-                <input 
-                  type="range" 
-                  className="mobile-slider"
-                  min={0}
-                  max={100}
-                  value={halftoneSettings.mix}
-                  onChange={(e) => updateHalftoneSettings('mix', parseInt(e.target.value))}
-                />
-              </div>
-              
+              <Slider
+                label="Cell Size"
+                value={halftoneSettings.cellSize}
+                onChange={(value) => updateHalftoneSettings('cellSize', value)}
+                min={2}
+                max={30}
+                step={1}
+                unit="px"
+              />
+              <Slider
+                label="Dot Scale"
+                value={halftoneSettings.dotScaleFactor}
+                onChange={(value) => updateHalftoneSettings('dotScaleFactor', value)}
+                min={0.1}
+                max={1.5}
+                step={0.05}
+              />
+              <Slider
+                label="Mix Amount"
+                value={halftoneSettings.mix}
+                onChange={(value) => updateHalftoneSettings('mix', value)}
+                min={0}
+                max={100}
+                step={1}
+                unit="%"
+              />
               <div className="mobile-control-group">
                 <label className="mobile-control-label">Shape</label>
                 <select 
@@ -748,29 +621,32 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                   </label>
                 </div>
                 
-                <div className="mobile-control-group">
-                  <label className="mobile-control-label">Intensity ({glitchSettings.glitchIntensity})</label>
-                  <input 
-                    type="range" 
-                    className="mobile-slider"
-                    min={0}
-                    max={100}
-                    value={glitchSettings.glitchIntensity}
-                    onChange={(e) => updateGlitchSettings({ glitchIntensity: parseInt(e.target.value) })}
-                  />
-                </div>
+                <Slider
+                  label="Intensity"
+                  value={glitchSettings.glitchIntensity}
+                  onChange={(value) => updateGlitchSettings({ glitchIntensity: value })}
+                  min={0}
+                  max={100}
+                  step={1}
+                />
                 
-                <div className="mobile-control-group">
-                  <label className="mobile-control-label">Density ({glitchSettings.glitchDensity})</label>
-                  <input 
-                    type="range" 
-                    className="mobile-slider"
-                    min={0}
-                    max={100}
-                    value={glitchSettings.glitchDensity}
-                    onChange={(e) => updateGlitchSettings({ glitchDensity: parseInt(e.target.value) })}
-                  />
-                </div>
+                <Slider
+                  label="Density"
+                  value={glitchSettings.glitchDensity}
+                  onChange={(value) => updateGlitchSettings({ glitchDensity: value })}
+                  min={0}
+                  max={100}
+                  step={1}
+                />
+                
+                <Slider
+                  label="Size"
+                  value={glitchSettings.glitchSize}
+                  onChange={(value) => updateGlitchSettings({ glitchSize: value })}
+                  min={1}
+                  max={50}
+                  step={1}
+                />
                 
                 <div className="mobile-control-group">
                   <label className="mobile-control-label">Direction</label>
@@ -801,18 +677,14 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                   </label>
                 </div>
                 
-                <div className="mobile-control-group">
-                  <label className="mobile-control-label">Threshold ({glitchSettings.pixelSortingThreshold})</label>
-                  <input 
-                    type="range" 
-                    className="mobile-slider"
-                    min={0}
-                    max={1}
-                    step={0.01}
-                    value={glitchSettings.pixelSortingThreshold}
-                    onChange={(e) => updateGlitchSettings({ pixelSortingThreshold: parseFloat(e.target.value) })}
-                  />
-                </div>
+                <Slider
+                  label="Threshold"
+                  value={glitchSettings.pixelSortingThreshold}
+                  onChange={(value) => updateGlitchSettings({ pixelSortingThreshold: value })}
+                  min={0}
+                  max={1}
+                  step={0.01}
+                />
                 
                 <div className="mobile-control-group">
                   <label className="mobile-control-label">Direction</label>
@@ -843,17 +715,14 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                   </label>
                 </div>
                 
-                <div className="mobile-control-group">
-                  <label className="mobile-control-label">Amount ({glitchSettings.channelShiftAmount})</label>
-                  <input 
-                    type="range" 
-                    className="mobile-slider"
-                    min={0}
-                    max={50}
-                    value={glitchSettings.channelShiftAmount}
-                    onChange={(e) => updateGlitchSettings({ channelShiftAmount: parseInt(e.target.value) })}
-                  />
-                </div>
+                <Slider
+                  label="Amount"
+                  value={glitchSettings.channelShiftAmount}
+                  onChange={(value) => updateGlitchSettings({ channelShiftAmount: value })}
+                  min={0}
+                  max={50}
+                  step={1}
+                />
                 
                 <div className="mobile-control-group">
                   <label className="mobile-control-label">Channels</label>
@@ -885,29 +754,23 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                   </label>
                 </div>
                 
-                <div className="mobile-control-group">
-                  <label className="mobile-control-label">Count ({glitchSettings.scanLinesCount})</label>
-                  <input 
-                    type="range" 
-                    className="mobile-slider"
-                    min={1}
-                    max={100}
-                    value={glitchSettings.scanLinesCount}
-                    onChange={(e) => updateGlitchSettings({ scanLinesCount: parseInt(e.target.value) })}
-                  />
-                </div>
+                <Slider
+                  label="Count"
+                  value={glitchSettings.scanLinesCount}
+                  onChange={(value) => updateGlitchSettings({ scanLinesCount: value })}
+                  min={1}
+                  max={100}
+                  step={1}
+                />
                 
-                <div className="mobile-control-group">
-                  <label className="mobile-control-label">Intensity ({glitchSettings.scanLinesIntensity})</label>
-                  <input 
-                    type="range" 
-                    className="mobile-slider"
-                    min={0}
-                    max={100}
-                    value={glitchSettings.scanLinesIntensity}
-                    onChange={(e) => updateGlitchSettings({ scanLinesIntensity: parseInt(e.target.value) })}
-                  />
-                </div>
+                <Slider
+                  label="Intensity"
+                  value={glitchSettings.scanLinesIntensity}
+                  onChange={(value) => updateGlitchSettings({ scanLinesIntensity: value })}
+                  min={0}
+                  max={100}
+                  step={1}
+                />
                 
                 <div className="mobile-control-group">
                   <label className="mobile-control-label">Direction</label>
@@ -938,17 +801,14 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                   </label>
                 </div>
                 
-                <div className="mobile-control-group">
-                  <label className="mobile-control-label">Amount ({glitchSettings.noiseAmount})</label>
-                  <input 
-                    type="range" 
-                    className="mobile-slider"
-                    min={0}
-                    max={100}
-                    value={glitchSettings.noiseAmount}
-                    onChange={(e) => updateGlitchSettings({ noiseAmount: parseInt(e.target.value) })}
-                  />
-                </div>
+                <Slider
+                  label="Amount"
+                  value={glitchSettings.noiseAmount}
+                  onChange={(value) => updateGlitchSettings({ noiseAmount: value })}
+                  min={0}
+                  max={100}
+                  step={1}
+                />
               </div>
               
               {/* Blocks */}
@@ -966,41 +826,32 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                   </label>
                 </div>
                 
-                <div className="mobile-control-group">
-                  <label className="mobile-control-label">Size ({glitchSettings.blocksSize})</label>
-                  <input 
-                    type="range" 
-                    className="mobile-slider"
-                    min={1}
-                    max={50}
-                    value={glitchSettings.blocksSize}
-                    onChange={(e) => updateGlitchSettings({ blocksSize: parseInt(e.target.value) })}
-                  />
-                </div>
+                <Slider
+                  label="Size"
+                  value={glitchSettings.blocksSize}
+                  onChange={(value) => updateGlitchSettings({ blocksSize: value })}
+                  min={1}
+                  max={50}
+                  step={1}
+                />
                 
-                <div className="mobile-control-group">
-                  <label className="mobile-control-label">Offset ({glitchSettings.blocksOffset})</label>
-                  <input 
-                    type="range" 
-                    className="mobile-slider"
-                    min={0}
-                    max={50}
-                    value={glitchSettings.blocksOffset}
-                    onChange={(e) => updateGlitchSettings({ blocksOffset: parseInt(e.target.value) })}
-                  />
-                </div>
+                <Slider
+                  label="Offset"
+                  value={glitchSettings.blocksOffset}
+                  onChange={(value) => updateGlitchSettings({ blocksOffset: value })}
+                  min={0}
+                  max={50}
+                  step={1}
+                />
                 
-                <div className="mobile-control-group">
-                  <label className="mobile-control-label">Density ({glitchSettings.blocksDensity})</label>
-                  <input 
-                    type="range" 
-                    className="mobile-slider"
-                    min={0}
-                    max={100}
-                    value={glitchSettings.blocksDensity}
-                    onChange={(e) => updateGlitchSettings({ blocksDensity: parseInt(e.target.value) })}
-                  />
-                </div>
+                <Slider
+                  label="Density"
+                  value={glitchSettings.blocksDensity}
+                  onChange={(value) => updateGlitchSettings({ blocksDensity: value })}
+                  min={0}
+                  max={100}
+                  step={1}
+                />
               </div>
             </div>
           </div>
@@ -1089,30 +940,22 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               (enabled) => updateGridSettings('enabled', enabled)
             )}
             <div className={`mobile-effect-content ${openSection === 'grid' ? 'open' : ''}`}>
-              <div className="mobile-control-group">
-                <label className="mobile-control-label">Columns ({gridSettings.columns})</label>
-                <input 
-                  type="range" 
-                  className="mobile-slider"
-                  min={1}
-                  max={10}
-                  value={gridSettings.columns}
-                  onChange={(e) => updateGridSettings('columns', parseInt(e.target.value))}
-                />
-              </div>
-              
-              <div className="mobile-control-group">
-                <label className="mobile-control-label">Rows ({gridSettings.rows})</label>
-                <input 
-                  type="range" 
-                  className="mobile-slider"
-                  min={1}
-                  max={10}
-                  value={gridSettings.rows}
-                  onChange={(e) => updateGridSettings('rows', parseInt(e.target.value))}
-                />
-              </div>
-              
+              <Slider
+                label="Columns"
+                value={gridSettings.columns}
+                onChange={(value) => updateGridSettings('columns', value)}
+                min={1}
+                max={10}
+                step={1}
+              />
+              <Slider
+                label="Rows"
+                value={gridSettings.rows}
+                onChange={(value) => updateGridSettings('rows', value)}
+                min={1}
+                max={10}
+                step={1}
+              />
               <div className="mobile-control-group">
                 <label className="mobile-control-label">Apply Rotation</label>
                 <label className="mobile-effect-toggle">
@@ -1124,21 +967,17 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                   <span className="mobile-effect-toggle-slider"></span>
                 </label>
               </div>
-              
               {gridSettings.applyRotation && (
-                <div className="mobile-control-group">
-                  <label className="mobile-control-label">Max Rotation ({gridSettings.maxRotation}°)</label>
-                  <input 
-                    type="range" 
-                    className="mobile-slider"
-                    min={0}
-                    max={45}
-                    value={gridSettings.maxRotation}
-                    onChange={(e) => updateGridSettings('maxRotation', parseInt(e.target.value))}
-                  />
-                </div>
+                <Slider
+                  label="Max Rotation"
+                  value={gridSettings.maxRotation}
+                  onChange={(value) => updateGridSettings('maxRotation', value)}
+                  min={0}
+                  max={45}
+                  step={1}
+                  unit="°"
+                />
               )}
-              
               <div className="mobile-control-group">
                 <label className="mobile-control-label">Split Enabled</label>
                 <label className="mobile-effect-toggle">
@@ -1150,45 +989,33 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                   <span className="mobile-effect-toggle-slider"></span>
                 </label>
               </div>
-              
               {gridSettings.splitEnabled && (
                 <>
-                  <div className="mobile-control-group">
-                    <label className="mobile-control-label">Split Probability ({gridSettings.splitProbability})</label>
-                    <input 
-                      type="range" 
-                      className="mobile-slider"
-                      min={0}
-                      max={1}
-                      step={0.05}
-                      value={gridSettings.splitProbability}
-                      onChange={(e) => updateGridSettings('splitProbability', parseFloat(e.target.value))}
-                    />
-                  </div>
-                  
-                  <div className="mobile-control-group">
-                    <label className="mobile-control-label">Max Split Levels ({gridSettings.maxSplitLevels})</label>
-                    <input 
-                      type="range" 
-                      className="mobile-slider"
-                      min={1}
-                      max={5}
-                      value={gridSettings.maxSplitLevels}
-                      onChange={(e) => updateGridSettings('maxSplitLevels', parseInt(e.target.value))}
-                    />
-                  </div>
-                  
-                  <div className="mobile-control-group">
-                    <label className="mobile-control-label">Min Cell Size ({gridSettings.minCellSize})</label>
-                    <input 
-                      type="range" 
-                      className="mobile-slider"
-                      min={10}
-                      max={200}
-                      value={gridSettings.minCellSize}
-                      onChange={(e) => updateGridSettings('minCellSize', parseInt(e.target.value))}
-                    />
-                  </div>
+                  <Slider
+                    label="Split Probability"
+                    value={gridSettings.splitProbability}
+                    onChange={(value) => updateGridSettings('splitProbability', value)}
+                    min={0}
+                    max={1}
+                    step={0.05}
+                  />
+                  <Slider
+                    label="Max Split Levels"
+                    value={gridSettings.maxSplitLevels}
+                    onChange={(value) => updateGridSettings('maxSplitLevels', value)}
+                    min={1}
+                    max={5}
+                    step={1}
+                  />
+                  <Slider
+                    label="Min Cell Size"
+                    value={gridSettings.minCellSize}
+                    onChange={(value) => updateGridSettings('minCellSize', value)}
+                    min={10}
+                    max={200}
+                    step={1}
+                    unit="px"
+                  />
                 </>
               )}
             </div>
