@@ -7,7 +7,6 @@
     "build": "next build",
     "start": "next start -p ${PORT:-3000}",
     "lint": "next lint",
-    "export": "next export",
     "deploy": "next build && touch out/.nojekyll && git add out/ && git commit -m \"Deploy to gh-pages\" && git subtree push --prefix out origin gh-pages",
     "postinstall": "node scripts/setup-fonts.js"
   },
@@ -33,7 +32,7 @@
     "@tailwindcss/typography": "^0.5.16",
     "@tweakpane/core": "^2.0.1",
     "autoprefixer": "^10.4.17",
-    "find-port-sync": "^1.1.1",
+    "critters": "^0.0.20",
     "postcss": "^8.4.35",
     "tailwindcss": "^3.4.1"
   }

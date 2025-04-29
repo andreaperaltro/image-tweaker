@@ -27,13 +27,13 @@ const nextConfig = {
     domains: ['picsum.photos'],
     unoptimized: true, // Required for static export
   },
-  output: 'standalone',
-  basePath: process.env.NODE_ENV === 'development' ? '' : (process.env.NEXT_PUBLIC_BASE_PATH || ''), // No basePath in development
+  output: 'export', // Changed from 'standalone' to 'export' for static builds
+  basePath: process.env.NODE_ENV === 'development' ? '' : (process.env.NEXT_PUBLIC_BASE_PATH || ''),
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
   },
   experimental: {
-    optimizeCss: true,
+    optimizeCss: false, // Disabled to prevent critters issues
   },
   webpack: (config) => {
     config.module.rules.push({
