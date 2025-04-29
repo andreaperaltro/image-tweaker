@@ -27,7 +27,7 @@ const nextConfig = {
     domains: ['picsum.photos'],
     unoptimized: true, // Required for static export
   },
-  output: 'export', // Enable static exports
+  output: 'standalone',
   basePath: process.env.NEXT_PUBLIC_BASE_PATH || '', // Set base path for GitHub Pages
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
@@ -35,6 +35,16 @@ const nextConfig = {
   experimental: {
     optimizeCss: true,
   },
+  webpack: (config) => {
+    config.module.rules.push({
+      test: /\.(otf|ttf|woff|woff2)$/,
+      type: 'asset/resource',
+      generator: {
+        filename: 'static/fonts/[hash][ext][query]'
+      }
+    });
+    return config;
+  }
 };
 
 // Export the configuration with PWA support
