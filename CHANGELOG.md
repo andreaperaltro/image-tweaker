@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.2.1.0] - 2024-03-26
+## [0.2.1.0] - 2025-04-30
 
 ### Added
 - New slider component with improved interaction and visual feedback
@@ -32,7 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - HelpModal component and related files (replaced with inline help)
 - Unused modal-based implementations
 
-## [0.2.0.0] - 2024-06-06
+## [0.2.0.0] - 2025-06-06
 
 ### Added
 - Complete mobile UI controls for all effects including:
@@ -54,7 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed issue where reordering effects would only change the number but not reposition controls
 - Improved effects panel organization and visual hierarchy
 
-## [0.1.92] - 2024-05-06
+## [0.1.92] - 2025-05-06
 
 ### Added
 - New "2 Color Palette" mode for dithering effects
@@ -68,7 +68,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Moved Threshold control above Color Mode
 - Enhanced error diffusion for custom colors to maintain dithering quality
 
-## [0.1.91] - 2024-04-12
+## [0.1.91] - 2025-04-12
 
 ### Added
 - Fixed gradient stops implementation with a simplified three-stop system
@@ -85,7 +85,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed potential memory leaks from temporary DOM elements
 - Resolved issues with gradient stops UI updating
 
-## [0.1.9] - 2024-04-11
+## [0.1.9] - 2025-04-11
 
 ### Added
 - Advanced cropping functionality with interactive preview
@@ -99,7 +99,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved UI feedback during cropping operations
 - Better handling of image dimensions and aspect ratios
 
-## [0.1.8] - 2024-04-10
+## [0.1.8] - 2025-04-10
 
 ### Added
 - Comprehensive Glitch Effects suite with multiple components:
@@ -115,7 +115,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enhanced the processing pipeline to support advanced distortion techniques
 - Optimized rendering for real-time preview of complex effects
 
-## [0.1.7] - 2024-04-10
+## [0.1.7] - 2025-04-10
 
 ### Added
 - New "New Image" button added to the top toolbar for easier access
@@ -126,7 +126,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed the Actions section as its functionality is now in the topbar
 - Improved overall user interface for a more focused experience
 
-## [0.1.6] - 2024-04-10
+## [0.1.6] - 2025-04-10
 
 ### Added
 - Responsive mobile-friendly layout for better usability on smaller screens
@@ -146,7 +146,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enhanced image loading and processing stability
 - Better error handling in control panel operations
 
-## [0.1.5] - 2024-04-08
+## [0.1.5] - 2025-04-08
 
 ### Added
 - Threshold effect with customizable threshold value
@@ -164,7 +164,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Real-time preview performance with threshold effect
 - Color gradient interpolation in threshold mode
 
-## [0.1.4] - 2024-04-06
+## [0.1.4] - 2025-04-06
 
 ### Added
 - Text dithering effect that distributes characters based on image brightness
@@ -182,7 +182,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed variable naming inconsistencies in spiral calculations
 - Addressed issues with spiral being cut off at canvas edges
 
-## [0.1.3] - 2024-04-02
+## [0.1.3] - 2025-04-02
 
 ### Added
 - Initial release with basic image editing capabilities
@@ -204,7 +204,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Corrected color space handling
 - Fixed dithering artifacts in certain cases
 
-## [0.1.2] - 2024-03-20
+## [0.1.2] - 2025-03-20
 
 ### Added
 - Basic project structure
@@ -222,7 +222,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Build configuration
 - Development server configuration
 
-## [0.1.1] - 2024-03-19
+## [0.1.1] - 2025-03-19
 
 ### Added
 - True vector SVG export functionality that uses stored halftone dot information
@@ -244,5 +244,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed unused background feature implementation
 - Eliminated redundant export buttons 
 
-## [0.1.0] - 2024-03-XX
+## [0.1.0] - 2025-03-XX
 - Initial release 
