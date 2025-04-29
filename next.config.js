@@ -40,10 +40,14 @@ const nextConfig = {
       test: /\.(otf|ttf|woff|woff2)$/,
       type: 'asset/resource',
       generator: {
-        filename: 'static/fonts/[hash][ext][query]'
+        filename: 'static/fonts/[name][ext][query]'
       }
     });
     return config;
+  },
+  // Add server configuration
+  server: {
+    port: process.env.PORT || 3000,
   }
 };
 

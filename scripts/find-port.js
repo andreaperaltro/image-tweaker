@@ -1,11 +1,28 @@
-const findPortSync = require('find-port-sync');
+const net = require('net');
 const fs = require('fs');
 const path = require('path');
 
-// Try to find an available port starting from 3000
-const port = findPortSync({ start: 3000, end: 3100 });
+function findAvailablePort(startPort) {
+  return new Promise((resolve) => {
+    const server = net.createServer();
+    server.unref();
+    server.on('error', () => {
+      findAvailablePort(startPort + 1).then(resolve);
+    });
+    server.listen(startPort, () => {
+      server.close(() => {
+        resolve(startPort);
+      });
+    });
+  });
+}
 
-// Write the port to a temporary file
-fs.writeFileSync(path.join(__dirname, 'port.txt'), port.toString());
+async function main() {
+  const startPort = 3000;
+  const port = await findAvailablePort(startPort);
+  const portFile = path.join(__dirname, 'port.txt');
+  fs.writeFileSync(portFile, port.toString());
+  console.log(`Found available port: ${port}`);
+}
 
-console.log(`Found available port: ${port}`); 
+main(); 

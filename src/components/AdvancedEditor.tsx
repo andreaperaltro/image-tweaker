@@ -1547,37 +1547,22 @@ export default function AdvancedEditor() {
   // Load random image
   const loadRandomImage = useCallback(() => {
     setIsLoading(true);
+    const width = Math.floor(Math.random() * 500) + 500;
+    const height = Math.floor(Math.random() * 500) + 500;
     
-    return fetch('https://picsum.photos/1200/800')
-      .then(response => {
-        if (!response.ok) {
-          throw new Error('Failed to fetch image');
-        }
-        return response.blob();
-      })
+    fetch(`https://picsum.photos/${width}/${height}`)
+      .then(response => response.blob())
       .then(blob => {
-        return new Promise<{ width: number; height: number }>((resolve) => {
+        return new Promise((resolve) => {
           const reader = new FileReader();
-          reader.onloadend = () => {
+          reader.onload = () => {
             const imageData = reader.result as string;
+            setImage(imageData);
+            setOriginalImageDataRef(imageData);
+            
             const img = new Image();
             img.onload = () => {
-              const viewportWidth = window.innerWidth - 200;
-              const viewportHeight = window.innerHeight - 200;
-              
-              // Calculate dimensions to maintain aspect ratio
-              const scale = Math.min(
-                viewportWidth / img.width,
-                viewportHeight / img.height
-              );
-              
-              setImage(imageData);
-              setOriginalImageDataRef(imageData);
-              
-              resolve({
-                width: Math.round(img.width * scale),
-                height: Math.round(img.height * scale)
-              });
+              resolve({ width: img.width, height: img.height });
             };
             img.src = imageData;
           };
