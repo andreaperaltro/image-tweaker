@@ -3,7 +3,7 @@
   "version": "0.2.0.0",
   "private": true,
   "scripts": {
-    "dev": "node scripts/find-port.js && next dev -p $(cat scripts/port.txt)",
+    "dev": "next dev",
     "build": "next build",
     "start": "next start -p ${PORT:-3000}",
     "lint": "next lint",

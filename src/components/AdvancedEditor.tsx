@@ -31,10 +31,6 @@ export default function AdvancedEditor() {
   const [processing, setProcessing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   
-  // Tweakpane references - use 'any' type to avoid TypeScript errors
-  const paneRef = useRef<Pane | null>(null);
-  const paneContainerRef = useRef<HTMLDivElement>(null);
-  
   // Internal buffer canvas for intermediate processing
   const sourceCanvasRef = useRef<HTMLCanvasElement | null>(null);
   
@@ -214,1084 +210,6 @@ export default function AdvancedEditor() {
   useEffect(() => {
     sourceCanvasRef.current = document.createElement('canvas');
   }, []);
-
-  // Initialize Tweakpane - ONLY when component mounts or image changes
-  useEffect(() => {
-    console.log('Tweakpane initialization triggered', { 
-      hasImage: !!image, 
-      hasContainer: !!paneContainerRef.current, 
-      hasExistingPane: !!paneRef.current 
-    });
-    
-    if (image && paneContainerRef.current && !paneRef.current) {
-      try {
-        console.log('Initializing Tweakpane...');
-        
-        if (!paneContainerRef.current) return;
-
-        // Create a new Tweakpane instance
-        const pane = new Pane({
-          container: paneContainerRef.current,
-          title: 'Image Controls',
-          expanded: true
-        });
-
-        // Add custom styles for mobile
-        const style = document.createElement('style');
-        style.textContent = `
-          .tp-dfwv {
-            --tp-base-background-color: rgba(255, 255, 255, 0.9) !important;
-            --tp-base-foreground-color: #333 !important;
-            --tp-container-background-color: rgba(255, 255, 255, 0.9) !important;
-            --tp-container-background-color-hover: rgba(255, 255, 255, 1) !important;
-            --tp-container-background-color-focus: rgba(255, 255, 255, 1) !important;
-            --tp-container-foreground-color: #333 !important;
-            --tp-button-background-color: #000 !important;
-            --tp-button-background-color-hover: #333 !important;
-            --tp-button-foreground-color: #fff !important;
-            --tp-folder-background-color: rgba(255, 255, 255, 0.9) !important;
-            --tp-folder-background-color-hover: rgba(255, 255, 255, 1) !important;
-            --tp-folder-background-color-focus: rgba(255, 255, 255, 1) !important;
-            --tp-folder-foreground-color: #333 !important;
-            --tp-input-background-color: #fff !important;
-            --tp-input-background-color-hover: #fff !important;
-            --tp-input-background-color-focus: #fff !important;
-            --tp-input-foreground-color: #333 !important;
-            --tp-label-foreground-color: #333 !important;
-            --tp-monitor-background-color: #fff !important;
-            --tp-monitor-foreground-color: #333 !important;
-          }
-
-          @media (max-width: 768px) {
-            .tp-dfwv {
-              --tp-base-padding: 8px !important;
-              --tp-base-font-size: 14px !important;
-              --tp-base-border-radius: 4px !important;
-            }
-          }
-        `;
-        document.head.appendChild(style);
-
-        console.log('Pane created:', pane);
-        
-        // Store references to bindings so we can update them
-        // const bindings: Record<string, any> = {};
-        
-        // 1. COLOR ADJUSTMENTS FOLDER
-        const colorFolder = pane.addFolder({
-          title: 'Color Adjustments',
-          expanded: false,
-        });
-        
-        colorFolder.addBinding(colorSettings, 'enabled', {
-          label: 'Enable'
-        });
-        
-        colorFolder.addBinding(colorSettings, 'brightness', {
-          label: 'Brightness',
-          min: 0,
-          max: 200,
-          step: 1,
-        }).on('change', (ev: any) => {
-          handleColorChange('brightness', ev.value);
-        });
-        
-        colorFolder.addBinding(colorSettings, 'contrast', {
-          label: 'Contrast',
-          min: 0,
-          max: 200,
-          step: 1,
-        }).on('change', (ev: any) => {
-          handleColorChange('contrast', ev.value);
-        });
-        
-        colorFolder.addBinding(colorSettings, 'saturation', {
-          label: 'Saturation',
-          min: 0,
-          max: 200,
-          step: 1,
-        }).on('change', (ev: TpChangeEvent<number>) => {
-          handleColorChange('saturation', ev.value);
-        });
-        
-        colorFolder.addBinding(colorSettings, 'hueShift', {
-          label: 'Hue Shift',
-          min: -180,
-          max: 180,
-          step: 1,
-        }).on('change', (ev: TpChangeEvent<number>) => {
-          handleColorChange('hueShift', ev.value);
-        });
-        
-        colorFolder.addBinding(colorSettings, 'invert', {
-          label: 'Invert Colors'
-        }).on('change', (ev: TpChangeEvent<boolean>) => {
-          handleColorChange('invert', ev.value);
-        });
-        
-        // 2. GRADIENT MAP FOLDER
-        const gradientMapFolder = pane.addFolder({
-          title: 'Gradient Map',
-          expanded: false,
-        });
-
-        // Enable gradient map
-        gradientMapFolder.addBinding(gradientMapSettings, 'enabled', {
-          label: 'Enable'
-        }).on('change', (ev: TpChangeEvent<boolean>) => {
-          setGradientMapSettings(prev => ({ ...prev, enabled: ev.value }));
-          processImage();
-        });
-
-        // Blend mode
-        gradientMapFolder.addBinding(gradientMapSettings, 'blendMode', {
-          label: 'Blend Mode',
-          options: {
-            'Normal': 'normal',
-            'Multiply': 'multiply',
-            'Screen': 'screen',
-            'Overlay': 'overlay',
-            'Hard Light': 'hard-light',
-            'Soft Light': 'soft-light',
-            'Color': 'color',
-            'Luminosity': 'luminosity'
-          }
-        }).on('change', (ev: TpChangeEvent<GradientMapBlendMode>) => {
-          setGradientMapSettings(prev => ({ ...prev, blendMode: ev.value }));
-          processImage();
-        });
-
-        // Gradient map opacity
-        const gradientMapOpacityContainer = document.createElement('div');
-        gradientMapFolder.element.appendChild(gradientMapOpacityContainer);
-        gradientMapFolder.addBinding(gradientMapSettings, 'opacity', {
-          label: 'Opacity',
-          value: gradientMapSettings.opacity,
-          min: 0,
-          max: 1,
-          step: 0.01,
-        }).on('change', (ev: TpChangeEvent<number>) => {
-          setGradientMapSettings(prev => ({ ...prev, opacity: ev.value }));
-          processImage();
-        });
-
-        // Gradient stops folder
-        const gradientStopsFolder = gradientMapFolder.addFolder({
-          title: 'Gradient Stops',
-          expanded: true
-        });
-
-        // Function to update gradient stops UI
-        const updateGradientStopsUI = () => {
-          console.log('Rebuilding gradient stops UI...');
-          
-          // Completely remove all children of the gradientStopsFolder
-          while (gradientStopsFolder.children.length > 0) {
-            try {
-              gradientStopsFolder.remove(gradientStopsFolder.children[0]);
-            } catch (error) {
-              console.error('Error removing control:', error);
-              break; // Break to avoid infinite loop if removal fails
-            }
-          }
-          
-          // Get fresh stops data directly from the state
-          let currentStops = [...gradientMapSettings.stops];
-          console.log('Current gradient stops:', currentStops);
-          
-          // Ensure we have exactly 3 stops at fixed positions (0, 50, 100)
-          const defaultPositions = [0, 50, 100];
-          const defaultColors = ['#000000', '#808080', '#ffffff'];
-          
-          if (currentStops.length < 3) {
-            // Add missing stops
-            const newStops = [...currentStops];
-            const existingPositions = currentStops.map(stop => stop.position);
-            
-            for (let i = 0; i < defaultPositions.length; i++) {
-              if (!existingPositions.includes(defaultPositions[i])) {
-                newStops.push({
-                  position: defaultPositions[i],
-                  color: defaultColors[i]
-                });
-              }
-            }
-            
-            // Update state with new stops
-            setGradientMapSettings(prev => ({
-              ...prev,
-              stops: newStops.sort((a, b) => a.position - b.position)
-            }));
-            
-            currentStops = newStops;
-          } else if (currentStops.length > 3) {
-            // Keep only the first 3 stops
-            const newStops = currentStops.slice(0, 3);
-            
-            // Make sure we have stops at positions 0, 50, and 100
-            const positions = newStops.map(stop => stop.position);
-            
-            if (!positions.includes(0)) {
-              newStops[0].position = 0;
-            }
-            if (!positions.includes(100)) {
-              newStops[2].position = 100;
-            }
-            if (!positions.includes(50)) {
-              newStops[1].position = 50;
-            }
-            
-            // Update state with new stops
-            setGradientMapSettings(prev => ({
-              ...prev,
-              stops: newStops.sort((a, b) => a.position - b.position)
-            }));
-            
-            currentStops = newStops;
-          }
-          
-          // Sort stops by position
-          const sortedStops = [...currentStops].sort((a, b) => a.position - b.position);
-          
-          // Add controls for each stop
-          sortedStops.forEach((stop, index) => {
-            const stopFolder = gradientStopsFolder.addFolder({
-              title: `Stop ${index + 1} (${stop.position}%)`
-            });
-            
-            // Color picker
-            const params = { color: stop.color };
-            stopFolder.addBinding(params, 'color', {
-              view: 'color',
-              label: 'Color'
-            }).on('change', (ev: TpChangeEvent<string>) => {
-              // Create a new array to ensure state change is detected
-              const newStops = [...sortedStops];
-              newStops[index].color = ev.value;
-              
-              // Update the state with the new stops
-              setGradientMapSettings(prev => ({
-                ...prev,
-                stops: newStops
-              }));
-              
-              processImage();
-            });
-            
-            // Don't allow position changes for first and last stops
-            if (index !== 0 && index !== sortedStops.length - 1) {
-              // Position slider (only for middle stops)
-              const posParams = { position: stop.position };
-              stopFolder.addBinding(posParams, 'position', {
-                label: 'Position',
-                min: 5,
-                max: 95,
-                step: 1
-              }).on('change', (ev: TpChangeEvent<number>) => {
-                // Create a new array to ensure state change is detected
-                const newStops = [...sortedStops];
-                newStops[index].position = ev.value;
-                
-                // Update the state with the new stops
-                setGradientMapSettings(prev => ({
-                  ...prev,
-                  stops: newStops
-                }));
-                
-                processImage();
-              });
-            }
-          });
-        };
-
-        // Initialize gradient stops UI
-        updateGradientStopsUI();
-        
-        // 3. THRESHOLD FOLDER
-        const thresholdFolder = pane.addFolder({
-          title: 'Threshold',
-          expanded: false,
-        });
-
-        const thresholdParams = {
-          enabled: thresholdSettings.enabled,
-          mode: thresholdSettings.mode,
-          threshold: thresholdSettings.threshold,
-          darkColor: thresholdSettings.darkColor,
-          lightColor: thresholdSettings.lightColor,
-          darkColorStart: thresholdSettings.darkColorStart,
-          darkColorEnd: thresholdSettings.darkColorEnd,
-          lightColorStart: thresholdSettings.lightColorStart,
-          lightColorEnd: thresholdSettings.lightColorEnd
-        };
-
-        // Enable threshold
-        thresholdFolder.addBinding(thresholdParams, 'enabled', {
-          label: 'Enable'
-        }).on('change', (ev: TpChangeEvent<boolean>) => {
-          setThresholdSettings(prev => ({ ...prev, enabled: ev.value }));
-          processImage();
-        });
-
-        // Threshold
-        const thresholdContainer = document.createElement('div');
-        thresholdFolder.element.appendChild(thresholdContainer);
-        thresholdFolder.addBinding(thresholdParams, 'threshold', {
-          label: 'Threshold',
-          value: thresholdSettings.threshold,
-          min: 0,
-          max: 255,
-          step: 1,
-        }).on('change', (ev: TpChangeEvent<number>) => {
-          setThresholdSettings(prev => ({ ...prev, threshold: ev.value }));
-          processImage();
-        });
-
-        // Threshold mode
-        thresholdFolder.addBinding(thresholdParams, 'mode', {
-          label: 'Mode',
-          options: {
-            'Solid': 'solid',
-            'Gradient': 'gradient'
-          }
-        }).on('change', (ev: TpChangeEvent<ThresholdMode>) => {
-          setThresholdSettings(prev => ({ ...prev, mode: ev.value }));
-          updateThresholdControls(ev.value);
-          processImage();
-        });
-
-        // Create folders but don't add them yet
-        const solidColorsFolder = thresholdFolder.addFolder({
-          title: 'Colors',
-          expanded: true
-        });
-
-        const gradientColorsFolder = thresholdFolder.addFolder({
-          title: 'Gradient Colors',
-          expanded: true
-        });
-
-        // Dark color (solid)
-        solidColorsFolder.addBinding(thresholdParams, 'darkColor', {
-          view: 'color',
-          label: 'Dark Color'
-        }).on('change', (ev: TpChangeEvent<string>) => {
-          setThresholdSettings(prev => ({ ...prev, darkColor: ev.value }));
-          processImage();
-        });
-
-        // Light color (solid)
-        solidColorsFolder.addBinding(thresholdParams, 'lightColor', {
-          view: 'color',
-          label: 'Light Color'
-        }).on('change', (ev: TpChangeEvent<string>) => {
-          setThresholdSettings(prev => ({ ...prev, lightColor: ev.value }));
-          processImage();
-        });
-
-        // Dark color start (gradient)
-        gradientColorsFolder.addBinding(thresholdParams, 'darkColorStart', {
-          view: 'color',
-          label: 'Dark Start'
-        }).on('change', (ev: TpChangeEvent<string>) => {
-          setThresholdSettings(prev => ({ ...prev, darkColorStart: ev.value }));
-          processImage();
-        });
-
-        // Dark color end (gradient)
-        gradientColorsFolder.addBinding(thresholdParams, 'darkColorEnd', {
-          view: 'color',
-          label: 'Dark End'
-        }).on('change', (ev: TpChangeEvent<string>) => {
-          setThresholdSettings(prev => ({ ...prev, darkColorEnd: ev.value }));
-          processImage();
-        });
-
-        // Light color start (gradient)
-        gradientColorsFolder.addBinding(thresholdParams, 'lightColorStart', {
-          view: 'color',
-          label: 'Light Start'
-        }).on('change', (ev: TpChangeEvent<string>) => {
-          setThresholdSettings(prev => ({ ...prev, lightColorStart: ev.value }));
-          processImage();
-        });
-
-        // Light color end (gradient)
-        gradientColorsFolder.addBinding(thresholdParams, 'lightColorEnd', {
-          view: 'color',
-          label: 'Light End'
-        }).on('change', (ev: TpChangeEvent<string>) => {
-          setThresholdSettings(prev => ({ ...prev, lightColorEnd: ev.value }));
-          processImage();
-        });
-
-        // Function to update visibility of color controls
-        const updateThresholdControls = (mode: ThresholdMode) => {
-          if (mode === 'solid') {
-            thresholdFolder.remove(gradientColorsFolder);
-            thresholdFolder.add(solidColorsFolder);
-          } else {
-            thresholdFolder.remove(solidColorsFolder);
-            thresholdFolder.add(gradientColorsFolder);
-          }
-        };
-
-        // Initial setup of controls based on current mode
-        updateThresholdControls(thresholdSettings.mode);
-        
-        // 4. DITHERING FOLDER
-        const ditherFolder = pane.addFolder({
-          title: 'Dithering',
-          expanded: false,
-        });
-        
-        // Enable dithering
-        ditherFolder.addBinding(ditherSettings, 'enabled', {
-          label: 'Enable'
-        }).on('change', (ev: TpChangeEvent<boolean>) => {
-          setDitherSettings(prev => ({ ...prev, enabled: ev.value }));
-        });
-        
-        // Dithering type
-        ditherFolder.addBinding(ditherSettings, 'type', {
-          label: 'Type',
-          options: {
-            'Ordered': 'ordered',
-            'Floyd-Steinberg': 'floyd-steinberg',
-            'Jarvis': 'jarvis',
-            'Judice & Ninke': 'judice-ninke',
-            'Stucki': 'stucki',
-            'Burkes': 'burkes'
-          }
-        }).on('change', (ev: TpChangeEvent<DitherType>) => {
-          setDitherSettings(prev => ({ ...prev, type: ev.value }));
-          processImage();
-        });
-        
-        // Dither resolution
-        const ditherResolutionContainer = document.createElement('div');
-        ditherFolder.element.appendChild(ditherResolutionContainer);
-        ditherFolder.addBinding(ditherSettings, 'resolution', {
-          label: 'Resolution',
-          value: ditherSettings.resolution,
-          min: 1,
-          max: 100,
-          step: 1,
-        }).on('change', (ev: TpChangeEvent<number>) => {
-          setDitherSettings(prev => ({ ...prev, resolution: ev.value }));
-          processImage();
-        });
-        
-        // Dither threshold
-        const ditherThresholdContainer = document.createElement('div');
-        ditherFolder.element.appendChild(ditherThresholdContainer);
-        ditherFolder.addBinding(ditherSettings, 'threshold', {
-          label: 'Threshold',
-          value: ditherSettings.threshold,
-          min: 0,
-          max: 255,
-          step: 1,
-        }).on('change', (ev: TpChangeEvent<number>) => {
-          setDitherSettings(prev => ({ ...prev, threshold: ev.value }));
-          processImage();
-        });
-        
-        // Color mode
-        ditherFolder.addBinding(ditherSettings, 'colorMode', {
-          label: 'Color Mode',
-          options: {
-            'Color': 'color',
-            'Grayscale': 'grayscale',
-            '2 Color Palette': '2-color'
-          }
-        }).on('change', (ev: TpChangeEvent<DitherColorMode>) => {
-          setDitherSettings(prev => ({ ...prev, colorMode: ev.value }));
-          updateDitherColorControls(ev.value);
-          processImage();
-        });
-        
-        // Color depth - only shown for grayscale and color modes
-        ditherFolder.addBinding(ditherSettings, 'colorDepth', {
-          label: 'Color Depth',
-          min: 2,
-          max: 256,
-          step: 1,
-        }).on('change', (ev: TpChangeEvent<number>) => {
-          setDitherSettings(prev => ({ ...prev, colorDepth: ev.value }));
-        });
-        
-        // Color pickers for 2-color mode - initially hidden
-        const twoColorParams = {
-          darkColor: ditherSettings.darkColor,
-          lightColor: ditherSettings.lightColor
-        };
-        
-        // These bindings won't be added to the UI until 2-color mode is selected
-        ditherFolder.addBinding(twoColorParams, 'darkColor', {
-          view: 'color',
-          label: 'Dark Color'
-        }).on('change', (ev: TpChangeEvent<string>) => {
-          setDitherSettings(prev => ({ ...prev, darkColor: ev.value }));
-        });
-        
-        ditherFolder.addBinding(twoColorParams, 'lightColor', {
-          view: 'color',
-          label: 'Light Color'
-        }).on('change', (ev: TpChangeEvent<string>) => {
-          setDitherSettings(prev => ({ ...prev, lightColor: ev.value }));
-        });
-        
-        // Initially remove the color pickers since default mode is grayscale
-        ditherFolder.remove(ditherFolder.children[0]);
-        ditherFolder.remove(ditherFolder.children[1]);
-        
-        // Function to update dithering color controls based on color mode
-        const updateDitherColorControls = (colorMode: DitherColorMode) => {
-          if (colorMode === '2-color') {
-            // Remove color depth control
-            ditherFolder.remove(ditherFolder.children[2]);
-            
-            // Add color picker controls
-            ditherFolder.add(ditherFolder.children[0]);
-            ditherFolder.add(ditherFolder.children[1]);
-          } else {
-            // Add color depth control
-            if (!ditherFolder.children.includes(ditherFolder.children[2])) {
-              ditherFolder.add(ditherFolder.children[2]);
-            }
-            
-            // Remove color picker controls
-            if (ditherFolder.children.includes(ditherFolder.children[0])) {
-              ditherFolder.remove(ditherFolder.children[0]);
-            }
-            
-            if (ditherFolder.children.includes(ditherFolder.children[1])) {
-              ditherFolder.remove(ditherFolder.children[1]);
-            }
-          }
-        };
-        
-        // 5. HALFTONE EFFECTS FOLDER
-        const halftoneFolder = pane.addFolder({
-          title: 'Halftone Effect',
-          expanded: false,
-        });
-        
-        halftoneFolder.addBinding(halftoneSettings, 'enabled', {
-          label: 'Enable'
-        }).on('change', (ev: TpChangeEvent<boolean>) => {
-          handleHalftoneChange('enabled', ev.value);
-        });
-        
-        halftoneFolder.addBinding(halftoneSettings, 'cellSize', {
-          label: 'Cell Size',
-          min: 1,
-          max: 50,
-          step: 1,
-        }).on('change', (ev: TpChangeEvent<number>) => {
-          handleHalftoneChange('cellSize', ev.value);
-        });
-        
-        halftoneFolder.addBinding(halftoneSettings, 'mix', {
-          label: 'Mix',
-          min: 0,
-          max: 100,
-          step: 1,
-        }).on('change', (ev: TpChangeEvent<number>) => {
-          handleHalftoneChange('mix', ev.value);
-        });
-        
-        // Colored halftone
-        halftoneFolder.addBinding(halftoneSettings, 'colored', {
-          label: 'Colored'
-        }).on('change', (ev: TpChangeEvent<boolean>) => {
-          handleHalftoneChange('colored', ev.value);
-        });
-        
-        // Shape options - moved ABOVE pattern
-        halftoneFolder.addBinding(halftoneSettings, 'shape', {
-          label: 'Shape',
-          options: {
-            'Circle': 'circle',
-            'Square': 'square',
-            'Diamond': 'diamond',
-            'Line': 'line',
-            'Cross': 'cross',
-            'Ellipse': 'ellipse',
-            'Triangle': 'triangle',
-            'Hexagon': 'hexagon',
-          }
-        }).on('change', (ev: TpChangeEvent<string>) => {
-          handleHalftoneChange('shape', ev.value);
-        });
-        
-        // Pattern options (renamed from "Arrangement")
-        halftoneFolder.addBinding(halftoneSettings, 'arrangement', {
-          label: 'Pattern',
-          options: {
-            'Grid': 'grid',
-            'Hexagonal': 'hexagonal',
-            'Spiral': 'spiral',
-            'Concentric': 'concentric',
-            'Random': 'random'
-          }
-        }).on('change', (ev: TpChangeEvent<string>) => {
-          handleHalftoneChange('arrangement', ev.value);
-          updateSpiralControls();
-          updateConcentricControls();
-        });
-        
-        // Size variation
-        halftoneFolder.addBinding(halftoneSettings, 'sizeVariation', {
-          label: 'Size Variation',
-          min: 0,
-          max: 1,
-          step: 0.05,
-        }).on('change', (ev: TpChangeEvent<number>) => {
-          handleHalftoneChange('sizeVariation', ev.value);
-        });
-        
-        // Invert brightness
-        halftoneFolder.addBinding(halftoneSettings, 'invertBrightness', {
-          label: 'Invert'
-        }).on('change', (ev: TpChangeEvent<boolean>) => {
-          handleHalftoneChange('invertBrightness', ev.value);
-        });
-
-        // CMYK Mode subfolder
-        const cmykFolder = halftoneFolder.addFolder({
-          title: 'CMYK Mode',
-          expanded: false
-        });
-        
-        // Enable CMYK mode checkbox
-        cmykFolder.addBinding(halftoneSettings, 'enableCMYK', {
-          label: 'Enable CMYK'
-        }).on('change', (ev: TpChangeEvent<boolean>) => {
-          handleHalftoneChange('enableCMYK', ev.value);
-        });
-        
-        // Cyan channel
-        cmykFolder.addBinding(halftoneSettings.channels, 'cyan', {
-          label: 'Cyan'
-        }).on('change', (ev: TpChangeEvent<boolean>) => {
-          handleHalftoneChannelChange('cyan', ev.value);
-        });
-        
-        // Magenta channel
-        cmykFolder.addBinding(halftoneSettings.channels, 'magenta', {
-          label: 'Magenta'
-        }).on('change', (ev: TpChangeEvent<boolean>) => {
-          handleHalftoneChannelChange('magenta', ev.value);
-        });
-        
-        // Yellow channel
-        cmykFolder.addBinding(halftoneSettings.channels, 'yellow', {
-          label: 'Yellow'
-        }).on('change', (ev: TpChangeEvent<boolean>) => {
-          handleHalftoneChannelChange('yellow', ev.value);
-        });
-        
-        // Black channel
-        cmykFolder.addBinding(halftoneSettings.channels, 'black', {
-          label: 'Black'
-        }).on('change', (ev: TpChangeEvent<boolean>) => {
-          handleHalftoneChannelChange('black', ev.value);
-        });
-
-        // Halftone angle offset
-        const halftoneAngleOffsetContainer = document.createElement('div');
-        halftoneFolder.element.appendChild(halftoneAngleOffsetContainer);
-        halftoneFolder.addBinding(halftoneSettings, 'angleOffset', {
-          label: 'Angle Offset',
-          value: halftoneSettings.angleOffset,
-          min: 0,
-          max: 360,
-          step: 1,
-        }).on('change', (ev: TpChangeEvent<number>) => {
-          handleHalftoneChange('angleOffset', ev.value);
-        });
-
-        // Halftone size variation
-        const halftoneSizeVariationContainer = document.createElement('div');
-        halftoneFolder.element.appendChild(halftoneSizeVariationContainer);
-        halftoneFolder.addBinding(halftoneSettings, 'sizeVariation', {
-          label: 'Size Variation',
-          value: halftoneSettings.sizeVariation,
-          min: 0,
-          max: 100,
-          step: 1,
-        }).on('change', (ev: TpChangeEvent<number>) => {
-          handleHalftoneChange('sizeVariation', ev.value);
-        });
-
-        // Halftone dot scale factor
-        const halftoneDotScaleFactorContainer = document.createElement('div');
-        halftoneFolder.element.appendChild(halftoneDotScaleFactorContainer);
-        halftoneFolder.addBinding(halftoneSettings, 'dotScaleFactor', {
-          label: 'Dot Scale',
-          value: halftoneSettings.dotScaleFactor,
-          min: 0.1,
-          max: 1,
-          step: 0.01,
-        }).on('change', (ev: TpChangeEvent<number>) => {
-          handleHalftoneChange('dotScaleFactor', ev.value);
-        });
-
-        // 6. GRID EFFECTS FOLDER
-        const gridFolder = pane.addFolder({
-          title: 'Grid Effects',
-          expanded: false,
-        });
-        
-        gridFolder.addBinding(gridSettings, 'enabled', {
-          label: 'Enable'
-        }).on('change', (ev: TpChangeEvent<boolean>) => {
-          handleGridChange('enabled', ev.value);
-        });
-        
-        gridFolder.addBinding(gridSettings, 'columns', {
-          label: 'Columns',
-          min: 1,
-          max: 20,
-          step: 1,
-        }).on('change', (ev: TpChangeEvent<number>) => {
-          handleGridChange('columns', ev.value);
-        });
-        
-        gridFolder.addBinding(gridSettings, 'rows', {
-          label: 'Rows',
-          min: 1,
-          max: 20,
-          step: 1,
-        }).on('change', (ev: TpChangeEvent<number>) => {
-          handleGridChange('rows', ev.value);
-        });
-        
-        // Apply rotation
-        gridFolder.addBinding(gridSettings, 'applyRotation', {
-          label: 'Apply Rotation'
-        }).on('change', (ev: TpChangeEvent<boolean>) => {
-          handleGridChange('applyRotation', ev.value);
-        });
-        
-        // Grid max rotation
-        const gridMaxRotationContainer = document.createElement('div');
-        gridFolder.element.appendChild(gridMaxRotationContainer);
-        gridFolder.addBinding(gridSettings, 'maxRotation', {
-          label: 'Max Rotation',
-          value: gridSettings.maxRotation,
-          min: 0,
-          max: 45,
-          step: 1,
-        }).on('change', (ev: TpChangeEvent<number>) => {
-          handleGridChange('maxRotation', ev.value);
-        });
-        
-        // Split enabled
-        gridFolder.addBinding(gridSettings, 'splitEnabled', {
-          label: 'Enable Splitting'
-        }).on('change', (ev: TpChangeEvent<boolean>) => {
-          handleGridChange('splitEnabled', ev.value);
-        });
-        
-        // Grid split probability
-        const gridSplitProbabilityContainer = document.createElement('div');
-        gridFolder.element.appendChild(gridSplitProbabilityContainer);
-        gridFolder.addBinding(gridSettings, 'splitProbability', {
-          label: 'Split Probability',
-          value: gridSettings.splitProbability,
-          min: 0,
-          max: 1,
-          step: 0.01,
-        }).on('change', (ev: TpChangeEvent<number>) => {
-          handleGridChange('splitProbability', ev.value);
-        });
-        
-        // Max split levels
-        const gridMaxSplitLevelsContainer = document.createElement('div');
-        gridFolder.element.appendChild(gridMaxSplitLevelsContainer);
-        gridFolder.addBinding(gridSettings, 'maxSplitLevels', {
-          label: 'Max Split Levels',
-          value: gridSettings.maxSplitLevels,
-          min: 1,
-          max: 5,
-          step: 1,
-        }).on('change', (ev: TpChangeEvent<number>) => {
-          handleGridChange('maxSplitLevels', ev.value);
-        });
-        
-        // Min cell size
-        const gridMinCellSizeContainer = document.createElement('div');
-        gridFolder.element.appendChild(gridMinCellSizeContainer);
-        gridFolder.addBinding(gridSettings, 'minCellSize', {
-          label: 'Min Cell Size',
-          value: gridSettings.minCellSize,
-          min: 10,
-          max: 200,
-          step: 1,
-        }).on('change', (ev: TpChangeEvent<number>) => {
-          handleGridChange('minCellSize', ev.value);
-        });
-        
-        // Regenerate grid button
-        gridFolder.addButton({
-          title: 'Regenerate Grid'
-        }).on('click', () => {
-          setGridSettings({...gridSettings});
-        });
-        
-        // Store the pane and bindings
-        paneRef.current = pane;
-        
-        // Define the updateSpiralControls function
-        const updateSpiralControls = () => {
-          const isSpiralVisible = halftoneSettings.arrangement === 'spiral';
-          const allSpiralBindings = ['spiralTightness', 'spiralExpansion', 'spiralRotation', 'spiralCenterX', 'spiralCenterY'];
-          
-          // Remove all spiral controls if they exist but shouldn't be visible
-          if (!isSpiralVisible) {
-            allSpiralBindings.forEach(key => {
-              if (paneRef.current?.getBlade(key)) {
-                halftoneFolder.remove(paneRef.current.getBlade(key));
-                paneRef.current?.removeBlade(key);
-              }
-            });
-            return;
-          }
-          
-          // Add spiral controls if they should be visible but don't exist yet
-          if (!paneRef.current?.getBlade('spiralTightness')) {
-            // First, remove all controls after arrangement to reinsert them later
-            const controlsToRemove: TweakpaneBladeApi[] = [];
-            let foundArrangement = false;
-            
-            halftoneFolder.children.forEach(control => {
-              if (foundArrangement && control !== paneRef.current?.getBlade('arrangement')) {
-                controlsToRemove.push(control as TweakpaneBladeApi);
-              }
-              if (control === paneRef.current?.getBlade('arrangement')) {
-                foundArrangement = true;
-              }
-            });
-            
-            // Store references to removed controls
-            const removedControls: TweakpaneBladeApi[] = [];
-            controlsToRemove.forEach(control => {
-              removedControls.push(control);
-              halftoneFolder.remove(control);
-            });
-            
-            // Add spiral controls
-            paneRef.current?.addBlade(halftoneSettings, 'spiralTightness', {
-              label: 'Spiral Tightness',
-              min: 0.01,
-              max: 0.2,
-              step: 0.01
-            }).on('change', (ev: TpChangeEvent<number>) => {
-              handleHalftoneChange('spiralTightness', ev.value);
-            });
-            
-            paneRef.current?.addBlade(halftoneSettings, 'spiralExpansion', {
-              label: 'Spiral Growth',
-              min: 0.5,
-              max: 3.0,
-              step: 0.1
-            }).on('change', (ev) => {
-              handleHalftoneChange('spiralExpansion', ev.value);
-            });
-            
-            paneRef.current?.addBlade(halftoneSettings, 'spiralRotation', {
-              label: 'Spiral Rotation',
-              min: -180,
-              max: 180,
-              step: 5
-            }).on('change', (ev) => {
-              handleHalftoneChange('spiralRotation', ev.value);
-            });
-            
-            paneRef.current?.addBlade(halftoneSettings, 'spiralCenterX', {
-              label: 'Center X Offset',
-              min: -500,
-              max: 500,
-              step: 5
-            }).on('change', (ev) => {
-              handleHalftoneChange('spiralCenterX', ev.value);
-            });
-            
-            paneRef.current?.addBlade(halftoneSettings, 'spiralCenterY', {
-              label: 'Center Y Offset',
-              min: -500,
-              max: 500,
-              step: 5
-            }).on('change', (ev) => {
-              handleHalftoneChange('spiralCenterY', ev.value);
-            });
-            
-            // Re-add the removed controls
-            removedControls.forEach(control => {
-              halftoneFolder.add(control);
-            });
-          }
-        };
-
-        // Define the updateConcentricControls function
-        const updateConcentricControls = () => {
-          const isConcentricVisible = halftoneSettings.arrangement === 'concentric';
-          const allConcentricBindings = ['concentricRingSpacing', 'concentricCenterX', 'concentricCenterY'];
-          
-          // Remove all concentric controls if they exist but shouldn't be visible
-          if (!isConcentricVisible) {
-            allConcentricBindings.forEach(key => {
-              if (paneRef.current?.getBlade(key)) {
-                halftoneFolder.remove(paneRef.current.getBlade(key));
-                paneRef.current?.removeBlade(key);
-              }
-            });
-            return;
-          }
-          
-          // Add concentric controls if they should be visible but don't exist yet
-          if (!paneRef.current?.getBlade('concentricRingSpacing')) {
-            // First, remove all controls after arrangement to reinsert them later
-            const controlsToRemove: TweakpaneBladeApi[] = [];
-            let foundArrangement = false;
-            
-            halftoneFolder.children.forEach(control => {
-              if (foundArrangement && control !== paneRef.current?.getBlade('arrangement')) {
-                controlsToRemove.push(control as TweakpaneBladeApi);
-              }
-              if (control === paneRef.current?.getBlade('arrangement')) {
-                foundArrangement = true;
-              }
-            });
-            
-            // Store references to removed controls
-            const removedControls: TweakpaneBladeApi[] = [];
-            controlsToRemove.forEach(control => {
-              removedControls.push(control);
-              halftoneFolder.remove(control);
-            });
-            
-            // Add concentric controls
-            paneRef.current?.addBlade(halftoneSettings, 'concentricRingSpacing', {
-              label: 'Ring Spacing',
-              min: 0.5,
-              max: 3.0,
-              step: 0.1
-            }).on('change', (ev) => {
-              handleHalftoneChange('concentricRingSpacing', ev.value);
-            });
-            
-            paneRef.current?.addBlade(halftoneSettings, 'concentricCenterX', {
-              label: 'Center X Offset',
-              min: -500,
-              max: 500,
-              step: 5
-            }).on('change', (ev) => {
-              handleHalftoneChange('concentricCenterX', ev.value);
-            });
-            
-            paneRef.current?.addBlade(halftoneSettings, 'concentricCenterY', {
-              label: 'Center Y Offset',
-              min: -500,
-              max: 500,
-              step: 5
-            }).on('change', (ev) => {
-              handleHalftoneChange('concentricCenterY', ev.value);
-            });
-            
-            // Re-add the removed controls
-            removedControls.forEach(control => {
-              halftoneFolder.add(control);
-            });
-          }
-        };
-        
-        // Call initially to set up the UI correctly
-        updateSpiralControls();
-        updateConcentricControls();
-        
-        // Update when arrangement changes
-        paneRef.current?.addBlade(halftoneSettings, 'arrangement', {
-          label: 'Pattern',
-          options: {
-            'Grid': 'grid',
-            'Hexagonal': 'hexagonal',
-            'Spiral': 'spiral',
-            'Concentric': 'concentric',
-            'Random': 'random'
-          }
-        }).on('change', () => {
-          updateSpiralControls();
-          updateConcentricControls();
-        });
-
-        // Add crop button to the main folder
-        const mainFolder = pane.addFolder({
-          title: 'Image Controls',
-        });
-
-        mainFolder.addButton({
-          title: 'Crop Image',
-        }).on('click', () => {
-          if (image) {
-            setIsCropping(true);
-          }
-        });
-
-        return () => {
-          if (paneRef.current) {
-            paneRef.current.dispose();
-            paneRef.current = null;
-          }
-        };
-      } catch (error) {
-        console.error('Error initializing Tweakpane:', error);
-      }
-    }
-  }, [image]); // Only depend on image, not other state variables
-
-  // Update Tweakpane bindings when states change
-  useEffect(() => {
-    if (!paneRef.current) return;
-    
-    try {
-      // Update dithering settings if they exist
-      if (paneRef.current.getBlade('ditherEnabled')) {
-        paneRef.current.getBlade('ditherEnabled').controller_.binding.target.enabled = ditherSettings.enabled;
-        paneRef.current.getBlade('ditherEnabled').refresh();
-      }
-      
-      if (paneRef.current.getBlade('ditherType')) {
-        paneRef.current.getBlade('ditherType').controller_.binding.target.type = ditherSettings.type;
-        paneRef.current.getBlade('ditherType').refresh();
-      }
-      
-      if (paneRef.current.getBlade('ditherResolution')) {
-        paneRef.current.getBlade('ditherResolution').controller_.binding.target.resolution = ditherSettings.resolution;
-        paneRef.current.getBlade('ditherResolution').refresh();
-      }
-      
-      if (paneRef.current.getBlade('ditherColorDepth')) {
-        paneRef.current.getBlade('ditherColorDepth').controller_.binding.target.colorDepth = ditherSettings.colorDepth;
-        paneRef.current.getBlade('ditherColorDepth').refresh();
-      }
-      
-      if (paneRef.current.getBlade('ditherThreshold')) {
-        paneRef.current.getBlade('ditherThreshold').controller_.binding.target.threshold = ditherSettings.threshold;
-        paneRef.current.getBlade('ditherThreshold').refresh();
-      }
-      
-      if (paneRef.current.getBlade('ditherColorMode')) {
-        paneRef.current.getBlade('ditherColorMode').controller_.binding.target.colorMode = ditherSettings.colorMode;
-        paneRef.current.getBlade('ditherColorMode').refresh();
-      }
-      
-    } catch (error) {
-      console.error('Error updating Tweakpane bindings:', error);
-    }
-  }, [ditherSettings]);
 
   // Handle file drop
   const onDrop = (acceptedFiles: File[]) => {
@@ -1547,16 +465,18 @@ export default function AdvancedEditor() {
   // Load random image
   const loadRandomImage = useCallback(() => {
     setIsLoading(true);
-    const width = Math.floor(Math.random() * 500) + 500;
-    const height = Math.floor(Math.random() * 500) + 500;
     
-    fetch(`https://picsum.photos/${width}/${height}`)
+    fetch('https://picsum.photos/800')
       .then(response => response.blob())
       .then(blob => {
-        return new Promise((resolve) => {
+        return new Promise<{ width: number; height: number }>((resolve) => {
           const reader = new FileReader();
-          reader.onload = () => {
-            const imageData = reader.result as string;
+          reader.onload = (e) => {
+            const imageData = e.target?.result as string;
+            if (!imageData) {
+              throw new Error('Failed to load image data');
+            }
+            
             setImage(imageData);
             setOriginalImageDataRef(imageData);
             
@@ -1584,13 +504,7 @@ export default function AdvancedEditor() {
 
   // Reset to original image
   const resetImage = () => {
-    console.log('Reset button clicked');
-    if (!originalImageDataRef) return;
-    
-    // Reset image and all settings
-    setImage(originalImageDataRef);
-    
-    // Reset all settings to defaults
+    // Reset all settings to their defaults
     setColorSettings({
       enabled: false,
       hueShift: 0,
@@ -1601,29 +515,55 @@ export default function AdvancedEditor() {
       invert: false,
       glitchIntensity: 0,
       glitchSeed: Math.random(),
-      blendMode: 'normal' as 'normal'
+      blendMode: 'normal'
     });
     
+    // Reset gradient map settings
+    setGradientMapSettings({
+      enabled: false,
+      stops: [
+        { position: 0, color: '#000000' },
+        { position: 50, color: '#808080' },
+        { position: 100, color: '#ffffff' }
+      ],
+      blendMode: 'normal',
+      opacity: 1
+    });
+    
+    // Reset threshold settings
+    setThresholdSettings({
+      enabled: false,
+      mode: 'solid',
+      threshold: 128,
+      darkColor: '#000000',
+      lightColor: '#ffffff',
+      darkColorStart: '#000000',
+      darkColorEnd: '#404040',
+      lightColorStart: '#BFBFBF',
+      lightColorEnd: '#ffffff'
+    });
+    
+    // Reset halftone settings
     setHalftoneSettings({
       enabled: false,
       cellSize: 8,
       mix: 100,
       colored: false,
       enableCMYK: false,
-      arrangement: 'grid' as HalftoneArrangement,
-      shape: 'circle' as HalftoneShape,
-      angleOffset: 0,
+      arrangement: 'grid',
+      shape: 'circle',
+      angleOffset: 45,
       sizeVariation: 0,
-      dotScaleFactor: 0.8,
+      dotScaleFactor: 1,
       invertBrightness: false,
       spiralTightness: 0.1,
-      spiralExpansion: 1.0,
+      spiralExpansion: 1,
       spiralRotation: 0,
       spiralCenterX: 0,
       spiralCenterY: 0,
       concentricCenterX: 0,
       concentricCenterY: 0,
-      concentricRingSpacing: 1.0,
+      concentricRingSpacing: 1,
       channels: {
         cyan: true,
         magenta: true,
@@ -1638,47 +578,25 @@ export default function AdvancedEditor() {
       }
     });
     
-    setGridSettings({
-      enabled: false,
-      columns: 3,
-      rows: 3,
-      applyRotation: false,
-      maxRotation: 10,
-      splitEnabled: false,
-      splitProbability: 0.5,
-      maxSplitLevels: 2,
-      minCellSize: 50
-    });
-
-    setThresholdSettings({
-      enabled: false,
-      mode: 'solid' as ThresholdMode,
-      threshold: 128,
-      darkColor: '#000000',
-      lightColor: '#FFFFFF',
-      darkColorStart: '#000000',
-      darkColorEnd: '#000066',
-      lightColorStart: '#FFFFFF',
-      lightColorEnd: '#FFFF66'
-    });
-
+    // Reset dither settings
     setDitherSettings({
       enabled: false,
-      type: 'ordered' as 'ordered',
+      type: 'ordered',
       threshold: 128,
-      colorMode: 'grayscale' as 'grayscale',
-      resolution: 30,
+      colorMode: 'grayscale',
+      resolution: 8,
       colorDepth: 2,
       darkColor: '#000000',
-      lightColor: '#FFFFFF'
+      lightColor: '#ffffff'
     });
-
+    
+    // Reset text dither settings
     setTextDitherSettings({
       enabled: false,
-      text: 'MATRIX',
+      text: 'Hello',
       fontSize: 12,
       fontFamily: 'monospace',
-      colorMode: 'monochrome' as 'monochrome',
+      colorMode: 'monochrome',
       contrast: 1,
       brightness: 0.5,
       invert: false,
@@ -1689,51 +607,30 @@ export default function AdvancedEditor() {
     setGlitchSettings({
       masterEnabled: false,
       enabled: false,
-      glitchIntensity: 50,
-      glitchDensity: 50,
-      glitchDirection: 'horizontal' as 'horizontal' | 'vertical' | 'both',
-      
-      // Pixel sorting
+      glitchIntensity: 10,
+      glitchDensity: 10,
+      glitchDirection: 'horizontal',
+      glitchSize: 20,
       pixelSortingEnabled: false,
-      pixelSortingThreshold: 0.5,
-      pixelSortingDirection: 'horizontal' as 'horizontal' | 'vertical' | 'both',
-      
-      // Channel shift
+      pixelSortingThreshold: 50,
+      pixelSortingDirection: 'horizontal',
       channelShiftEnabled: false,
-      channelShiftAmount: 1,
-      channelShiftMode: 'rgb' as 'rgb' | 'rb' | 'rg' | 'gb',
-      
-      // Scan lines
+      channelShiftAmount: 5,
+      channelShiftMode: 'rgb',
       scanLinesEnabled: false,
-      scanLinesCount: 20,
-      scanLinesIntensity: 50,
-      scanLinesDirection: 'horizontal' as 'horizontal' | 'vertical' | 'both',
-      
-      // Noise
+      scanLinesCount: 50,
+      scanLinesIntensity: 0.5,
+      scanLinesDirection: 'horizontal',
       noiseEnabled: false,
-      noiseAmount: 20,
-      
-      // Blocks
+      noiseAmount: 0.5,
       blocksEnabled: false,
       blocksSize: 20,
-      blocksOffset: 10,
-      blocksDensity: 20
+      blocksOffset: 0,
+      blocksDensity: 0.3
     });
 
-    // Force recreate Tweakpane instance
-    if (paneRef.current) {
-      paneRef.current.dispose();
-      paneRef.current = null;
-      
-      // Force a rerender by simulating an image change, which will recreate the pane
-      setImage(null);
-      setTimeout(() => {
-        setImage(originalImageDataRef);
-      }, 50);
-    } else {
-      // If there's no pane yet, just process the image with reset settings
-      processImage();
-    }
+    // Process the image with reset settings
+    processImage();
   };
 
   // Handle color setting changes
@@ -1931,7 +828,7 @@ export default function AdvancedEditor() {
     }
   }, [image, processImage]);
 
-  const handleCropComplete = (croppedOriginal: string, croppedModified: string) => {
+  const handleCropComplete = useCallback((croppedOriginal: string, croppedModified: string) => {
     // Create a temporary image to get the dimensions
     const img = new Image();
     img.onload = () => {
@@ -1947,6 +844,33 @@ export default function AdvancedEditor() {
       setIsCropping(false);
     };
     img.src = croppedModified; // Use modified image dimensions
+  }, []);
+
+  const resetGlitchSettings = () => {
+    setGlitchSettings({
+      masterEnabled: false,
+      enabled: false,
+      glitchIntensity: 10,
+      glitchDensity: 10,
+      glitchDirection: 'horizontal',
+      glitchSize: 20,
+      pixelSortingEnabled: false,
+      pixelSortingThreshold: 50,
+      pixelSortingDirection: 'horizontal',
+      channelShiftEnabled: false,
+      channelShiftAmount: 5,
+      channelShiftMode: 'rgb',
+      scanLinesEnabled: false,
+      scanLinesCount: 50,
+      scanLinesIntensity: 0.5,
+      scanLinesDirection: 'horizontal',
+      noiseEnabled: false,
+      noiseAmount: 0.5,
+      blocksEnabled: false,
+      blocksSize: 20,
+      blocksOffset: 0,
+      blocksDensity: 0.3
+    });
   };
 
   return (
@@ -2034,6 +958,7 @@ export default function AdvancedEditor() {
             textDitherSettings={textDitherSettings}
             gradientMapSettings={gradientMapSettings}
             gridSettings={gridSettings}
+            effectsOrder={effectsOrder}
             updateDitherSettings={(settings) => setDitherSettings(prev => ({ ...prev, ...settings }))}
             updateHalftoneSettings={handleHalftoneChange}
             updateColorSettings={handleColorChange}
@@ -2042,14 +967,12 @@ export default function AdvancedEditor() {
             updateTextDitherSettings={(settings) => setTextDitherSettings(prev => ({ ...prev, ...settings }))}
             updateGradientMapSettings={(settings) => setGradientMapSettings(prev => ({ ...prev, ...settings }))}
             updateGridSettings={handleGridChange}
-            effectsOrder={effectsOrder}
             updateEffectsOrder={setEffectsOrder}
             onResetImage={resetImage}
             onExportPng={() => canvasRef.current && exportCanvasAsPng(canvasRef.current)}
             onExportSvg={() => canvasRef.current && exportCanvasAsSvg(canvasRef.current)}
             onCropImage={() => setIsCropping(true)}
           />
-          <div ref={paneContainerRef} className="tweakpane-container"></div>
         </div>
       </div>
 

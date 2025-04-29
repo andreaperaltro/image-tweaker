@@ -28,7 +28,7 @@ const nextConfig = {
     unoptimized: true, // Required for static export
   },
   output: 'standalone',
-  basePath: process.env.NEXT_PUBLIC_BASE_PATH || '', // Set base path for GitHub Pages
+  basePath: process.env.NODE_ENV === 'development' ? '' : (process.env.NEXT_PUBLIC_BASE_PATH || ''), // No basePath in development
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
   },
@@ -44,10 +44,6 @@ const nextConfig = {
       }
     });
     return config;
-  },
-  // Add server configuration
-  server: {
-    port: process.env.PORT || 3000,
   }
 };
 

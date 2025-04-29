@@ -420,6 +420,74 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 max={255}
                 step={1}
               />
+              
+              {thresholdSettings.mode === 'solid' && (
+                <>
+                  <div className="mobile-control-group">
+                    <label className="mobile-control-label">Dark Color</label>
+                    <input 
+                      type="color" 
+                      className="mobile-color-picker"
+                      value={thresholdSettings.darkColor}
+                      onChange={(e) => handleColorChange(updateThresholdSettings, 'darkColor', e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="mobile-control-group">
+                    <label className="mobile-control-label">Light Color</label>
+                    <input 
+                      type="color" 
+                      className="mobile-color-picker"
+                      value={thresholdSettings.lightColor}
+                      onChange={(e) => handleColorChange(updateThresholdSettings, 'lightColor', e.target.value)}
+                    />
+                  </div>
+                </>
+              )}
+              
+              {thresholdSettings.mode === 'gradient' && (
+                <>
+                  <div className="mobile-control-group">
+                    <label className="mobile-control-label">Dark Color Start</label>
+                    <input 
+                      type="color" 
+                      className="mobile-color-picker"
+                      value={thresholdSettings.darkColorStart}
+                      onChange={(e) => handleColorChange(updateThresholdSettings, 'darkColorStart', e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="mobile-control-group">
+                    <label className="mobile-control-label">Dark Color End</label>
+                    <input 
+                      type="color" 
+                      className="mobile-color-picker"
+                      value={thresholdSettings.darkColorEnd}
+                      onChange={(e) => handleColorChange(updateThresholdSettings, 'darkColorEnd', e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="mobile-control-group">
+                    <label className="mobile-control-label">Light Color Start</label>
+                    <input 
+                      type="color" 
+                      className="mobile-color-picker"
+                      value={thresholdSettings.lightColorStart}
+                      onChange={(e) => handleColorChange(updateThresholdSettings, 'lightColorStart', e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="mobile-control-group">
+                    <label className="mobile-control-label">Light Color End</label>
+                    <input 
+                      type="color" 
+                      className="mobile-color-picker"
+                      value={thresholdSettings.lightColorEnd}
+                      onChange={(e) => handleColorChange(updateThresholdSettings, 'lightColorEnd', e.target.value)}
+                    />
+                  </div>
+                </>
+              )}
             </div>
           </div>
         );
@@ -491,6 +559,30 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                   max={256}
                   step={1}
                 />
+              )}
+
+              {ditherSettings.colorMode === '2-color' && (
+                <>
+                  <div className="mobile-control-group">
+                    <label className="mobile-control-label">Dark Color</label>
+                    <input 
+                      type="color" 
+                      className="mobile-color-picker"
+                      value={ditherSettings.darkColor}
+                      onChange={(e) => updateDitherSettings({ darkColor: e.target.value })}
+                    />
+                  </div>
+                  
+                  <div className="mobile-control-group">
+                    <label className="mobile-control-label">Light Color</label>
+                    <input 
+                      type="color" 
+                      className="mobile-color-picker"
+                      value={ditherSettings.lightColor}
+                      onChange={(e) => updateDitherSettings({ lightColor: e.target.value })}
+                    />
+                  </div>
+                </>
               )}
             </div>
           </div>
