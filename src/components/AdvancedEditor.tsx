@@ -1548,8 +1548,7 @@ export default function AdvancedEditor() {
   const loadRandomImage = useCallback(() => {
     setIsLoading(true);
     
-    // Use picsum.photos instead of Unsplash
-    fetch('https://picsum.photos/1200/800')
+    return fetch('https://picsum.photos/1200/800')
       .then(response => {
         if (!response.ok) {
           throw new Error('Failed to fetch image');

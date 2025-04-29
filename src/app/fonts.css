@@ -1,6 +1,6 @@
 @font-face {
   font-family: 'PP Mondwest';
-  src: url('data:font/opentype;base64,T1RUTwALAIAAAwAwQ0ZGIDSmzPIAAAXoAAAZM0RTSUcAAAABAABtJAAAAAhPUy8yoEOg/wAAARAAAABgY21hcFBmXIsAAANMAAADemhlYWQGwf+LAAABLAAAADZoaGVhBx4EhQAAAWQAAAAkaG10eJhkGUQAAAIQAAAFcG1heHAACVAAAAABCAAAAAZuYW1lL0RQwgAAAeQAAAJScG9zdP+4ADIAAAFEAAAAIAABAAAAAQgvW1WOzV8PPPUAAwPoAAAAANFrF3YAAAAA1pQ51gAA/0ACAAHAAAAAAwACAAAAAAAAAAEAAAHA/0AAJgIAAAAAAAACAAAA') format('opentype');
+  src: url('/fonts/PPMondwest-Regular.otf') format('opentype');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -8,7 +8,7 @@
 
 @font-face {
   font-family: 'PP Mondwest';
-  src: url('data:font/opentype;base64,T1RUTwALAIAAAwAwQ0ZGIDSmzPIAAAXoAAAZM0RTSUcAAAABAABtJAAAAAhPUy8yoEOg/wAAARAAAABgY21hcFBmXIsAAANMAAADemhlYWQGwf+LAAABLAAAADZoaGVhBx4EhQAAAWQAAAAkaG10eJhkGUQAAAIQAAAFcG1heHAACVAAAAABCAAAAAZuYW1lL0RQwgAAAeQAAAJScG9zdP+4ADIAAAFEAAAAIAABAAAAAQgvW1WOzV8PPPUAAwPoAAAAANFrF3YAAAAA1pQ51gAA/0ACAAHAAAAAAwACAAAAAAAAAAEAAAHA/0AAJgIAAAAAAAACAAAA') format('opentype');
+  src: url('/fonts/PPMondwest-Bold.otf') format('opentype');
   font-weight: bold;
   font-style: normal;
   font-display: swap;

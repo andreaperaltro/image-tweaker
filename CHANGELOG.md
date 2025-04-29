@@ -7,18 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.2.1.0] - 2024-03-26
 
+### Added
+- New slider component with improved interaction and visual feedback
+- Integrated help section directly in the header for better accessibility
+- Smooth animation for help text visibility toggle
+
 ### Changed
 - Switched from Unsplash to Picsum.photos for random image service
 - Improved error handling in image loading
 - Enhanced development server configuration with dynamic port assignment
-- Removed unused HelpModal component and related files
+- Removed modal-based help system in favor of inline help text
 - Streamlined mobile controls implementation
+- Updated GUI with consistent PP Mondwest font usage
+- Improved slider controls across all effect parameters
 
 ### Fixed
 - Fixed port conflict issues in development server
 - Resolved font loading issues with PP Mondwest
 - Fixed syntax errors in AdvancedEditor component
 - Improved error handling in image processing pipeline
+- Fixed help text visibility toggle animation
+
+### Removed
+- HelpModal component and related files (replaced with inline help)
+- Unused modal-based implementations
 
 ## [0.2.0.0] - 2024-06-06
 

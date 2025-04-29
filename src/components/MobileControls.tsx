@@ -347,18 +347,15 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 </select>
               </div>
               
-              <div className="mobile-control-group">
-                <label className="mobile-control-label">Opacity ({Math.round(gradientMapSettings.opacity * 100)}%)</label>
-                <input 
-                  type="range" 
-                  className="mobile-slider"
-                  min={0}
-                  max={1}
-                  step={0.01}
-                  value={gradientMapSettings.opacity}
-                  onChange={(e) => updateGradientMapSettings({ opacity: parseFloat(e.target.value) })}
-                />
-              </div>
+              <Slider
+                label="Opacity"
+                value={gradientMapSettings.opacity}
+                onChange={(value) => updateGradientMapSettings({ opacity: value })}
+                min={0}
+                max={1}
+                step={0.01}
+                unit="%"
+              />
               
               <div className="mobile-control-group">
                 <label className="mobile-control-label">Dark Color (0%)</label>
@@ -877,30 +874,24 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 />
               </div>
               
-              <div className="mobile-control-group">
-                <label className="mobile-control-label">Font Size ({textDitherSettings.fontSize})</label>
-                <input 
-                  type="range" 
-                  className="mobile-slider"
-                  min={6}
-                  max={24}
-                  value={textDitherSettings.fontSize}
-                  onChange={(e) => updateTextDitherSettings({ fontSize: parseInt(e.target.value) })}
-                />
-              </div>
+              <Slider
+                label="Font Size"
+                value={textDitherSettings.fontSize}
+                onChange={(value) => updateTextDitherSettings({ fontSize: value })}
+                min={6}
+                max={24}
+                step={1}
+                unit="px"
+              />
               
-              <div className="mobile-control-group">
-                <label className="mobile-control-label">Resolution ({textDitherSettings.resolution})</label>
-                <input 
-                  type="range" 
-                  className="mobile-slider"
-                  min={0.5}
-                  max={4}
-                  step={0.1}
-                  value={textDitherSettings.resolution}
-                  onChange={(e) => updateTextDitherSettings({ resolution: parseFloat(e.target.value) })}
-                />
-              </div>
+              <Slider
+                label="Resolution"
+                value={textDitherSettings.resolution}
+                onChange={(value) => updateTextDitherSettings({ resolution: value })}
+                min={0.5}
+                max={4}
+                step={0.1}
+              />
               
               <div className="mobile-control-group">
                 <label className="mobile-control-label">Color Mode</label>
@@ -914,18 +905,14 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 </select>
               </div>
               
-              <div className="mobile-control-group">
-                <label className="mobile-control-label">Contrast ({textDitherSettings.contrast})</label>
-                <input 
-                  type="range" 
-                  className="mobile-slider"
-                  min={0}
-                  max={2}
-                  step={0.1}
-                  value={textDitherSettings.contrast}
-                  onChange={(e) => updateTextDitherSettings({ contrast: parseFloat(e.target.value) })}
-                />
-              </div>
+              <Slider
+                label="Contrast"
+                value={textDitherSettings.contrast}
+                onChange={(value) => updateTextDitherSettings({ contrast: value })}
+                min={0}
+                max={2}
+                step={0.1}
+              />
             </div>
           </div>
         );
