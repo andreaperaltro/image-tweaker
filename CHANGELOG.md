@@ -246,3 +246,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0] - 2025-03-XX
 - Initial release 
+
+## [0.2.2.0] - 2025-06-07
+
+### Added
+- New blur effects:
+  - Radial blur with center point control
+  - Motion blur with angle adjustment
+  - Tilt-shift blur with focus point, width, and gradient controls
+- Enhanced blur controls with consistent UI styling
+- Improved blur effect performance and quality
+
+### Changed
+- Updated blur section UI to match the rest of the application's design
+- Improved blur effect initialization and state management
+- Enhanced blur effect parameter controls for better user experience
+
+### Fixed
+- Fixed Gaussian blur initialization issue
+- Improved radial blur position handling
+- Enhanced tilt-shift blur stability and performance
+- Fixed UI consistency issues in blur controls

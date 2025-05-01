@@ -14,7 +14,10 @@ A modern web application for real-time image processing and manipulation.
 
 - **Blur Effects**
   - Gaussian blur with adjustable radius
-  - Optimized kernel calculation for smooth results
+  - Radial blur with customizable center point
+  - Motion blur with angle control
+  - Tilt-shift blur with focus point, width, and gradient controls
+  - Optimized kernel calculations for smooth results
 
 - **Gradient Map**
   - Custom color stops
@@ -81,7 +84,7 @@ A modern web application for real-time image processing and manipulation.
 The application features a mobile-friendly interface with intuitive controls:
 
 - **Color Section**: Adjust basic color properties
-- **Blur Section**: Control the Gaussian blur radius
+- **Blur Section**: Control various blur effects including Gaussian, radial, motion, and tilt-shift
 - **Gradient Section**: Create and edit gradient maps
 - **Threshold Section**: Set threshold levels and colors
 - **Dither Section**: Configure dithering parameters
