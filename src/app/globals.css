@@ -86,35 +86,6 @@ input[type="range"]::-moz-range-thumb:hover {
   @apply flex items-center justify-center w-6 h-6 rounded bg-gray-100 text-gray-700 hover:bg-gray-200 active:bg-gray-300 transition-colors;
 }
 
-/* Tweakpane custom styles */
-.tp-dfwv {
-  min-width: 350px !important;
-}
-
-.tp-rotv {
-  background-color: rgb(31 41 55) !important;
-}
-
-.tp-lblv_l {
-  color: rgb(209 213 219) !important;
-}
-
-.tp-sldv_k {
-  background-color: rgb(30 41 59) !important;
-}
-
-.tp-sldv_v {
-  background-color: rgb(52 211 153) !important;
-}
-
-.tp-sldv_v:hover {
-  background-color: rgb(16 185 129) !important;
-}
-
-.tp-rotv_t {
-  color: rgb(209 213 219) !important;
-}
-
 /* Custom scrollbar styles */
 ::-webkit-scrollbar {
   width: 8px;

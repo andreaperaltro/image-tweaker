@@ -8,8 +8,6 @@ import { HalftoneSettings, HalftoneArrangement, HalftoneShape, applyHalftone } f
 import { exportAsPng, exportAsSvg } from './SvgExport'
 import { exportCanvasAsPng, exportCanvasAsSvg } from './ExportUtils'
 import { GlitchSettings, applyGlitch } from './GlitchUtils'
-import { Pane, FolderApi } from 'tweakpane';
-import { BladeApi, BladeController, View } from '@tweakpane/core';
 import { applyDithering, DitherSettings, DitherType, DitherColorMode } from '../components/DitherUtils'
 import { TextDitherSettings, applyTextDither } from './TextDitherUtils'
 import { ThresholdSettings, ThresholdMode, applyThreshold } from './ThresholdUtils'
@@ -17,13 +15,49 @@ import CropEditor from './CropEditor'
 import { GradientMapSettings, applyGradientMap, GradientMapBlendMode, GradientStop } from './GradientMapUtils'
 import { saveAs } from 'file-saver'
 import MobileControls from './MobileControls'
-import { TweakpaneBladeApi, TpChangeEvent } from '../types'
+import { BlurSettings } from '../types'
+import { applyBlur } from './BlurUtils'
 
 // Define types
 type AspectRatioPreset = '1:1' | '4:3' | '16:9' | '3:2' | '5:4' | '2:1' | '3:4' | '9:16' | '2:3' | '4:5' | '1:2' | 'custom';
 type Orientation = 'landscape' | 'portrait';
 
-export default function AdvancedEditor() {
+interface AdvancedEditorProps {
+  blur: BlurSettings;
+  onBlurChange: (settings: BlurSettings) => void;
+}
+
+interface MobileControlsProps {
+  ditherSettings: DitherSettings;
+  halftoneSettings: HalftoneSettings;
+  colorSettings: ColorSettings;
+  thresholdSettings: ThresholdSettings;
+  glitchSettings: GlitchSettings;
+  textDitherSettings: TextDitherSettings;
+  gradientMapSettings: GradientMapSettings;
+  gridSettings: GridSettings;
+  effectsOrder: string[];
+  updateDitherSettings: (settings: Partial<DitherSettings>) => void;
+  updateHalftoneSettings: (setting: keyof HalftoneSettings, value: any) => void;
+  updateColorSettings: (setting: keyof ColorSettings, value: any) => void;
+  updateThresholdSettings: (settings: Partial<ThresholdSettings>) => void;
+  updateGlitchSettings: (settings: Partial<GlitchSettings>) => void;
+  updateTextDitherSettings: (settings: Partial<TextDitherSettings>) => void;
+  updateGradientMapSettings: (settings: Partial<GradientMapSettings>) => void;
+  updateGridSettings: (setting: keyof GridSettings, value: any) => void;
+  updateEffectsOrder: (order: string[]) => void;
+  onResetImage: () => void;
+  onExportPng: () => void;
+  onExportSvg: () => void;
+  onCropImage: () => void;
+  blur: BlurSettings;
+  onBlurChange: (settings: BlurSettings) => void;
+}
+
+export default function AdvancedEditor({
+  blur,
+  onBlurChange,
+}: AdvancedEditorProps) {
   // Canvas and image states
   const [image, setImage] = useState<string | null>(null);
   const [originalImageDataRef, setOriginalImageDataRef] = useState<string | null>(null);
@@ -158,6 +192,7 @@ export default function AdvancedEditor() {
   // Effects order
   const [effectsOrder, setEffectsOrder] = useState([
     'color',
+    'blur',
     'gradient',
     'threshold',
     'dither',
@@ -793,6 +828,12 @@ export default function AdvancedEditor() {
               applyGlitch(sourceCtx, sourceCanvas, canvasWidth, canvasHeight, glitchSettings);
             }
             break;
+
+          case 'blur':
+            if (blur.enabled) {
+              applyBlur(sourceCtx, canvasWidth, canvasHeight, blur);
+            }
+            break;
         }
       });
       
@@ -818,7 +859,8 @@ export default function AdvancedEditor() {
     textDitherSettings,
     glitchSettings,
     gradientMapSettings,
-    effectsOrder
+    effectsOrder,
+    blur
   ]);
 
   // Process image when it changes
@@ -972,6 +1014,8 @@ export default function AdvancedEditor() {
             onExportPng={() => canvasRef.current && exportCanvasAsPng(canvasRef.current)}
             onExportSvg={() => canvasRef.current && exportCanvasAsSvg(canvasRef.current)}
             onCropImage={() => setIsCropping(true)}
+            blur={blur}
+            onBlurChange={onBlurChange}
           />
         </div>
       </div>

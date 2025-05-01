@@ -1,7 +1,8 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import React from 'react';
+import React, { useState } from 'react';
+import { BlurSettings } from '../types';
 
 // Import the AdvancedEditor component with dynamic import to avoid SSR issues
 const AdvancedEditor = dynamic(() => import('@/components/AdvancedEditor'), {
@@ -18,6 +19,28 @@ const AdvancedEditor = dynamic(() => import('@/components/AdvancedEditor'), {
 export default function Home() {
   const [isHelpOpen, setIsHelpOpen] = React.useState(false);
   const [openSection, setOpenSection] = React.useState<string | null>(null);
+  const [blurSettings, setBlurSettings] = useState<BlurSettings>({
+    enabled: false,
+    type: 'gaussian',
+    radius: 5,
+    angle: 0,
+    distance: 20,
+    centerX: 0.5,
+    centerY: 0.5,
+    strength: 0.5,
+    area: 50
+  });
+  const [effectsOrder, setEffectsOrder] = useState([
+    'color',
+    'blur',
+    'gradient',
+    'threshold',
+    'dither',
+    'halftone',
+    'textDither',
+    'glitch',
+    'grid'
+  ]);
 
   const toggleSection = (section: string) => {
     setOpenSection(openSection === section ? null : section);
@@ -243,7 +266,10 @@ export default function Home() {
 
       <div className="container mx-auto py-4 md:py-6 px-2 md:px-3">
         <div className="border-2 border-black p-2 md:p-3">
-          <AdvancedEditor />
+          <AdvancedEditor
+            blur={blurSettings}
+            onBlurChange={setBlurSettings}
+          />
         </div>
       </div>
 

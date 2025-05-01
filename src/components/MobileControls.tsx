@@ -11,6 +11,7 @@ import { TextDitherSettings } from './TextDitherUtils'
 import { GradientMapSettings, GradientMapBlendMode } from './GradientMapUtils'
 import { GridSettings } from './Grid'
 import Slider from './Slider'
+import { BlurSettings } from '../types'
 
 interface MobileControlsProps {
   ditherSettings: DitherSettings
@@ -35,6 +36,8 @@ interface MobileControlsProps {
   onExportPng: () => void
   onExportSvg: () => void
   onCropImage: () => void
+  blur: BlurSettings
+  onBlurChange: (settings: BlurSettings) => void
 }
 
 // Debounce function to limit update frequency
@@ -74,7 +77,9 @@ const MobileControls: React.FC<MobileControlsProps> = ({
   onResetImage,
   onExportPng,
   onExportSvg,
-  onCropImage
+  onCropImage,
+  blur,
+  onBlurChange
 }) => {
   const [openSection, setOpenSection] = useState<string | null>(null)
 
@@ -306,6 +311,28 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                   <span className="mobile-effect-toggle-slider"></span>
                 </label>
               </div>
+            </div>
+          </div>
+        );
+      
+      case 'blur':
+        return (
+          <div key="blur" className="mobile-effect-section">
+            {renderSectionHeader(
+              'blur',
+              'Blur Effect',
+              blur.enabled,
+              (enabled) => onBlurChange({ ...blur, enabled })
+            )}
+            <div className={`mobile-effect-content ${openSection === 'blur' ? 'open' : ''}`}>
+              <Slider
+                label="Radius"
+                value={blur.radius || 0}
+                onChange={(value) => onBlurChange({ ...blur, radius: value })}
+                min={0}
+                max={200}
+                step={1}
+              />
             </div>
           </div>
         );

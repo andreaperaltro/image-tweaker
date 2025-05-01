@@ -5,11 +5,6 @@
   font-family: 'PP Mondwest', sans-serif;
 }
 
-/* Hide the original Tweakpane */
-.tweakpane-container {
-  display: none !important;
-}
-
 /* Controls panel - consistent for all screen sizes */
 .mobile-controls-panel {
   position: static;
