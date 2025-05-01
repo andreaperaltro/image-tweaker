@@ -97,12 +97,5 @@ export type TextDitherSettings = {
 
 export interface BlurSettings {
   enabled: boolean;
-  type: 'gaussian' | 'motion' | 'radial' | 'tiltShift';
-  radius?: number; // For Gaussian blur (0-200)
-  angle?: number; // For motion blur and tilt-shift
-  distance?: number; // For motion blur
-  centerX?: number; // For radial blur and tilt-shift
-  centerY?: number; // For radial blur and tilt-shift
-  strength?: number; // For radial blur and tilt-shift
-  area?: number; // For tilt-shift blur
+  radius: number;
 } 
