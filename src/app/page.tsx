@@ -21,6 +21,7 @@ export default function Home() {
   const [openSection, setOpenSection] = React.useState<string | null>(null);
   const [blurSettings, setBlurSettings] = useState<BlurSettings>({
     enabled: false,
+    type: 'gaussian',
     radius: 5
   });
   const [effectsOrder, setEffectsOrder] = useState([

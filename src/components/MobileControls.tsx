@@ -325,6 +325,20 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               (enabled) => onBlurChange({ ...blur, enabled })
             )}
             <div className={`mobile-effect-content ${openSection === 'blur' ? 'open' : ''}`}>
+              <div className="mobile-control-group">
+                <label className="mobile-control-label">Blur Type</label>
+                <select 
+                  className="mobile-select"
+                  value={blur.type || 'gaussian'}
+                  onChange={(e) => onBlurChange({ ...blur, type: e.target.value as any })}
+                >
+                  <option value="gaussian">Gaussian</option>
+                  <option value="radial">Radial</option>
+                  <option value="motion">Motion</option>
+                  <option value="tiltShift">Tilt Shift</option>
+                </select>
+              </div>
+
               <Slider
                 label="Radius"
                 value={blur.radius || 0}
@@ -333,6 +347,88 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 max={200}
                 step={1}
               />
+
+              {blur.type === 'radial' && (
+                <>
+                  <Slider
+                    label="Center X"
+                    value={blur.centerX || 50}
+                    onChange={(value) => onBlurChange({ ...blur, centerX: value })}
+                    min={0}
+                    max={100}
+                    step={1}
+                  />
+                  <Slider
+                    label="Center Y"
+                    value={blur.centerY || 50}
+                    onChange={(value) => onBlurChange({ ...blur, centerY: value })}
+                    min={0}
+                    max={100}
+                    step={1}
+                  />
+                </>
+              )}
+
+              {blur.type === 'motion' && (
+                <Slider
+                  label="Angle"
+                  value={blur.angle || 0}
+                  onChange={(value) => onBlurChange({ ...blur, angle: value })}
+                  min={0}
+                  max={360}
+                  step={1}
+                />
+              )}
+
+              {blur.type === 'tiltShift' && (
+                <>
+                  <Slider
+                    label="Focus X"
+                    value={blur.focusPoint || 50}
+                    onChange={(value) => onBlurChange({ ...blur, focusPoint: value })}
+                    min={0}
+                    max={100}
+                    step={1}
+                    unit="%"
+                  />
+                  <Slider
+                    label="Focus Y"
+                    value={blur.focusPointY || 50}
+                    onChange={(value) => onBlurChange({ ...blur, focusPointY: value })}
+                    min={0}
+                    max={100}
+                    step={1}
+                    unit="%"
+                  />
+                  <Slider
+                    label="Angle"
+                    value={blur.angle || 0}
+                    onChange={(value) => onBlurChange({ ...blur, angle: value })}
+                    min={0}
+                    max={180}
+                    step={1}
+                    unit="°"
+                  />
+                  <Slider
+                    label="Focus Width"
+                    value={blur.focusWidth || 25}
+                    onChange={(value) => onBlurChange({ ...blur, focusWidth: value })}
+                    min={0}
+                    max={100}
+                    step={1}
+                    unit="%"
+                  />
+                  <Slider
+                    label="Gradient"
+                    value={blur.gradient || 12.5}
+                    onChange={(value) => onBlurChange({ ...blur, gradient: value })}
+                    min={0}
+                    max={100}
+                    step={1}
+                    unit="%"
+                  />
+                </>
+              )}
             </div>
           </div>
         );
