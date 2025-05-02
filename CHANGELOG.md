@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.2.2.0] - 2025-06-07
+## [0.2.2.0] - 2025-05-02
 
 ### Added
 - Settings save/load functionality
@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed issue with settings not applying to image after loading
 - Removed duplicate blur state in AdvancedEditor component
 
-## [0.2.1.0] - 2025-04-30
+## [0.2.1.0] - 2025-05-01
 
 ### Added
 - New slider component with improved interaction and visual feedback
@@ -45,7 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - HelpModal component and related files (replaced with inline help)
 - Unused modal-based implementations
 
-## [0.2.0.0] - 2025-06-06
+## [0.2.0.0] - 2025-04-26
 
 ### Added
 - Complete mobile UI controls for all effects including:
@@ -67,7 +67,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed issue where reordering effects would only change the number but not reposition controls
 - Improved effects panel organization and visual hierarchy
 
-## [0.1.92] - 2025-05-06
+## [0.1.92] - 2025-04-16
 
 ### Added
 - New "2 Color Palette" mode for dithering effects
