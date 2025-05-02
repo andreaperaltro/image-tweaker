@@ -17,6 +17,7 @@ import { saveAs } from 'file-saver'
 import MobileControls from './MobileControls'
 import { BlurSettings } from '../types'
 import { applyBlur } from './BlurUtils'
+import { EffectSettings } from '../utils/EffectSettingsUtils'
 
 // Define types
 type AspectRatioPreset = '1:1' | '4:3' | '16:9' | '3:2' | '5:4' | '2:1' | '3:4' | '9:16' | '2:3' | '4:5' | '1:2' | 'custom';
@@ -52,6 +53,7 @@ interface MobileControlsProps {
   onCropImage: () => void;
   blur: BlurSettings;
   onBlurChange: (settings: BlurSettings) => void;
+  onSettingsLoaded: (settings: EffectSettings) => void;
 }
 
 export default function AdvancedEditor({
@@ -915,6 +917,22 @@ export default function AdvancedEditor({
     });
   };
 
+  const handleSettingsLoaded = (settings: EffectSettings) => {
+    setDitherSettings(settings.ditherSettings);
+    setHalftoneSettings(settings.halftoneSettings);
+    setColorSettings(settings.colorSettings);
+    setThresholdSettings(settings.thresholdSettings);
+    setGlitchSettings(settings.glitchSettings);
+    setTextDitherSettings(settings.textDitherSettings);
+    setGradientMapSettings(settings.gradientMapSettings);
+    setGridSettings(settings.gridSettings);
+    setEffectsOrder(settings.effectsOrder);
+    onBlurChange(settings.blur);
+    
+    // Process the image with the new settings
+    processImage();
+  };
+
   return (
     <div className="flex flex-col lg:flex-row gap-4">
       {/* Canvas Container */}
@@ -1015,7 +1033,8 @@ export default function AdvancedEditor({
             onExportSvg={() => canvasRef.current && exportCanvasAsSvg(canvasRef.current)}
             onCropImage={() => setIsCropping(true)}
             blur={blur}
-            onBlurChange={onBlurChange}
+            onBlurChange={(newBlur) => onBlurChange(newBlur)}
+            onSettingsLoaded={handleSettingsLoaded}
           />
         </div>
       </div>

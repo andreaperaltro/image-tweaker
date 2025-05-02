@@ -59,6 +59,11 @@ A modern web application for real-time image processing and manipulation.
   - Split cells
   - Minimum cell size
 
+- **Settings Management**
+  - Save effect settings to JSON file
+  - Load previously saved settings
+  - Preserve all effect parameters and order
+
 ## Getting Started
 
 1. Clone the repository
@@ -77,7 +82,9 @@ A modern web application for real-time image processing and manipulation.
 1. Upload an image by dragging and dropping or clicking the upload area
 2. Use the controls panel to adjust various effects
 3. Effects are applied in real-time as you adjust the settings
-4. Export your result as PNG or SVG
+4. Save your settings to a JSON file for later use
+5. Load previously saved settings to restore your configuration
+6. Export your result as PNG or SVG
 
 ## Controls
 
