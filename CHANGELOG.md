@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.3.0] - 2023-05-27
+
+### Added
+- Comprehensive help section update with detailed information on all features
+- Added Blur Effects section to the help guide
+- Added Export Options section with PNG/SVG metadata information
+- Added Settings Management section to the help guide
+
+### Changed
+- Reorganized help content for better readability
+- Updated feature descriptions to match current functionality
+- Improved navigation tips with information about effect reordering
+- Enhanced Getting Started guide with more detailed instructions
+
+### Fixed
+- Corrected parameter ranges and descriptions in help text
+- Fixed outdated information about controls and buttons
+- Updated information about the Top Bar Controls
+
 ## [0.2.2.0] - 2025-05-02
 
 ### Added

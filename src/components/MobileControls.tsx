@@ -1269,24 +1269,6 @@ const MobileControls: React.FC<MobileControlsProps> = ({
       <div className="mobile-controls-panel">
         <div className="mobile-controls-header">
           <h2 className="mobile-controls-title">Image Effects</h2>
-          <div className="settings-controls">
-            <button
-              className="settings-button"
-              onClick={handleSaveSettings}
-              title="Save current effect settings"
-            >
-              💾 Save Settings
-            </button>
-            <label className="settings-button">
-              📂 Load Settings
-              <input
-                type="file"
-                accept=".json"
-                onChange={handleLoadSettings}
-                style={{ display: 'none' }}
-              />
-            </label>
-          </div>
         </div>
 
         {/* Render effects in the order specified by effectsOrder */}

@@ -67,20 +67,33 @@ export default function Home() {
               <div>
                 <h3 className="text-emerald-500 mb-2">Navigation Tips</h3>
                 <ul className="list-disc pl-4 space-y-1 text-gray-300">
-                  <li>Use the <strong>arrow buttons</strong> to navigate between effects</li>
+                  <li>Use the <strong>compact toolbar</strong> at the top for quick actions (Upload, Random, Clear, Reset, Save/Load Settings, Export)</li>
                   <li>Click the <strong>effect name</strong> to expand/collapse its controls</li>
+                  <li>Reorder effects using the <strong>up/down arrows</strong> in each effect panel</li>
                   <li>Use the <strong>sliders</strong> to adjust values, or click the - / + buttons for precise control</li>
-                  <li>The <strong>Reset</strong> button will restore the original image</li>
-                  <li>Click <strong>Export</strong> to save your creation as PNG or SVG</li>
                 </ul>
               </div>
 
               <div>
                 <h3 className="text-emerald-500 mb-2">Getting Started</h3>
                 <p className="text-gray-300">
-                  Image Tweaker is a powerful tool for applying various effects and transformations to your images.
-                  Start by uploading an image using the "Upload Image" button or drag and drop an image file.
+                  ImageTweaker is a powerful tool for applying various effects and transformations to your images.
+                  Start by uploading an image using the "Upload" button, drag and drop an image file, or click "Random" for a placeholder image.
                 </p>
+              </div>
+
+              <div>
+                <h3 className="text-emerald-500 mb-2">Top Bar Controls</h3>
+                <ul className="list-disc pl-4 space-y-1 text-gray-300">
+                  <li><strong>Upload:</strong> Select an image from your device</li>
+                  <li><strong>Random:</strong> Load a random placeholder image</li> 
+                  <li><strong>Clear:</strong> Remove the current image</li>
+                  <li><strong>Reset:</strong> Reset all effects while keeping the current image</li>
+                  <li><strong>Save:</strong> Save current effect settings to a JSON file</li>
+                  <li><strong>Load:</strong> Load previously saved settings from a JSON file</li>
+                  <li><strong>PNG:</strong> Export the image as PNG with embedded metadata</li>
+                  <li><strong>SVG:</strong> Export the image as SVG with embedded metadata</li>
+                </ul>
               </div>
 
               {[
@@ -93,6 +106,20 @@ export default function Home() {
                       <li><strong>Saturation:</strong> Modify color intensity from 0-200% (100% is original)</li>
                       <li><strong>Hue Shift:</strong> Rotate colors along the color wheel from -180° to +180°</li>
                       <li><strong>Invert Colors:</strong> Toggle to invert all colors in the image</li>
+                    </ul>
+                  )
+                },
+                {
+                  title: 'Blur Effects',
+                  content: (
+                    <ul className="list-disc pl-4 space-y-1 text-gray-300">
+                      <li><strong>Type:</strong> Choose between Gaussian, Radial, Motion, or Tilt-Shift blur</li>
+                      <li><strong>Radius:</strong> Control the strength/distance of the blur effect</li>
+                      <li><strong>Center X/Y:</strong> Set the center point for Radial blur (0-100%)</li>
+                      <li><strong>Angle:</strong> Set the direction for Motion blur (0-360°)</li>
+                      <li><strong>Focus Position:</strong> Set the clear area for Tilt-Shift blur</li>
+                      <li><strong>Focus Width:</strong> Control the size of the clear area in Tilt-Shift</li>
+                      <li><strong>Gradient:</strong> Control the transition smoothness in Tilt-Shift</li>
                     </ul>
                   )
                 },
@@ -112,6 +139,7 @@ export default function Home() {
                     <ul className="list-disc pl-4 space-y-1 text-gray-300">
                       <li><strong>Mode:</strong> Choose between Solid (pure black/white) or Gradient</li>
                       <li><strong>Threshold:</strong> Set the brightness cutoff point (0-255)</li>
+                      <li><strong>Colors:</strong> Customize dark and light colors for both solid and gradient modes</li>
                     </ul>
                   )
                 },
@@ -126,6 +154,7 @@ export default function Home() {
                         <li><strong>Resolution:</strong> Control pattern size (1-100)</li>
                         <li><strong>Threshold:</strong> Adjust pattern intensity (0-255)</li>
                         <li><strong>Color Depth:</strong> Number of colors used (2-256, not available in 2-Color mode)</li>
+                        <li><strong>Custom Colors:</strong> In 2-Color mode, set your own dark and light colors</li>
                       </ul>
                     </>
                   )
@@ -140,6 +169,7 @@ export default function Home() {
                       <li><strong>Shape:</strong> Choose dot shape (Circle, Square, Diamond, etc.)</li>
                       <li><strong>Pattern:</strong> Arrangement style (Grid, Hexagonal, Spiral, etc.)</li>
                       <li><strong>Colored:</strong> Toggle between monochrome and color</li>
+                      <li><strong>CMYK:</strong> Enable for color separation with individual channel control</li>
                       <li><strong>Invert:</strong> Reverse the brightness pattern</li>
                     </ul>
                   )
@@ -160,7 +190,7 @@ export default function Home() {
                       <div>
                         <h4 className="text-white text-sm font-semibold mb-1">Pixel Sorting</h4>
                         <ul className="list-disc pl-4 space-y-1">
-                          <li><strong>Threshold:</strong> Brightness level to trigger sorting (0-1)</li>
+                          <li><strong>Threshold:</strong> Brightness level to trigger sorting (0-100)</li>
                           <li><strong>Direction:</strong> Sort horizontally, vertically, or both</li>
                         </ul>
                       </div>
@@ -205,6 +235,8 @@ export default function Home() {
                       <li><strong>Resolution:</strong> Pattern density (0.5-4)</li>
                       <li><strong>Color Mode:</strong> Monochrome or colored</li>
                       <li><strong>Contrast:</strong> Pattern intensity (0-2)</li>
+                      <li><strong>Brightness:</strong> Overall brightness of the text pattern</li>
+                      <li><strong>Invert:</strong> Reverse the brightness pattern</li>
                     </ul>
                   )
                 },
@@ -222,12 +254,23 @@ export default function Home() {
                   )
                 },
                 {
-                  title: 'Additional Controls',
+                  title: 'Export Options',
                   content: (
                     <ul className="list-disc pl-4 space-y-1 text-gray-300">
-                      <li><strong>Crop Image:</strong> Open cropping interface</li>
-                      <li><strong>Reset:</strong> Restore original image</li>
-                      <li><strong>Export:</strong> Save as PNG or SVG</li>
+                      <li><strong>PNG Export:</strong> Save as standard PNG with embedded metadata including Software, Author, and Website info</li>
+                      <li><strong>SVG Export:</strong> Save as vector SVG with RDF metadata and precise information about halftone dots</li>
+                      <li><strong>Filename:</strong> Includes timestamp to prevent overwriting previous exports</li>
+                    </ul>
+                  )
+                },
+                {
+                  title: 'Settings Management',
+                  content: (
+                    <ul className="list-disc pl-4 space-y-1 text-gray-300">
+                      <li><strong>Save Settings:</strong> Export all effect parameters and their order to a JSON file</li>
+                      <li><strong>Load Settings:</strong> Apply previously saved settings from a JSON file to recreate an effect</li>
+                      <li><strong>Reset:</strong> Restore original settings without losing your image</li>
+                      <li><strong>Crop Image:</strong> Open the cropping interface with aspect ratio presets</li>
                     </ul>
                   )
                 }

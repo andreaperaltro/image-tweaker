@@ -1,15 +1,18 @@
 # ImageTweaker
 
-A modern web application for real-time image processing and manipulation.
+A modern web application for real-time image processing and manipulation, featuring a robust set of image effects and filters that run entirely in your browser.
+
+## Live Demo
+
+Visit [https://image-tweaker.vercel.app/](https://image-tweaker.vercel.app/) to try the application.
 
 ## Features
 
 - **Color Adjustments**
-  - Hue shift
-  - Saturation
-  - Brightness
-  - Contrast
-  - Posterize
+  - Hue shift (-180° to +180°)
+  - Saturation (0-200%)
+  - Brightness (0-200%)
+  - Contrast (0-200%)
   - Invert colors
 
 - **Blur Effects**
@@ -20,49 +23,64 @@ A modern web application for real-time image processing and manipulation.
   - Optimized kernel calculations for smooth results
 
 - **Gradient Map**
-  - Custom color stops
-  - Multiple blend modes
+  - Three-color gradient (dark, mid, light)
+  - 16 blend modes
   - Opacity control
+  - Intuitive color picking interface
 
 - **Threshold Effects**
   - Solid and gradient modes
-  - Customizable threshold levels
-  - Color selection
+  - Customizable threshold levels (0-255)
+  - Custom color selection for both modes
 
 - **Dithering**
-  - Ordered dithering
-  - Custom resolution
-  - Color depth control
-  - Grayscale and color modes
+  - Multiple algorithms (Ordered, Floyd-Steinberg, Atkinson)
+  - Adjustable resolution
+  - Color depth control (2-256 colors)
+  - Grayscale, Color, and 2-Color Palette modes
+  - Custom color selection in 2-Color mode
 
 - **Halftone**
-  - Grid and spiral arrangements
-  - Circle and square shapes
-  - CMYK support
-  - Size variation
+  - Multiple arrangements (Grid, Spiral, Concentric)
+  - Various shapes (Circle, Square, Diamond, Line, Cross, Ellipse, Triangle, Hexagon)
+  - CMYK mode with independent channel control
+  - Size variation and dot scaling
+  - Monochrome or color options
 
 - **Text Dither**
-  - Custom text input
-  - Font size control
+  - Custom character patterns
+  - Adjustable font size and resolution
   - Monochrome and color modes
+  - Contrast and brightness controls
 
 - **Glitch Effects**
-  - Pixel sorting
-  - Channel shift
-  - Scan lines
-  - Noise
-  - Blocks
+  - Pixel sorting with threshold and direction controls
+  - RGB channel shifting
+  - Scan lines with customizable count and intensity
+  - Noise generation
+  - Block displacement
+  - General glitch distortion
 
-- **Grid**
+- **Grid Effects**
   - Customizable columns and rows
   - Rotation control
-  - Split cells
-  - Minimum cell size
+  - Recursive splitting with probability controls
+  - Minimum cell size protection
+
+- **Export Options**
+  - PNG export with embedded metadata
+  - Vector SVG export with metadata and preserved halftone information
+  - Timestamp naming to prevent overwriting previous exports
 
 - **Settings Management**
   - Save effect settings to JSON file
   - Load previously saved settings
-  - Preserve all effect parameters and order
+  - Preserve all effect parameters and their processing order
+
+- **Advanced Image Manipulation**
+  - Interactive cropping with aspect ratio presets
+  - Effect reordering to control processing sequence
+  - Real-time preview for all adjustments
 
 ## Getting Started
 
@@ -79,31 +97,35 @@ A modern web application for real-time image processing and manipulation.
 
 ## Usage
 
-1. Upload an image by dragging and dropping or clicking the upload area
-2. Use the controls panel to adjust various effects
-3. Effects are applied in real-time as you adjust the settings
-4. Save your settings to a JSON file for later use
-5. Load previously saved settings to restore your configuration
-6. Export your result as PNG or SVG
+1. Upload an image by dragging and dropping or clicking the upload button
+2. Alternatively, click "Random" to load a placeholder image
+3. Use the control panels on the right to adjust various effects
+4. Effects are applied in real-time as you adjust the settings
+5. Reorder effects using the arrow buttons to change the processing sequence
+6. Save your settings to a JSON file for later use
+7. Load previously saved settings to restore your configuration
+8. Export your result as PNG or SVG with embedded metadata
 
-## Controls
+## Help Section
 
-The application features a mobile-friendly interface with intuitive controls:
+The application includes a comprehensive help section accessible by clicking the "?" button in the top-right corner. This provides detailed information about:
 
-- **Color Section**: Adjust basic color properties
-- **Blur Section**: Control various blur effects including Gaussian, radial, motion, and tilt-shift
-- **Gradient Section**: Create and edit gradient maps
-- **Threshold Section**: Set threshold levels and colors
-- **Dither Section**: Configure dithering parameters
-- **Halftone Section**: Customize halftone patterns
-- **Text Dither Section**: Set up text-based dithering
-- **Glitch Section**: Apply various glitch effects
-- **Grid Section**: Create and modify grid layouts
+- Navigation tips
+- Getting started guide
+- Description of all top bar controls
+- Detailed explanation of each effect and its parameters
+- Export options
+- Settings management
 
-## Export Options
+## Technical Details
 
-- **PNG Export**: Save your processed image as a PNG file
-- **SVG Export**: Export your image as an SVG file
+- Built with Next.js and TypeScript
+- Responsive design with Tailwind CSS
+- All processing happens client-side (no server uploads)
+- Pure JavaScript implementation for image processing
+- Custom PNG metadata implementation
+- SVG export with RDF metadata
+- PP Mondwest font for a distinctive UI
 
 ## License
 
@@ -111,4 +133,4 @@ MIT License
 
 ## Author
 
-Created by Andrea Perato 
+Created by [Andrea Perato](https://andreaperato.com) with AI assistance 
