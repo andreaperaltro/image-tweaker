@@ -12,6 +12,7 @@ import { GradientMapSettings, GradientMapBlendMode } from './GradientMapUtils'
 import { GridSettings } from './Grid'
 import Slider from './Slider'
 import { BlurSettings } from '../types'
+import { saveEffectSettings, loadEffectSettings, EffectSettings } from '../utils/EffectSettingsUtils'
 
 interface MobileControlsProps {
   ditherSettings: DitherSettings
@@ -38,6 +39,7 @@ interface MobileControlsProps {
   onCropImage: () => void
   blur: BlurSettings
   onBlurChange: (settings: BlurSettings) => void
+  onSettingsLoaded?: (settings: EffectSettings) => void
 }
 
 // Debounce function to limit update frequency
@@ -79,7 +81,8 @@ const MobileControls: React.FC<MobileControlsProps> = ({
   onExportSvg,
   onCropImage,
   blur,
-  onBlurChange
+  onBlurChange,
+  onSettingsLoaded
 }) => {
   const [openSection, setOpenSection] = useState<string | null>(null)
 
@@ -1230,11 +1233,60 @@ const MobileControls: React.FC<MobileControlsProps> = ({
     }
   };
 
+  const handleSaveSettings = () => {
+    const settings: EffectSettings = {
+      ditherSettings,
+      halftoneSettings,
+      colorSettings,
+      thresholdSettings,
+      glitchSettings,
+      textDitherSettings,
+      gradientMapSettings,
+      gridSettings,
+      effectsOrder,
+      blur
+    };
+    saveEffectSettings(settings);
+  };
+
+  const handleLoadSettings = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      try {
+        const settings = await loadEffectSettings(file);
+        if (onSettingsLoaded) {
+          onSettingsLoaded(settings);
+        }
+      } catch (error) {
+        console.error('Error loading settings:', error);
+        alert('Error loading settings: ' + (error as Error).message);
+      }
+    }
+  };
+
   return (
     <div className="mobile-controls">
       <div className="mobile-controls-panel">
         <div className="mobile-controls-header">
-          <h2 className="mobile-controls-title">Image Controls</h2>
+          <h2 className="mobile-controls-title">Image Effects</h2>
+          <div className="settings-controls">
+            <button
+              className="settings-button"
+              onClick={handleSaveSettings}
+              title="Save current effect settings"
+            >
+              💾 Save Settings
+            </button>
+            <label className="settings-button">
+              📂 Load Settings
+              <input
+                type="file"
+                accept=".json"
+                onChange={handleLoadSettings}
+                style={{ display: 'none' }}
+              />
+            </label>
+          </div>
         </div>
 
         {/* Render effects in the order specified by effectsOrder */}

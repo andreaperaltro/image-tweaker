@@ -426,4 +426,32 @@
 .mobile-controls-footer a:hover {
   text-decoration: underline;
   color: white;
+}
+
+.settings-controls {
+  display: flex;
+  gap: 8px;
+  margin-left: 12px;
+}
+
+.settings-button {
+  background: #444;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: background-color 0.2s;
+}
+
+.settings-button:hover {
+  background: #555;
+}
+
+.settings-button input[type="file"] {
+  display: none;
 } 
