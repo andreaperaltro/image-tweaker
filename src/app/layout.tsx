@@ -13,8 +13,14 @@ export const metadata: Metadata = {
     title: 'ImageTweaker',
   },
   icons: {
-    icon: '/icons/icon-192x192.png',
+    icon: [
+      { url: '/icons/icon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.png', type: 'image/png' },
+      { url: '/icons/icon-192x192.png', type: 'image/png', sizes: '192x192' },
+      { url: '/icons/icon-512x512.png', type: 'image/png', sizes: '512x512' }
+    ],
     apple: '/icons/icon-192x192.png',
+    shortcut: '/icons/icon.svg',
   },
 };
 
@@ -22,7 +28,7 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
-  themeColor: '#000000',
+  themeColor: '#0000FF',
 };
 
 export default function RootLayout({

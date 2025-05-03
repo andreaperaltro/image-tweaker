@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.6.0] - 2025-05-04
+
+### Added
+- Custom pixel art favicon and app icons
+- Updated all icon sizes (16x16, 32x32, 192x192, 512x512)
+- Added SVG version of the icon for better scaling
+
+### Changed
+- Updated theme color to match app icon blue background
+- Improved icon handling in the app manifest
+- Enhanced PWA support with proper icon definitions
+
 ## [0.2.5.0] - 2025-05-03
 
 ### Added

@@ -4,8 +4,8 @@
   "description": "Progressive Web App for image manipulation",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#2563eb",
+  "background_color": "#0000FF",
+  "theme_color": "#0000FF",
   "orientation": "portrait",
   "icons": [
     {
