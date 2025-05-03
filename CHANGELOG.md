@@ -5,7 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.2.4.0] - 2023-05-03
+## [0.2.5.0] - 2025-05-03
+
+### Added
+- Dynamic gradient map color stops allowing unlimited colors
+- Add and remove color stops functionality in gradient map
+- Interactive gradient preview display
+- Position control sliders for precise color stop placement
+
+### Changed
+- Improved UI for color controls with more flexible layout
+- Enhanced image controls panel width on larger screens (now 35% of width)
+- Reorganized halftone settings with shape and pattern options at the top
+- Optimized color picker and slider layout for better usability
+
+### Fixed
+- Improved button styling consistency throughout the application
+- Fixed layout and spacing issues in gradient map controls
+- Enhanced gradient color preview rendering
+- Made UI more responsive to different screen sizes
+
+## [0.2.4.0] - 2025-05-03
 
 ### Added
 - Added app icon for mobile home screens

@@ -8,7 +8,7 @@ import { ColorSettings } from './ColorUtils'
 import { ThresholdSettings } from './ThresholdUtils'
 import { GlitchSettings } from './GlitchUtils'
 import { TextDitherSettings } from './TextDitherUtils'
-import { GradientMapSettings, GradientMapBlendMode } from './GradientMapUtils'
+import { GradientMapSettings, GradientMapBlendMode, GradientStop } from './GradientMapUtils'
 import { GridSettings } from './Grid'
 import Slider from './Slider'
 import { BlurSettings } from '../types'
@@ -57,6 +57,15 @@ const useDebounce = (callback: (...args: any[]) => void, delay: number) => {
       callback(...args);
     }, delay);
   }, [callback, delay]);
+};
+
+// Helper function to create CSS gradient from stops
+const getGradientPreviewStyle = (stops: GradientStop[]) => {
+  if (!stops || stops.length < 2) return 'linear-gradient(to right, #000000, #ffffff)';
+  
+  const sortedStops = [...stops].sort((a, b) => a.position - b.position);
+  const gradientStops = sortedStops.map(stop => `${stop.color} ${stop.position}%`).join(', ');
+  return `linear-gradient(to right, ${gradientStops})`;
 };
 
 const MobileControls: React.FC<MobileControlsProps> = ({
@@ -485,34 +494,94 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 unit="%"
               />
               
-              <div className="mobile-control-group">
-                <label className="mobile-control-label">Dark Color (0%)</label>
-                <input 
-                  type="color" 
-                  className="mobile-color-picker"
-                  value={gradientMapSettings.stops[0]?.color || '#000000'}
-                  onChange={(e) => handleGradientStopChange(0, e.target.value)}
-                />
+              {/* Visual gradient preview */}
+              <div className="mobile-control-group mb-2">
+                <div 
+                  className="w-full h-12 rounded border border-[var(--border-color)] mt-1 shadow-inner" 
+                  style={{
+                    background: getGradientPreviewStyle(gradientMapSettings.stops)
+                  }}
+                ></div>
               </div>
               
-              <div className="mobile-control-group">
-                <label className="mobile-control-label">Mid Color (50%)</label>
-                <input 
-                  type="color" 
-                  className="mobile-color-picker"
-                  value={gradientMapSettings.stops[1]?.color || '#808080'}
-                  onChange={(e) => handleGradientStopChange(1, e.target.value)}
-                />
-              </div>
-              
-              <div className="mobile-control-group">
-                <label className="mobile-control-label">Light Color (100%)</label>
-                <input 
-                  type="color" 
-                  className="mobile-color-picker"
-                  value={gradientMapSettings.stops[gradientMapSettings.stops.length - 1]?.color || '#ffffff'}
-                  onChange={(e) => handleGradientStopChange(gradientMapSettings.stops.length - 1, e.target.value)}
-                />
+              {/* Render dynamic gradient stops */}
+              {gradientMapSettings.stops.map((stop, index) => (
+                <div key={`stop-${index}`} className="mobile-control-group">
+                  <div className="flex items-center gap-2 w-full">
+                    <input 
+                      type="color" 
+                      className="mobile-color-picker"
+                      style={{ width: '32px', minWidth: '32px', height: '32px' }}
+                      value={stop.color}
+                      onChange={(e) => {
+                        const newStops = [...gradientMapSettings.stops];
+                        newStops[index] = { ...stop, color: e.target.value };
+                        updateGradientMapSettings({ stops: newStops });
+                      }}
+                    />
+                    <input
+                      type="range"
+                      className="flex-grow"
+                      min="0"
+                      max="100"
+                      value={stop.position}
+                      onChange={(e) => {
+                        const newPosition = parseInt(e.target.value);
+                        const newStops = [...gradientMapSettings.stops];
+                        newStops[index] = { ...stop, position: newPosition };
+                        updateGradientMapSettings({ stops: newStops });
+                      }}
+                    />
+                    <span className="text-xs text-[var(--text-secondary)] w-10 text-right">{stop.position}%</span>
+                    {gradientMapSettings.stops.length > 2 && (
+                      <button 
+                        className="slider-button"
+                        onClick={() => {
+                          const newStops = gradientMapSettings.stops.filter((_, i) => i !== index);
+                          updateGradientMapSettings({ stops: newStops });
+                        }}
+                        aria-label="Remove color stop"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+
+              {/* Add new stop button */}
+              <div className="mobile-control-group mt-3">
+                <button 
+                  className="mobile-action-button w-full"
+                  onClick={() => {
+                    // Find a middle position between existing stops
+                    const sortedStops = [...gradientMapSettings.stops].sort((a, b) => a.position - b.position);
+                    let newPosition = 50; // Default middle position
+                    
+                    if (sortedStops.length >= 2) {
+                      // Find largest gap between stops
+                      let maxGap = 0;
+                      let gapPosition = 0;
+                      
+                      for (let i = 0; i < sortedStops.length - 1; i++) {
+                        const gap = sortedStops[i + 1].position - sortedStops[i].position;
+                        if (gap > maxGap) {
+                          maxGap = gap;
+                          gapPosition = sortedStops[i].position + gap / 2;
+                        }
+                      }
+                      
+                      newPosition = Math.round(gapPosition);
+                    }
+                    
+                    // Add new stop with a random color
+                    const randomColor = `#${Math.floor(Math.random()*16777215).toString(16).padStart(6, '0')}`;
+                    const newStops = [...gradientMapSettings.stops, { position: newPosition, color: randomColor }];
+                    updateGradientMapSettings({ stops: newStops });
+                  }}
+                >
+                  + Add Color Stop
+                </button>
               </div>
             </div>
           </div>
@@ -727,32 +796,6 @@ const MobileControls: React.FC<MobileControlsProps> = ({
             )}
             <div className={`mobile-effect-content ${openSection === 'halftone' ? 'open' : ''}`}>
               {/* Halftone content */}
-              <Slider
-                label="Cell Size"
-                value={halftoneSettings.cellSize}
-                onChange={(value) => updateHalftoneSettings('cellSize', value)}
-                min={2}
-                max={30}
-                step={1}
-                unit="px"
-              />
-              <Slider
-                label="Dot Scale"
-                value={halftoneSettings.dotScaleFactor}
-                onChange={(value) => updateHalftoneSettings('dotScaleFactor', value)}
-                min={0.1}
-                max={1.5}
-                step={0.05}
-              />
-              <Slider
-                label="Mix Amount"
-                value={halftoneSettings.mix}
-                onChange={(value) => updateHalftoneSettings('mix', value)}
-                min={0}
-                max={100}
-                step={1}
-                unit="%"
-              />
               <div className="mobile-control-group">
                 <label className="mobile-control-label">Shape</label>
                 <select 
@@ -785,6 +828,33 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                   <option value="random">Random</option>
                 </select>
               </div>
+              
+              <Slider
+                label="Cell Size"
+                value={halftoneSettings.cellSize}
+                onChange={(value) => updateHalftoneSettings('cellSize', value)}
+                min={2}
+                max={30}
+                step={1}
+                unit="px"
+              />
+              <Slider
+                label="Dot Scale"
+                value={halftoneSettings.dotScaleFactor}
+                onChange={(value) => updateHalftoneSettings('dotScaleFactor', value)}
+                min={0.1}
+                max={1.5}
+                step={0.05}
+              />
+              <Slider
+                label="Mix Amount"
+                value={halftoneSettings.mix}
+                onChange={(value) => updateHalftoneSettings('mix', value)}
+                min={0}
+                max={100}
+                step={1}
+                unit="%"
+              />
               
               <div className="mobile-control-group">
                 <label className="mobile-control-label">Colored</label>

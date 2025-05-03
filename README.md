@@ -23,10 +23,11 @@ Visit [https://image-tweaker.vercel.app/](https://image-tweaker.vercel.app/) to 
   - Optimized kernel calculations for smooth results
 
 - **Gradient Map**
-  - Three-color gradient (dark, mid, light)
+  - Dynamic color stops (add and remove as many colors as needed)
   - 16 blend modes
   - Opacity control
-  - Intuitive color picking interface
+  - Interactive gradient preview
+  - Position control for each color stop
 
 - **Threshold Effects**
   - Solid and gradient modes

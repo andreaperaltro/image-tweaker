@@ -1020,7 +1020,7 @@ export default function AdvancedEditor({
   };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-4">
+    <div className="flex flex-col lg:flex-row gap-6">
       {/* Canvas Container */}
       <div className="flex-1 min-w-0">
         <div className="sticky top-20">
@@ -1163,7 +1163,7 @@ export default function AdvancedEditor({
       </div>
 
       {/* Controls Panel */}
-      <div className="lg:w-80 xl:w-96">
+      <div className="lg:w-1/3 xl:w-[35%]">
         <div className="sticky top-20 bg-[var(--accent-bg)] p-4 rounded-lg border border-[var(--border-color)] shadow-sm">
           <MobileControls 
             ditherSettings={ditherSettings}
