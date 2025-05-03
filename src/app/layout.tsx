@@ -13,14 +13,8 @@ export const metadata: Metadata = {
     title: 'ImageTweaker',
   },
   icons: {
-    icon: [
-      { url: '/icons/icon.svg', type: 'image/svg+xml' },
-      { url: '/favicon.png', type: 'image/png' },
-      { url: '/icons/icon-192x192.png', type: 'image/png', sizes: '192x192' },
-      { url: '/icons/icon-512x512.png', type: 'image/png', sizes: '512x512' }
-    ],
+    icon: '/favicon.ico',
     apple: '/icons/icon-192x192.png',
-    shortcut: '/icons/icon.svg',
   },
 };
 
@@ -38,6 +32,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="h-full">
+      <head>
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" href="/favicon.png" type="image/png" />
+      </head>
       <body className="h-full dark:bg-gray-900 dark:text-white transition-colors duration-200">
         <ThemeProvider>
           {children}
