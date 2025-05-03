@@ -69,13 +69,19 @@ Visit [https://image-tweaker.vercel.app/](https://image-tweaker.vercel.app/) to 
 
 - **Export Options**
   - PNG export with embedded metadata
-  - Vector SVG export with metadata and preserved halftone information
+  - True vector SVG export for halftone and dithering effects (not just embedded raster images)
   - Timestamp naming to prevent overwriting previous exports
 
 - **Settings Management**
   - Save effect settings to JSON file
   - Load previously saved settings
   - Preserve all effect parameters and their processing order
+
+- **Advanced UI**
+  - Dark/light mode toggle for better viewing in different environments
+  - Responsive design that works on both desktop and mobile devices
+  - Consistent theming with a visually pleasing color scheme
+  - Custom app icon for mobile home screens
 
 - **Advanced Image Manipulation**
   - Interactive cropping with aspect ratio presets

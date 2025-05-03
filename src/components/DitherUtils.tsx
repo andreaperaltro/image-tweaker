@@ -9,6 +9,28 @@
 
 import { ColorSettings } from './ColorUtils';
 
+// Define exact dot info type to store the exact parameters for each dot
+export type DitherDotInfo = {
+  x: number;
+  y: number;
+  size: number;
+  color?: string;
+};
+
+// Create a global store to access the dot information for SVG export
+export const ditherDotsStore = {
+  dots: [] as DitherDotInfo[],
+  width: 0,
+  height: 0,
+  settings: null as DitherSettings | null,
+  updateDots(newDots: DitherDotInfo[], width: number, height: number, settings: DitherSettings) {
+    this.dots = [...newDots]; // Create a copy of the array
+    this.width = width;
+    this.height = height;
+    this.settings = {...settings};
+  }
+};
+
 // Dithering matrices for different algorithms
 const DITHER_MATRICES: Record<Exclude<DitherType, 'ordered'>, { matrix: number[][], width: number, height: number }> = {
   'floyd-steinberg': {
@@ -132,12 +154,18 @@ export function applyDithering(
   // Get image data from temporary canvas
   const imageData = tempCtx.getImageData(0, 0, scaledWidth, scaledHeight);
   
+  // Collection of dots for vector SVG export
+  const ditherDots: DitherDotInfo[] = [];
+  
   // Apply the appropriate dithering algorithm
   if (settings.type === 'ordered') {
-    applyOrderedDithering(imageData, settings);
+    applyOrderedDithering(imageData, settings, ditherDots);
   } else {
-    applyErrorDiffusionDithering(imageData, settings);
+    applyErrorDiffusionDithering(imageData, settings, ditherDots);
   }
+  
+  // Store the dots for SVG export
+  ditherDotsStore.updateDots(ditherDots, width, height, settings);
   
   // Put the modified image data back to the temporary canvas
   tempCtx.putImageData(imageData, 0, 0);
@@ -150,7 +178,8 @@ export function applyDithering(
 
 function applyOrderedDithering(
   imageData: ImageData,
-  settings: DitherSettings
+  settings: DitherSettings,
+  ditherDots: DitherDotInfo[] = []
 ): void {
   const { width, height, data } = imageData;
   const colorSteps = Math.max(2, Math.min(256, settings.colorDepth));
@@ -182,6 +211,20 @@ function applyOrderedDithering(
         data[i] = value;     // R
         data[i + 1] = value; // G
         data[i + 2] = value; // B
+        
+        // Add pixel to dots for SVG export only if it's not white/transparent
+        if (value < 255) {
+          // Calculate the actual size based on proportions between scaled and original canvas
+          const scaledPixelSize = Math.max(1, Math.ceil(width / imageData.width));
+          const dotColor = `rgb(${value}, ${value}, ${value})`;
+          
+          ditherDots.push({
+            x: x * scaledPixelSize,
+            y: y * scaledPixelSize,
+            size: scaledPixelSize,
+            color: dotColor
+          });
+        }
       } else if (settings.colorMode === '2-color') {
         // Convert to grayscale using weighted average
         const gray = (data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114);
@@ -191,10 +234,34 @@ function applyOrderedDithering(
           data[i] = darkColor[0];       // R
           data[i + 1] = darkColor[1];   // G
           data[i + 2] = darkColor[2];   // B
+          
+          // Add pixel to dots for SVG export
+          const scaledPixelSize = Math.max(1, Math.ceil(width / imageData.width));
+          const dotColor = `rgb(${darkColor[0]}, ${darkColor[1]}, ${darkColor[2]})`;
+          
+          ditherDots.push({
+            x: x * scaledPixelSize,
+            y: y * scaledPixelSize,
+            size: scaledPixelSize,
+            color: dotColor
+          });
         } else {
           data[i] = lightColor[0];      // R
           data[i + 1] = lightColor[1];  // G
           data[i + 2] = lightColor[2];  // B
+          
+          // Don't add light pixels to SVG export unless they're not white
+          if (lightColor[0] < 255 || lightColor[1] < 255 || lightColor[2] < 255) {
+            const scaledPixelSize = Math.max(1, Math.ceil(width / imageData.width));
+            const dotColor = `rgb(${lightColor[0]}, ${lightColor[1]}, ${lightColor[2]})`;
+            
+            ditherDots.push({
+              x: x * scaledPixelSize,
+              y: y * scaledPixelSize,
+              size: scaledPixelSize,
+              color: dotColor
+            });
+          }
         }
       } else if (palette) {
         // Find the closest color in the palette
@@ -207,6 +274,16 @@ function applyOrderedDithering(
           data[i] = 0;
           data[i + 1] = 0;
           data[i + 2] = 0;
+          
+          // Add black pixel to dots for SVG export
+          const scaledPixelSize = Math.max(1, Math.ceil(width / imageData.width));
+          ditherDots.push({
+            x: x * scaledPixelSize,
+            y: y * scaledPixelSize,
+            size: scaledPixelSize,
+            color: 'rgb(0, 0, 0)'
+          });
+          
           continue;
         }
         
@@ -228,6 +305,19 @@ function applyOrderedDithering(
         data[i] = closestColor[0];
         data[i + 1] = closestColor[1];
         data[i + 2] = closestColor[2];
+        
+        // Add pixel to dots for SVG export only if it's not white/transparent
+        if (closestColor[0] < 255 || closestColor[1] < 255 || closestColor[2] < 255) {
+          const scaledPixelSize = Math.max(1, Math.ceil(width / imageData.width));
+          const dotColor = `rgb(${closestColor[0]}, ${closestColor[1]}, ${closestColor[2]})`;
+          
+          ditherDots.push({
+            x: x * scaledPixelSize,
+            y: y * scaledPixelSize,
+            size: scaledPixelSize,
+            color: dotColor
+          });
+        }
       }
       // Alpha channel remains unchanged
     }
@@ -236,7 +326,8 @@ function applyOrderedDithering(
 
 function applyErrorDiffusionDithering(
   imageData: ImageData,
-  settings: DitherSettings
+  settings: DitherSettings,
+  ditherDots: DitherDotInfo[] = []
 ): void {
   const { width, height, data } = imageData;
   const colorSteps = Math.max(2, Math.min(256, settings.colorDepth));
@@ -278,6 +369,20 @@ function applyErrorDiffusionDithering(
         data[i] = newValue;     // R
         data[i + 1] = newValue; // G
         data[i + 2] = newValue; // B
+
+        // Add pixel to dots for SVG export only if it's not white/transparent
+        if (newValue < 255) {
+          // Calculate the actual size based on proportions between scaled and original canvas
+          const scaledPixelSize = Math.max(1, Math.ceil(width / imageData.width));
+          const dotColor = `rgb(${newValue}, ${newValue}, ${newValue})`;
+          
+          ditherDots.push({
+            x: x * scaledPixelSize,
+            y: y * scaledPixelSize,
+            size: scaledPixelSize,
+            color: dotColor
+          });
+        }
         
         // Distribute error to neighboring pixels
         if (ditherMatrix) {
@@ -309,11 +414,35 @@ function applyErrorDiffusionDithering(
           newG = darkColor[1];
           newB = darkColor[2];
           newValue = 0; // Use this for error calculation
+
+          // Add pixel to dots for SVG export
+          const scaledPixelSize = Math.max(1, Math.ceil(width / imageData.width));
+          const dotColor = `rgb(${newR}, ${newG}, ${newB})`;
+          
+          ditherDots.push({
+            x: x * scaledPixelSize,
+            y: y * scaledPixelSize,
+            size: scaledPixelSize,
+            color: dotColor
+          });
         } else {
           newR = lightColor[0];
           newG = lightColor[1];
           newB = lightColor[2];
           newValue = 255; // Use this for error calculation
+
+          // Don't add light pixels to SVG export unless they're not white
+          if (lightColor[0] < 255 || lightColor[1] < 255 || lightColor[2] < 255) {
+            const scaledPixelSize = Math.max(1, Math.ceil(width / imageData.width));
+            const dotColor = `rgb(${lightColor[0]}, ${lightColor[1]}, ${lightColor[2]})`;
+            
+            ditherDots.push({
+              x: x * scaledPixelSize,
+              y: y * scaledPixelSize,
+              size: scaledPixelSize,
+              color: dotColor
+            });
+          }
         }
         
         data[i] = newR;     // R
@@ -353,6 +482,16 @@ function applyErrorDiffusionDithering(
           data[i] = 0;
           data[i + 1] = 0;
           data[i + 2] = 0;
+
+          // Add black pixel to dots for SVG export
+          const scaledPixelSize = Math.max(1, Math.ceil(width / imageData.width));
+          ditherDots.push({
+            x: x * scaledPixelSize,
+            y: y * scaledPixelSize,
+            size: scaledPixelSize,
+            color: 'rgb(0, 0, 0)'
+          });
+          
           continue;
         }
         
@@ -374,6 +513,19 @@ function applyErrorDiffusionDithering(
         data[i] = closestColor[0];
         data[i + 1] = closestColor[1];
         data[i + 2] = closestColor[2];
+
+        // Add pixel to dots for SVG export only if it's not white/transparent
+        if (closestColor[0] < 255 || closestColor[1] < 255 || closestColor[2] < 255) {
+          const scaledPixelSize = Math.max(1, Math.ceil(width / imageData.width));
+          const dotColor = `rgb(${closestColor[0]}, ${closestColor[1]}, ${closestColor[2]})`;
+          
+          ditherDots.push({
+            x: x * scaledPixelSize,
+            y: y * scaledPixelSize,
+            size: scaledPixelSize,
+            color: dotColor
+          });
+        }
         
         // Calculate error for each channel
         const errorR = r - closestColor[0];

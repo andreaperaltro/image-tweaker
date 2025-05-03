@@ -11,6 +11,15 @@
 import { saveAs } from 'file-saver';
 import C2S from 'canvas2svg';
 import { HalftoneSettings, HalftoneShape, HalftoneArrangement, halftoneDotsStore } from './Halftone';
+import { DitherSettings, DitherDotInfo, ditherDotsStore, DitherType, DitherColorMode } from './DitherUtils';
+
+// Define a type for the dot parameter
+interface DotParams {
+  x: number;
+  y: number;
+  size: number;
+  color?: string;
+}
 
 /**
  * Creates a Canvas2SVG context that can be used like a regular canvas context
@@ -479,7 +488,7 @@ export function createHalftoneVectorSvg(
     dots.sort((a, b) => b.size - a.size);
     
     // Second pass - render the dots in order of size (largest first)
-    for (const dot of dots) {
+    for (const dot of dots as DotParams[]) {
       channelSvg += addVectorShape(dot.x, dot.y, dot.size, shape, angle);
     }
     
@@ -699,7 +708,7 @@ export function createHalftoneVectorSvg(
         dots.sort((a, b) => b.size - a.size);
         
         // Second pass - render the dots in order of size (largest first)
-        for (const dot of dots) {
+        for (const dot of dots as DotParams[]) {
           if (dot.color) {
             svg += addVectorShape(dot.x, dot.y, dot.size, shape, 0, dot.color);
           } else {
@@ -729,7 +738,7 @@ export function createHalftoneVectorSvg(
 
 /**
  * Creates a true vector-based SVG from the canvas content
- * This uses the halftone approach to ensure it matches what's shown on screen
+ * Prioritizes halftone or dither effects if they were the last applied effects
  */
 export function createVectorSvg(
   canvas: HTMLCanvasElement,
@@ -737,25 +746,124 @@ export function createVectorSvg(
 ): string {
   const width = canvas.width;
   const height = canvas.height;
-  const ctx = canvas.getContext('2d', { willReadFrequently: true });
   
+  // Get ImageData for potential backup conversions
+  const ctx = canvas.getContext('2d');
   if (!ctx) {
-    return '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><text x="10" y="50">Error: Could not get canvas context</text></svg>';
+    throw new Error('Cannot get canvas context');
   }
   
-  // Check if we have stored halftone dots available
-  if (halftoneDotsStore.dots.length > 0 && 
-      halftoneDotsStore.width === width && 
-      halftoneDotsStore.height === height &&
-      halftoneDotsStore.settings) {
-    
+  const imageData = ctx.getImageData(0, 0, width, height);
+  
+  // Check for stored halftone dots first
+  if (halftoneDotsStore.dots.length > 0 && halftoneDotsStore.settings) {
     console.log(`Using ${halftoneDotsStore.dots.length} stored dots for vector SVG`);
     
     // Use the halftone vector generation
-    const imageData = ctx.getImageData(0, 0, width, height);
-    return createHalftoneVectorSvg(imageData, width, height, halftoneDotsStore.settings, imageInfo);
+    try {
+      return createHalftoneVectorSvg(imageData, width, height, halftoneDotsStore.settings, imageInfo);
+    } catch (error) {
+      console.error('Error creating halftone vector SVG:', error);
+      // Fall back to default SVG if halftone generation fails
+    }
   }
   
-  // Fallback to normal SVG conversion if no halftone data is available
+  // Check for stored dither dots next
+  if (ditherDotsStore.dots.length > 0 && ditherDotsStore.settings) {
+    console.log(`Using ${ditherDotsStore.dots.length} stored dither dots for vector SVG`);
+    
+    // Use the dither vector generation
+    try {
+      return createDitherVectorSvg(imageData, width, height, ditherDotsStore.settings, imageInfo);
+    } catch (error) {
+      console.error('Error creating dither vector SVG:', error);
+      // Fall back to default SVG if dither generation fails
+    }
+  }
+  
+  // If no specialized vector generation is available, return default SVG with embedded image
   return canvasToSvg(canvas, imageInfo);
+}
+
+/**
+ * Create an SVG dithering pattern directly without using canvas
+ * This creates true vector shapes for each dithered pixel, making it ideal for vector editing software
+ */
+export function createDitherVectorSvg(
+  imageData: ImageData,
+  width: number,
+  height: number,
+  settings: DitherSettings,
+  imageInfo: Record<string, string> = {}
+): string {
+  // Start building SVG
+  let svg = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">\n`;
+  
+  // Add a white background
+  const backgroundEnabled = imageInfo.backgroundEnabled === 'true';
+  const backgroundType = imageInfo.backgroundType || 'white';
+  
+  if (!backgroundEnabled || backgroundType !== 'transparent') {
+    svg += `  <rect width="${width}" height="${height}" fill="white" />\n`;
+  }
+  
+  // Import the dots from the global store
+  const { dots } = ditherDotsStore;
+  
+  if (!dots || dots.length === 0) {
+    throw new Error('No dither dots available for SVG export');
+  }
+  
+  // Group the dots by color for better SVG structure and smaller file size
+  const dotsByColor: Record<string, Array<{x: number, y: number, size: number}>> = {};
+  
+  dots.forEach(dot => {
+    const color = dot.color || 'black';
+    if (!dotsByColor[color]) {
+      dotsByColor[color] = [];
+    }
+    dotsByColor[color].push({
+      x: dot.x,
+      y: dot.y,
+      size: dot.size
+    });
+  });
+  
+  // Add each color group
+  Object.entries(dotsByColor).forEach(([color, colorDots]) => {
+    // Start a group for this color
+    svg += `  <g fill="${color}">\n`;
+    
+    // Add each rectangle (pixel) for this color
+    colorDots.forEach(dot => {
+      svg += `    <rect x="${dot.x}" y="${dot.y}" width="${dot.size}" height="${dot.size}" />\n`;
+    });
+    
+    // Close the group
+    svg += `  </g>\n`;
+  });
+  
+  // Add metadata with dithering settings
+  const metadataProps: Record<string, string> = {
+    ...imageInfo,
+    // Add dithering specific settings
+    ditherType: settings.type || 'ordered',
+    colorMode: settings.colorMode || 'grayscale',
+    threshold: String(settings.threshold || 128),
+    resolution: String(settings.resolution || 100),
+    colorDepth: String(settings.colorDepth || 2)
+  };
+  
+  // Format color settings if in 2-color mode
+  if (settings.colorMode === '2-color') {
+    metadataProps.darkColor = settings.darkColor || '#000000';
+    metadataProps.lightColor = settings.lightColor || '#FFFFFF';
+  }
+  
+  // Close the SVG
+  svg += `</svg>`;
+  
+  // Add metadata
+  return addSvgMetadata(svg, metadataProps);
 }

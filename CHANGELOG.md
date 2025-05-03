@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.4.0] - 2023-05-28
+
+### Added
+- Added app icon for mobile home screens
+
+### Changed
+- Improved UI in light mode with better readable control labels
+- Refactored CSS variables to ensure consistent theming across components
+- Enhanced mobile control styles with better contrast in light mode
+
+### Fixed
+- Fixed SVG export to create true vector shapes for halftone and dithering effects
+- Added dividers between button groups in the toolbar
+- Fixed SVG button size to match other buttons
+- Removed redundant buttons from the mobile controls
+- Fixed various theming issues in mobile controls
+
 ## [0.2.3.0] - 2023-05-27
 
 ### Added

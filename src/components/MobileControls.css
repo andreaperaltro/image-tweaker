@@ -8,16 +8,16 @@
 /* Controls panel - consistent for all screen sizes */
 .mobile-controls-panel {
   position: static;
-  background: #333;
-  color: white;
+  background: var(--accent-bg);
+  color: var(--text-primary);
   border-radius: 8px;
   padding: 12px;
   overflow-y: auto;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
   font-size: 14px;
   height: 100%;
   max-height: calc(100vh - 40px);
-  border: 1px solid #444;
+  border: 1px solid var(--border-color);
   font-family: 'PP Mondwest', sans-serif;
 }
 
@@ -36,7 +36,7 @@
   align-items: center;
   margin-bottom: 12px;
   padding-bottom: 6px;
-  border-bottom: 1px solid #444;
+  border-bottom: 1px solid var(--border-color);
   cursor: default;
 }
 
@@ -49,7 +49,7 @@
 
 .mobile-effect-section {
   margin-bottom: 12px;
-  border-bottom: 1px solid #444;
+  border-bottom: 1px solid var(--border-color);
   padding-bottom: 12px;
 }
 
@@ -65,13 +65,13 @@
 }
 
 .mobile-effect-header:hover {
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: rgba(0, 0, 0, 0.05);
 }
 
 /* Style for the effect order number */
 .effect-order-number {
-  background: #555;
-  color: white;
+  background: var(--accent-bg);
+  color: var(--text-primary);
   border-radius: 50%;
   min-width: 20px;
   height: 20px;
@@ -81,7 +81,7 @@
   margin-right: 8px;
   font-weight: bold;
   font-size: 11px;
-  border: 1px solid #666;
+  border: 1px solid var(--border-color);
 }
 
 /* Style for reorder buttons */
@@ -95,7 +95,7 @@
 .reorder-btn {
   background: none;
   border: none;
-  color: #ccc;
+  color: var(--text-secondary);
   cursor: pointer;
   font-size: 14px;
   line-height: 1;
@@ -110,17 +110,17 @@
 }
 
 .reorder-btn:hover {
-  color: white;
-  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+  background: rgba(0, 0, 0, 0.05);
 }
 
 .reorder-btn:active {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.1);
   transform: scale(0.95);
 }
 
 .reorder-btn:disabled {
-  color: #666;
+  color: var(--text-muted);
   cursor: not-allowed;
   background: none;
   transform: none;
@@ -132,6 +132,7 @@
   margin: 0;
   cursor: pointer;
   font-family: 'PP Mondwest', sans-serif;
+  color: var(--text-primary);
 }
 
 /* Add expand indicator icon */
@@ -167,7 +168,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #666;
+  background-color: var(--text-muted);
   transition: .3s;
   border-radius: 34px;
 }
@@ -179,13 +180,13 @@
   width: 16px;
   left: 2px;
   bottom: 2px;
-  background-color: white;
+  background-color: var(--primary-bg);
   transition: .3s;
   border-radius: 50%;
 }
 
 .mobile-effect-toggle input:checked + .mobile-effect-toggle-slider {
-  background-color: #4CAF50;
+  background-color: #10b981;
 }
 
 .mobile-effect-toggle input:checked + .mobile-effect-toggle-slider:before {
@@ -207,15 +208,16 @@
 .mobile-sub-section {
   margin: 10px 0 15px 0;
   padding: 10px;
-  background-color: rgba(255, 255, 255, 0.03);
+  background-color: rgba(0, 0, 0, 0.03);
   border-radius: 6px;
-  border-left: 3px solid rgba(255, 255, 255, 0.1);
+  border-left: 3px solid var(--border-color);
 }
 
 .mobile-sub-section-title {
   font-size: 1rem;
   font-weight: 600;
   margin: 0 0 12px 0;
+  color: var(--text-primary);
 }
 
 .mobile-sub-section .mobile-control-group:first-of-type {
@@ -238,7 +240,7 @@
   display: block;
   font-size: 14px;
   min-width: 120px;
-  color: #ccc;
+  color: var(--text-secondary);
   font-family: 'PP Mondwest', sans-serif;
 }
 
@@ -246,9 +248,9 @@
   flex: 1;
   height: 36px;
   border-radius: 6px;
-  border: 1px solid #555;
-  background: #444;
-  color: white;
+  border: 1px solid var(--border-color);
+  background: var(--secondary-bg);
+  color: var(--text-primary);
   padding: 0 32px 0 12px;
   font-size: 14px;
   cursor: pointer;
@@ -261,8 +263,8 @@
 }
 
 .mobile-select:hover {
-  background-color: #4a4a4a;
-  border-color: #666;
+  background-color: var(--accent-bg);
+  border-color: var(--text-muted);
 }
 
 .mobile-select:focus {
@@ -272,8 +274,8 @@
 }
 
 .mobile-select option {
-  background: #333;
-  color: white;
+  background: var(--secondary-bg);
+  color: var(--text-primary);
   padding: 8px;
   font-size: 14px;
 }
@@ -292,14 +294,14 @@
 }
 
 .mobile-effect-section .slider-label {
-  color: #ccc;
+  color: var(--text-secondary);
   font-size: 14px;
   min-width: 120px;
   font-family: 'PP Mondwest', sans-serif;
 }
 
 .mobile-effect-section .slider-value {
-  color: #ccc;
+  color: var(--text-secondary);
   font-size: 14px;
   min-width: 50px;
   text-align: right;
@@ -314,7 +316,7 @@
 .mobile-effect-section input[type="range"] {
   flex: 1;
   height: 2px;
-  background-color: #555;
+  background-color: var(--border-color);
   border-radius: 2px;
   cursor: pointer;
 }
@@ -352,8 +354,8 @@
 .mobile-effect-section .slider-button {
   width: 28px;
   height: 28px;
-  background-color: #444;
-  color: #ccc;
+  background-color: var(--accent-bg);
+  color: var(--text-secondary);
   border: none;
   border-radius: 6px;
   font-size: 14px;
@@ -365,17 +367,17 @@
 }
 
 .mobile-effect-section .slider-button:hover {
-  background-color: #555;
+  background-color: var(--secondary-bg);
 }
 
 .mobile-effect-section .slider-button:active {
-  background-color: #666;
+  background-color: var(--border-color);
   transform: scale(0.95);
 }
 
 .mobile-effect-section .slider-button:disabled {
-  background-color: #333;
-  color: #666;
+  background-color: var(--primary-bg);
+  color: var(--text-muted);
   cursor: not-allowed;
 }
 
@@ -393,8 +395,8 @@
 
 .mobile-action-button {
   padding: 8px 12px;
-  background: #222;
-  color: white;
+  background: var(--accent-bg);
+  color: var(--text-primary);
   border: none;
   border-radius: 4px;
   font-size: 12px;
@@ -405,27 +407,27 @@
 }
 
 .mobile-action-button:hover {
-  background: #444;
+  background: var(--secondary-bg);
 }
 
 .mobile-controls-footer {
   padding-top: 12px;
   margin-top: 12px;
-  border-top: 1px solid #444;
+  border-top: 1px solid var(--border-color);
   font-size: 12px;
   text-align: center;
-  color: #999;
+  color: var(--text-muted);
 }
 
 .mobile-controls-footer a {
-  color: #ccc;
+  color: var(--text-secondary);
   text-decoration: none;
   font-weight: bold;
 }
 
 .mobile-controls-footer a:hover {
   text-decoration: underline;
-  color: white;
+  color: var(--text-primary);
 }
 
 .settings-controls {
@@ -435,8 +437,8 @@
 }
 
 .settings-button {
-  background: #444;
-  color: white;
+  background: var(--accent-bg);
+  color: var(--text-primary);
   border: none;
   padding: 6px 12px;
   border-radius: 4px;
@@ -449,9 +451,14 @@
 }
 
 .settings-button:hover {
-  background: #555;
+  background: var(--secondary-bg);
 }
 
 .settings-button input[type="file"] {
   display: none;
+}
+
+/* Add dark mode styles - these overrides should no longer be needed since we're using CSS variables */
+@media (prefers-color-scheme: dark) {
+  /* Remove the dark mode specific overrides since our variables take care of it */
 } 

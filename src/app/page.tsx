@@ -3,14 +3,16 @@
 import dynamic from 'next/dynamic';
 import React, { useState } from 'react';
 import { BlurSettings } from '../types';
+import { useTheme } from '@/context/ThemeContext';
+import { FiMoon, FiSun } from 'react-icons/fi';
 
 // Import the AdvancedEditor component with dynamic import to avoid SSR issues
 const AdvancedEditor = dynamic(() => import('@/components/AdvancedEditor'), {
   ssr: false,
   loading: () => (
     <div className="flex flex-col items-center justify-center h-96">
-      <div className="w-12 h-12 mb-2 border-2 border-black"></div>
-      <div className="h-4 w-32 bg-black"></div>
+      <div className="w-12 h-12 mb-2 border-2 border-black dark:border-white"></div>
+      <div className="h-4 w-32 bg-black dark:bg-white"></div>
       <div className="mt-2 h-3 w-48 bg-gray-700"></div>
     </div>
   ),
@@ -19,6 +21,7 @@ const AdvancedEditor = dynamic(() => import('@/components/AdvancedEditor'), {
 export default function Home() {
   const [isHelpOpen, setIsHelpOpen] = React.useState(false);
   const [openSection, setOpenSection] = React.useState<string | null>(null);
+  const { theme, toggleTheme } = useTheme();
   const [blurSettings, setBlurSettings] = useState<BlurSettings>({
     enabled: false,
     type: 'gaussian',
@@ -41,22 +44,32 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-white">
-      <header className="bg-black text-white p-3 border-b-2 border-gray-700 sticky top-0 z-50">
+    <main className="min-h-screen bg-[var(--primary-bg)] text-[var(--text-primary)] transition-colors duration-200">
+      <header className="bg-[var(--header-bg)] text-white p-3 border-b-2 border-gray-700 sticky top-0 z-50">
         <div className="container mx-auto">
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-xl md:text-2xl pp-mondwest-font uppercase">ImageTweaker</h1>
               <p className="text-xs pp-mondwest-font">Image manipulation studio</p>
             </div>
-            <button
-              onClick={() => setIsHelpOpen(!isHelpOpen)}
-              className="text-gray-400 hover:text-white transition-colors text-xl"
-              aria-label="Help"
-              title="View controls guide"
-            >
-              ?
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={toggleTheme}
+                className="text-gray-400 hover:text-white transition-colors text-xl"
+                aria-label={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              >
+                {theme === 'dark' ? <FiSun size={20} /> : <FiMoon size={20} />}
+              </button>
+              <button
+                onClick={() => setIsHelpOpen(!isHelpOpen)}
+                className="text-gray-400 hover:text-white transition-colors text-xl"
+                aria-label="Help"
+                title="View controls guide"
+              >
+                ?
+              </button>
+            </div>
           </div>
           <div 
             className={`overflow-hidden transition-all duration-300 ease-in-out ${
@@ -302,7 +315,7 @@ export default function Home() {
       </header>
 
       <div className="container mx-auto py-4 md:py-6 px-2 md:px-3">
-        <div className="border-2 border-black p-2 md:p-3">
+        <div className="border-2 border-[var(--border-color)] p-2 md:p-3">
           <AdvancedEditor
             blur={blurSettings}
             onBlurChange={setBlurSettings}
@@ -310,7 +323,7 @@ export default function Home() {
         </div>
       </div>
 
-      <footer className="bg-black text-white p-3 mt-4 md:mt-8 border-t-2 border-gray-700">
+      <footer className="bg-[var(--header-bg)] text-white p-3 mt-4 md:mt-8 border-t-2 border-gray-700">
         <div className="container mx-auto text-center">
           <p className="text-xs pp-mondwest-font uppercase">ImageTweaker | Image manipulation app</p>
           <p className="text-xs text-gray-400 pp-mondwest-font">

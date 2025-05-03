@@ -6,7 +6,7 @@ import { ColorSettings, applyColorAdjustments } from './ColorUtils'
 import { GridSettings, GridCell, createGrid, renderGridCell } from './Grid'
 import { HalftoneSettings, HalftoneArrangement, HalftoneShape, applyHalftone } from './Halftone'
 import { exportAsPng, exportAsSvg } from './SvgExport'
-import { exportCanvasAsPng, exportCanvasAsSvg } from './ExportUtils'
+import { exportCanvasAsPng, exportCanvasAsSvg, isVectorExportAvailable } from './ExportUtils'
 import { GlitchSettings, applyGlitch } from './GlitchUtils'
 import { applyDithering, DitherSettings, DitherType, DitherColorMode } from '../components/DitherUtils'
 import { TextDitherSettings, applyTextDither } from './TextDitherUtils'
@@ -18,7 +18,7 @@ import MobileControls from './MobileControls'
 import { BlurSettings } from '../types'
 import { applyBlur } from './BlurUtils'
 import { EffectSettings } from '../utils/EffectSettingsUtils'
-import { FiUpload, FiShuffle, FiTrash2, FiRefreshCw, FiSave, FiFolder, FiImage, FiFileText } from 'react-icons/fi'
+import { FiUpload, FiShuffle, FiTrash, FiRefreshCw, FiSave, FiFolder, FiImage, FiFileText, FiDownload } from 'react-icons/fi'
 
 // Define types
 type AspectRatioPreset = '1:1' | '4:3' | '16:9' | '3:2' | '5:4' | '2:1' | '3:4' | '9:16' | '2:3' | '4:5' | '1:2' | 'custom';
@@ -243,6 +243,42 @@ export default function AdvancedEditor({
 
   const [isCropping, setIsCropping] = useState(false);
   const [cropImageData, setCropImageData] = useState<string | null>(null);
+
+  // Add the ref and handler functions at the top of the component
+  const saveButtonRef = React.useRef<HTMLInputElement>(null);
+
+  // Save settings function
+  const handleSaveSettings = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const settings = {
+      ditherSettings,
+      halftoneSettings,
+      colorSettings,
+      thresholdSettings,
+      glitchSettings,
+      textDitherSettings,
+      gradientMapSettings,
+      gridSettings,
+      effectsOrder,
+      blur
+    };
+    const blob = new Blob([JSON.stringify(settings, null, 2)], { type: 'application/json' });
+    saveAs(blob, 'image-tweaker-settings.json');
+  };
+
+  // Load settings function
+  const handleLoadSettings = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      try {
+        const text = await file.text();
+        const settings = JSON.parse(text);
+        handleSettingsLoaded(settings);
+      } catch (error) {
+        alert('Error loading settings: ' + (error as Error).message);
+      }
+    }
+  };
 
   // Initialize the source canvas
   useEffect(() => {
@@ -934,243 +970,166 @@ export default function AdvancedEditor({
     processImage();
   };
 
+  /**
+   * Checks if the current effect order makes vector SVG export available
+   * Only shows the SVG export button if halftone or dither is the last effect
+   */
+  const isVectorSvgAvailable = (): boolean => {
+    if (!effectsOrder || effectsOrder.length === 0) return false;
+    
+    // Get the last enabled effect
+    const getLastEnabledEffect = () => {
+      for (let i = effectsOrder.length - 1; i >= 0; i--) {
+        const effect = effectsOrder[i];
+        
+        switch (effect) {
+          case 'halftone':
+            if (halftoneSettings.enabled) return 'halftone';
+            break;
+          case 'dither':
+            if (ditherSettings.enabled) return 'dither';
+            break;
+          case 'textDither':
+            if (textDitherSettings.enabled) return 'textDither';
+            break;
+          case 'color':
+            if (colorSettings.enabled) return 'color';
+            break;
+          case 'threshold':
+            if (thresholdSettings.enabled) return 'threshold';
+            break;
+          case 'gradient':
+            if (gradientMapSettings.enabled) return 'gradient';
+            break;
+          case 'glitch':
+            if (glitchSettings.masterEnabled) return 'glitch';
+            break;
+          case 'grid':
+            if (gridSettings.enabled) return 'grid';
+            break;
+          case 'blur':
+            if (blur.enabled) return 'blur';
+            break;
+        }
+      }
+      return null;
+    };
+    
+    const lastEnabledEffect = getLastEnabledEffect();
+    return lastEnabledEffect === 'halftone' || lastEnabledEffect === 'dither';
+  };
+
   return (
     <div className="flex flex-col lg:flex-row gap-4">
       {/* Canvas Container */}
       <div className="flex-1 min-w-0">
         <div className="sticky top-20">
-          <div className="bg-gray-100 p-2 rounded-lg mb-2 flex flex-nowrap gap-2 items-center justify-between overflow-x-auto">
-            <div className="flex flex-nowrap gap-2 items-center">
-              {/* Upload from device */}
-              <label className="px-2 py-1 bg-black text-white text-xs rounded hover:bg-gray-800 transition-colors pp-mondwest-font cursor-pointer flex items-center gap-1 min-w-fit">
-                <FiUpload size={16} />
-                <span className="hidden sm:inline">Upload</span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  style={{ display: 'none' }}
-                  onChange={e => {
-                    if (e.target.files && e.target.files[0]) {
-                      onDrop([e.target.files[0]]);
-                    }
-                  }}
-                />
-              </label>
-              {/* Load Random */}
-              <button
-                onClick={loadRandomImage}
-                disabled={isLoading}
-                className={`px-2 py-1 bg-black text-white text-xs rounded hover:bg-gray-800 transition-colors pp-mondwest-font flex items-center gap-1 min-w-fit ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-              >
-                <FiShuffle size={16} />
-                <span className="hidden sm:inline">Random</span>
-              </button>
-              {/* Clear Image */}
-              <button
-                onClick={() => {
-                  setImage(null);
-                  setOriginalImageDataRef(null);
-                }}
-                className="px-2 py-1 bg-black text-white text-xs rounded hover:bg-gray-800 transition-colors pp-mondwest-font flex items-center gap-1 min-w-fit"
-              >
-                <FiTrash2 size={16} />
-                <span className="hidden sm:inline">Clear</span>
-              </button>
-              {/* Reset Effects */}
-              <button
-                onClick={() => {
-                  // Reset all effect settings but keep the image
-                  setDitherSettings({
-                    enabled: false,
-                    type: 'ordered',
-                    threshold: 128,
-                    colorMode: 'grayscale',
-                    resolution: 30,
-                    colorDepth: 2,
-                    darkColor: '#000000',
-                    lightColor: '#FFFFFF'
-                  });
-                  setHalftoneSettings({
-                    enabled: false,
-                    cellSize: 8,
-                    mix: 100,
-                    colored: false,
-                    enableCMYK: false,
-                    arrangement: 'grid',
-                    shape: 'circle',
-                    angleOffset: 0,
-                    sizeVariation: 0,
-                    dotScaleFactor: 0.8,
-                    invertBrightness: false,
-                    spiralTightness: 0.1,
-                    spiralExpansion: 1.0,
-                    spiralRotation: 0,
-                    spiralCenterX: 0,
-                    spiralCenterY: 0,
-                    concentricCenterX: 0,
-                    concentricCenterY: 0,
-                    concentricRingSpacing: 1.0,
-                    channels: { cyan: true, magenta: true, yellow: true, black: true },
-                    cmykAngles: { cyan: 15, magenta: 75, yellow: 0, black: 45 }
-                  });
-                  setColorSettings({
-                    enabled: false,
-                    hueShift: 0,
-                    saturation: 100,
-                    brightness: 100,
-                    contrast: 100,
-                    posterize: 0,
-                    invert: false,
-                    glitchIntensity: 0,
-                    glitchSeed: Math.random(),
-                    blendMode: 'normal'
-                  });
-                  setThresholdSettings({
-                    enabled: false,
-                    mode: 'solid',
-                    threshold: 128,
-                    darkColor: '#000000',
-                    lightColor: '#FFFFFF',
-                    darkColorStart: '#000000',
-                    darkColorEnd: '#000066',
-                    lightColorStart: '#FFFFFF',
-                    lightColorEnd: '#FFFF66'
-                  });
-                  setGlitchSettings({
-                    masterEnabled: false,
-                    enabled: false,
-                    glitchIntensity: 10,
-                    glitchDensity: 10,
-                    glitchDirection: 'horizontal',
-                    glitchSize: 20,
-                    pixelSortingEnabled: false,
-                    pixelSortingThreshold: 50,
-                    pixelSortingDirection: 'horizontal',
-                    channelShiftEnabled: false,
-                    channelShiftAmount: 5,
-                    channelShiftMode: 'rgb',
-                    scanLinesEnabled: false,
-                    scanLinesCount: 50,
-                    scanLinesIntensity: 0.5,
-                    scanLinesDirection: 'horizontal',
-                    noiseEnabled: false,
-                    noiseAmount: 0.5,
-                    blocksEnabled: false,
-                    blocksSize: 20,
-                    blocksOffset: 0,
-                    blocksDensity: 0.3
-                  });
-                  setTextDitherSettings({
-                    enabled: false,
-                    text: 'MATRIX',
-                    fontSize: 12,
-                    fontFamily: 'monospace',
-                    colorMode: 'monochrome',
-                    contrast: 1,
-                    brightness: 0.5,
-                    invert: false,
-                    resolution: 2
-                  });
-                  setGradientMapSettings({
-                    enabled: false,
-                    stops: [
-                      { position: 0, color: '#000000' },
-                      { position: 50, color: '#ff0000' },
-                      { position: 100, color: '#ffffff' }
-                    ],
-                    blendMode: 'normal',
-                    opacity: 1
-                  });
-                  setGridSettings({
-                    enabled: false,
-                    columns: 3,
-                    rows: 3,
-                    applyRotation: false,
-                    maxRotation: 10,
-                    splitEnabled: false,
-                    splitProbability: 0.5,
-                    maxSplitLevels: 2,
-                    minCellSize: 50
-                  });
-                  setEffectsOrder([
-                    'color',
-                    'blur',
-                    'gradient',
-                    'threshold',
-                    'dither',
-                    'halftone',
-                    'textDither',
-                    'glitch',
-                    'grid'
-                  ]);
-                  onBlurChange({ enabled: false, type: 'gaussian', radius: 5 });
-                }}
-                className="px-2 py-1 bg-black text-white text-xs rounded hover:bg-gray-800 transition-colors pp-mondwest-font flex items-center gap-1 min-w-fit"
-              >
-                <FiRefreshCw size={16} />
-                <span className="hidden sm:inline">Reset</span>
-              </button>
-              {/* Save Settings */}
-              <button
-                onClick={() => {
-                  const settings = {
-                    ditherSettings,
-                    halftoneSettings,
-                    colorSettings,
-                    thresholdSettings,
-                    glitchSettings,
-                    textDitherSettings,
-                    gradientMapSettings,
-                    gridSettings,
-                    effectsOrder,
-                    blur
-                  };
-                  const blob = new Blob([JSON.stringify(settings, null, 2)], { type: 'application/json' });
-                  saveAs(blob, 'image-tweaker-settings.json');
-                }}
-                className="px-2 py-1 bg-black text-white text-xs rounded hover:bg-gray-800 transition-colors pp-mondwest-font flex items-center gap-1 min-w-fit"
-              >
-                <FiSave size={16} />
-                <span className="hidden sm:inline">Save</span>
-              </button>
-              {/* Load Settings */}
-              <label className="px-2 py-1 bg-black text-white text-xs rounded hover:bg-gray-800 transition-colors pp-mondwest-font cursor-pointer flex items-center gap-1 min-w-fit">
-                <FiFolder size={16} />
-                <span className="hidden sm:inline">Load</span>
-                <input
-                  type="file"
-                  accept=".json"
-                  style={{ display: 'none' }}
-                  onChange={async e => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      try {
-                        const text = await file.text();
-                        const settings = JSON.parse(text);
-                        handleSettingsLoaded(settings);
-                      } catch (error) {
-                        alert('Error loading settings: ' + (error as Error).message);
+          <div className="flex flex-col gap-3 mb-4">
+            <div className="flex w-full justify-between gap-2">
+              <div className="flex flex-nowrap gap-2 items-center">
+                <label 
+                  className="px-2 py-1 bg-[var(--header-bg)] text-white text-xs rounded hover:bg-gray-800 transition-colors pp-mondwest-font cursor-pointer flex items-center gap-1 min-w-fit"
+                >
+                  <FiUpload size={16} />
+                  <span className="hidden sm:inline">Upload</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    onChange={e => {
+                      if (e.target.files && e.target.files[0]) {
+                        onDrop([e.target.files[0]]);
                       }
-                    }
+                    }}
+                  />
+                </label>
+                <button
+                  onClick={loadRandomImage}
+                  className="px-2 py-1 bg-[var(--header-bg)] text-white text-xs rounded hover:bg-gray-800 transition-colors pp-mondwest-font flex items-center gap-1 min-w-fit"
+                >
+                  <FiShuffle size={16} />
+                  <span className="hidden sm:inline">Random</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setImage(null);
+                    setOriginalImageDataRef(null);
                   }}
-                />
-              </label>
-            </div>
-            <div className="flex flex-nowrap gap-2 items-center">
-              <button
-                onClick={() => canvasRef.current && exportCanvasAsPng(canvasRef.current)}
-                className="px-2 py-1 bg-black text-white text-xs rounded hover:bg-gray-800 transition-colors pp-mondwest-font flex items-center gap-1 min-w-fit"
-              >
-                <FiImage size={16} />
-                <span className="hidden sm:inline">PNG</span>
-              </button>
-              <button
-                onClick={() => canvasRef.current && exportCanvasAsSvg(canvasRef.current)}
-                className="px-2 py-1 bg-black text-white text-xs rounded hover:bg-gray-800 transition-colors pp-mondwest-font flex items-center gap-1 min-w-fit"
-              >
-                <FiFileText size={16} />
-                <span className="hidden sm:inline">SVG</span>
-              </button>
+                  className="px-2 py-1 bg-[var(--header-bg)] text-white text-xs rounded hover:bg-gray-800 transition-colors pp-mondwest-font flex items-center gap-1 min-w-fit"
+                >
+                  <FiTrash size={16} />
+                  <span className="hidden sm:inline">Clear</span>
+                </button>
+                
+                <div className="h-4 mx-1 border-r border-[var(--border-color)]"></div>
+                
+                <button
+                  onClick={resetImage}
+                  disabled={!originalImageDataRef}
+                  className={`px-2 py-1 ${
+                    originalImageDataRef
+                      ? 'bg-[var(--header-bg)] text-white hover:bg-gray-800'
+                      : 'bg-gray-800 text-gray-500 cursor-not-allowed'
+                  } text-xs rounded transition-colors pp-mondwest-font flex items-center gap-1 min-w-fit`}
+                >
+                  <FiRefreshCw size={16} />
+                  <span className="hidden sm:inline">Reset</span>
+                </button>
+                
+                <div className="h-4 mx-1 border-r border-[var(--border-color)]"></div>
+                
+                <label 
+                  className="px-2 py-1 bg-[var(--header-bg)] text-white text-xs rounded hover:bg-gray-800 transition-colors pp-mondwest-font cursor-pointer flex items-center gap-1 min-w-fit"
+                >
+                  <FiDownload size={16} />
+                  <span className="hidden sm:inline">Save</span>
+                  <input 
+                    type="file" 
+                    style={{ display: 'none' }} 
+                    ref={saveButtonRef}
+                    onClick={handleSaveSettings}
+                  />
+                </label>
+                <label 
+                  className="px-2 py-1 bg-[var(--header-bg)] text-white text-xs rounded hover:bg-gray-800 transition-colors pp-mondwest-font cursor-pointer flex items-center gap-1 min-w-fit"
+                >
+                  <FiUpload size={16} />
+                  <span className="hidden sm:inline">Load</span>
+                  <input 
+                    type="file" 
+                    accept=".json" 
+                    style={{ display: 'none' }} 
+                    onChange={handleLoadSettings} 
+                  />
+                </label>
+                
+                <div className="h-4 mx-1 border-r border-[var(--border-color)]"></div>
+                
+                <button
+                  className="px-2 py-1 bg-[var(--header-bg)] text-white text-xs rounded hover:bg-gray-800 transition-colors pp-mondwest-font flex items-center gap-1 min-w-fit"
+                  onClick={() => canvasRef.current && exportCanvasAsPng(canvasRef.current)}
+                  disabled={!image}
+                  title="Export as PNG"
+                >
+                  <FiImage size={16} />
+                  <span className="hidden sm:inline">PNG</span>
+                </button>
+                <button
+                  className={`px-2 py-1 rounded-md flex items-center space-x-1 text-xs transition-colors pp-mondwest-font ${
+                    isVectorSvgAvailable() 
+                      ? 'bg-[var(--header-bg)] text-white hover:bg-gray-800'
+                      : 'bg-gray-800 border-gray-900 text-gray-500 cursor-not-allowed'
+                  }`}
+                  onClick={() => canvasRef.current && isVectorSvgAvailable() && exportCanvasAsSvg(canvasRef.current)}
+                  disabled={!image || !isVectorSvgAvailable()}
+                  title={isVectorSvgAvailable() 
+                    ? "Export as true vector SVG (halftone/dither)" 
+                    : "Vector SVG export only available when halftone or dither is the last effect"}
+                >
+                  <FiFileText size={16} />
+                  <span className="hidden sm:inline">SVG</span>
+                </button>
+              </div>
             </div>
           </div>
           
@@ -1178,8 +1137,10 @@ export default function AdvancedEditor({
             <div
               {...getRootProps()}
               className={`border-2 border-dashed ${
-                isDragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
-              } rounded-lg p-4 text-center cursor-pointer transition-colors`}
+                isDragActive 
+                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/10' 
+                  : 'border-[var(--border-color)]'
+              } rounded-lg p-4 text-center cursor-pointer transition-colors bg-[var(--secondary-bg)]`}
             >
               <input {...getInputProps()} />
               {image ? (
@@ -1191,7 +1152,7 @@ export default function AdvancedEditor({
                 />
               ) : (
                 <div className="py-12">
-                  <p className="text-gray-600 pp-mondwest-font">
+                  <p className="text-[var(--text-secondary)] pp-mondwest-font">
                     {isLoading ? 'Loading random image...' : 'Drag & drop an image here, or click to select'}
                   </p>
                 </div>
@@ -1203,7 +1164,7 @@ export default function AdvancedEditor({
 
       {/* Controls Panel */}
       <div className="lg:w-80 xl:w-96">
-        <div className="sticky top-20 bg-gray-800 p-4 rounded-lg border border-gray-700 shadow-sm">
+        <div className="sticky top-20 bg-[var(--accent-bg)] p-4 rounded-lg border border-[var(--border-color)] shadow-sm">
           <MobileControls 
             ditherSettings={ditherSettings}
             halftoneSettings={halftoneSettings}

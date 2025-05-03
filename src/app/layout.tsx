@@ -1,6 +1,7 @@
 import React from 'react';
 import './globals.css';
 import type { Metadata, Viewport } from 'next';
+import { ThemeProvider } from '@/context/ThemeContext';
 
 export const metadata: Metadata = {
   title: 'ImageTweaker',
@@ -31,7 +32,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="h-full">
-      <body className="h-full">{children}</body>
+      <body className="h-full dark:bg-gray-900 dark:text-white transition-colors duration-200">
+        <ThemeProvider>
+          {children}
+        </ThemeProvider>
+      </body>
     </html>
   );
 } 

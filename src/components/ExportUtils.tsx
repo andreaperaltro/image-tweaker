@@ -5,6 +5,9 @@
 
 import { saveAs } from 'file-saver';
 import { addPngMetadata } from '../utils/PngMetadata';
+import { createVectorSvg } from './SvgExport';
+import { halftoneDotsStore } from './Halftone';
+import { ditherDotsStore } from './DitherUtils';
 
 /**
  * Exports a canvas as a PNG file with the timestamp in the filename
@@ -46,7 +49,22 @@ export function exportCanvasAsPng(canvas: HTMLCanvasElement): void {
 }
 
 /**
+ * Checks if vector SVG export is available
+ * It's available only if the last effect was halftone or dithering
+ */
+export function isVectorExportAvailable(): boolean {
+  // Check if we have halftone dots stored
+  const hasHalftone = halftoneDotsStore.dots && halftoneDotsStore.dots.length > 0;
+  
+  // Check if we have dither dots stored
+  const hasDither = ditherDotsStore && ditherDotsStore.dots && ditherDotsStore.dots.length > 0;
+  
+  return hasHalftone || hasDither;
+}
+
+/**
  * Exports a canvas as an SVG file with the timestamp in the filename
+ * If the last effect was halftone or dithering, creates a true vector SVG
  */
 export function exportCanvasAsSvg(canvas: HTMLCanvasElement): void {
   if (!canvas) return;
@@ -56,7 +74,30 @@ export function exportCanvasAsSvg(canvas: HTMLCanvasElement): void {
   const dateStr = now.toISOString().replace(/[:.]/g, '-').slice(0, 19);
   const filename = `imagetweaker-${dateStr}.svg`;
 
-  // Create SVG content
+  // Check if we can create a vector SVG
+  if (isVectorExportAvailable()) {
+    try {
+      // Create a true vector SVG
+      const width = canvas.width;
+      const height = canvas.height;
+      const imageInfo = {
+        'Software': 'ImageTweaker v0.2.0',
+        'Author': 'ImageTweaker realized by andreaperato.com',
+        'Website': 'https://image-tweaker.vercel.app/',
+        'Date': new Date().toISOString()
+      };
+      
+      const svgContent = createVectorSvg(canvas, imageInfo);
+      const blob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
+      saveAs(blob, filename);
+      return;
+    } catch (error) {
+      console.error('Error creating vector SVG:', error);
+      // Fall back to raster SVG if vector creation fails
+    }
+  }
+
+  // Create simple SVG with the canvas content as an image (fallback)
   const width = canvas.width;
   const height = canvas.height;
   

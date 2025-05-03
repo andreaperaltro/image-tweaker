@@ -13,6 +13,8 @@ import { GridSettings } from './Grid'
 import Slider from './Slider'
 import { BlurSettings } from '../types'
 import { saveEffectSettings, loadEffectSettings, EffectSettings } from '../utils/EffectSettingsUtils'
+import { isVectorExportAvailable } from './ExportUtils'
+import { FiFileText } from 'react-icons/fi'
 
 interface MobileControlsProps {
   ditherSettings: DitherSettings
@@ -1264,6 +1266,52 @@ const MobileControls: React.FC<MobileControlsProps> = ({
     }
   };
 
+  // Add a function to check if vector SVG export is available based on last effect
+  const isVectorSvgAvailable = (): boolean => {
+    if (!effectsOrder || effectsOrder.length === 0) return false;
+    
+    // Get the last enabled effect
+    const getLastEnabledEffect = () => {
+      for (let i = effectsOrder.length - 1; i >= 0; i--) {
+        const effect = effectsOrder[i];
+        
+        switch (effect) {
+          case 'halftone':
+            if (halftoneSettings.enabled) return 'halftone';
+            break;
+          case 'dither':
+            if (ditherSettings.enabled) return 'dither';
+            break;
+          case 'textDither':
+            if (textDitherSettings.enabled) return 'textDither';
+            break;
+          case 'color':
+            if (colorSettings.enabled) return 'color';
+            break;
+          case 'threshold':
+            if (thresholdSettings.enabled) return 'threshold';
+            break;
+          case 'gradient':
+            if (gradientMapSettings.enabled) return 'gradient';
+            break;
+          case 'glitch':
+            if (glitchSettings.masterEnabled) return 'glitch';
+            break;
+          case 'grid':
+            if (gridSettings.enabled) return 'grid';
+            break;
+          case 'blur':
+            if (blur.enabled) return 'blur';
+            break;
+        }
+      }
+      return null;
+    };
+    
+    const lastEnabledEffect = getLastEnabledEffect();
+    return lastEnabledEffect === 'halftone' || lastEnabledEffect === 'dither';
+  };
+
   return (
     <div className="mobile-controls">
       <div className="mobile-controls-panel">
@@ -1278,35 +1326,11 @@ const MobileControls: React.FC<MobileControlsProps> = ({
         <div className="mobile-effect-section">
           <button 
             onClick={onCropImage}
-            className="mobile-action-button"
+            className="mobile-action-button dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
             style={{ width: '100%', padding: '10px', marginBottom: '10px' }}
           >
             Crop Image
           </button>
-        </div>
-
-        {/* Controls Actions - Moved below Crop button */}
-        <div className="mobile-effect-section">
-          <div className="mobile-controls-actions">
-            <button 
-              onClick={onResetImage}
-              className="mobile-action-button"
-            >
-              Reset
-            </button>
-            <button 
-              onClick={onExportPng}
-              className="mobile-action-button"
-            >
-              PNG
-            </button>
-            <button 
-              onClick={onExportSvg}
-              className="mobile-action-button"
-            >
-              SVG
-            </button>
-          </div>
         </div>
       </div>
     </div>
