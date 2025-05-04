@@ -297,83 +297,6 @@ const MobileControls: React.FC<MobileControlsProps> = ({
     );
   };
 
-  // Function to render the add new effect button
-  const renderAddEffectButton = () => {
-    return (
-      <div className="add-effect-section mt-4">
-        <h3 className="add-effect-title">Add New Effect</h3>
-        <p className="text-sm text-[var(--text-secondary)] mb-3">
-          Choose an effect to add to your image processing chain:
-        </p>
-        <div className="add-effect-buttons">
-          <button 
-            className="add-effect-btn"
-            onClick={() => addEffect('color')}
-            title="Add Color Adjustment"
-          >
-            <FiPlus size={12} /> Color
-          </button>
-          <button 
-            className="add-effect-btn"
-            onClick={() => addEffect('blur')}
-            title="Add Blur Effect"
-          >
-            <FiPlus size={12} /> Blur
-          </button>
-          <button 
-            className="add-effect-btn"
-            onClick={() => addEffect('gradient')}
-            title="Add Gradient Map"
-          >
-            <FiPlus size={12} /> Gradient
-          </button>
-          <button 
-            className="add-effect-btn"
-            onClick={() => addEffect('threshold')}
-            title="Add Threshold"
-          >
-            <FiPlus size={12} /> Threshold
-          </button>
-          <button 
-            className="add-effect-btn"
-            onClick={() => addEffect('dither')}
-            title="Add Dither"
-          >
-            <FiPlus size={12} /> Dither
-          </button>
-          <button 
-            className="add-effect-btn"
-            onClick={() => addEffect('halftone')}
-            title="Add Halftone"
-          >
-            <FiPlus size={12} /> Halftone
-          </button>
-          <button 
-            className="add-effect-btn"
-            onClick={() => addEffect('textDither')}
-            title="Add Text Dither"
-          >
-            <FiPlus size={12} /> Text Dither
-          </button>
-          <button 
-            className="add-effect-btn"
-            onClick={() => addEffect('glitch')}
-            title="Add Glitch"
-          >
-            <FiPlus size={12} /> Glitch
-          </button>
-          <button 
-            className="add-effect-btn"
-            onClick={() => addEffect('grid')}
-            title="Add Grid"
-          >
-            <FiPlus size={12} /> Grid
-          </button>
-        </div>
-      </div>
-    );
-  };
-
   const handleSaveSettings = () => {
     const settings: EffectSettings = {
       ditherSettings,
@@ -427,12 +350,6 @@ const MobileControls: React.FC<MobileControlsProps> = ({
   return (
     <div className="mobile-controls">
       <div className="mobile-controls-panel">
-        <div className="mobile-controls-header">
-          <div className="flex items-center gap-3">
-            {/* Toolbar buttons ... */}
-          </div>
-        </div>
-
         {/* Effects list first */}
         {effectInstances.map(instance => {
           switch (instance.type) {
@@ -1100,8 +1017,70 @@ const MobileControls: React.FC<MobileControlsProps> = ({
           }
         })}
         
-        {/* Add new effect section at the bottom */}
-        {renderAddEffectButton()}
+        {/* Simple add effect title and buttons with no containers */}
+        {effectInstances.length > 0 && (
+          <div className="add-effect-label">Add Effect</div>
+        )}
+        {effectInstances.length === 0 && (
+          <div className="add-first-effect-label">Add Effect</div>
+        )}
+        
+        <div className="effect-buttons-container">
+          <button 
+            className="plain-effect-btn" 
+            onClick={() => addEffect('color')}
+          >
+            <FiPlus size={12} /> Color
+          </button>
+          <button 
+            className="plain-effect-btn" 
+            onClick={() => addEffect('blur')}
+          >
+            <FiPlus size={12} /> Blur
+          </button>
+          <button 
+            className="plain-effect-btn" 
+            onClick={() => addEffect('gradient')}
+          >
+            <FiPlus size={12} /> Gradient
+          </button>
+          <button 
+            className="plain-effect-btn" 
+            onClick={() => addEffect('threshold')}
+          >
+            <FiPlus size={12} /> Threshold
+          </button>
+          <button 
+            className="plain-effect-btn" 
+            onClick={() => addEffect('dither')}
+          >
+            <FiPlus size={12} /> Dither
+          </button>
+          <button 
+            className="plain-effect-btn" 
+            onClick={() => addEffect('halftone')}
+          >
+            <FiPlus size={12} /> Halftone
+          </button>
+          <button 
+            className="plain-effect-btn" 
+            onClick={() => addEffect('textDither')}
+          >
+            <FiPlus size={12} /> Text
+          </button>
+          <button 
+            className="plain-effect-btn" 
+            onClick={() => addEffect('glitch')}
+          >
+            <FiPlus size={12} /> Glitch
+          </button>
+          <button 
+            className="plain-effect-btn" 
+            onClick={() => addEffect('grid')}
+          >
+            <FiPlus size={12} /> Grid
+          </button>
+        </div>
       </div>
     </div>
   );

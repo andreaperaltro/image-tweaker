@@ -31,20 +31,11 @@
 }
 
 .mobile-controls-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid var(--border-color);
-  cursor: default;
+  display: none !important;
 }
 
 .mobile-controls-title {
-  font-size: 1.5rem;
-  font-weight: 600;
-  margin: 0;
-  font-family: 'PP Mondwest', sans-serif;
+  display: none !important;
 }
 
 .mobile-effect-section {
@@ -514,42 +505,100 @@
   gap: 4px;
 }
 
-.add-effect-section {
-  margin-bottom: 16px;
-  padding: 16px;
-  border-radius: 8px;
-  background-color: rgba(0, 0, 0, 0.04);
-  border: 1px solid var(--border-color);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  position: relative;
-  overflow: hidden;
-}
-
-.add-effect-section::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 5px;
-  height: 100%;
-  background: linear-gradient(to bottom, #10b981, #3b82f6);
-}
-
-.add-effect-title {
-  font-size: 1.2rem;
+.effect-buttons-title {
+  font-size: 1.1rem;
   font-weight: 600;
-  margin: 0 0 8px 0;
+  margin: 15px 0 10px 0;
+  padding: 0 10px;
   font-family: 'PP Mondwest', sans-serif;
   color: var(--text-primary);
 }
 
-.add-effect-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+.effect-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  background-color: var(--accent-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--text-primary);
+  gap: 4px;
+  margin: 0 4px 8px 8px;
+  width: calc(33.333% - 16px);
+  max-width: 100px;
 }
 
-.add-effect-btn {
+.effect-btn:hover {
+  background-color: #e5e5e5;
+  transform: translateY(-1px);
+}
+
+@media (prefers-color-scheme: dark) {
+  .effect-btn:hover {
+    background-color: #333336;
+  }
+}
+
+.effect-btn:active {
+  transform: translateY(0px);
+}
+
+/* Hide old styles */
+.effect-buttons-container,
+.effect-buttons-header,
+.add-effect-section,
+.add-effect-title,
+.add-effect-buttons,
+.add-effect-btn,
+.add-effects-section,
+.effect-buttons-grid,
+.effect-buttons-row,
+.effects-separator {
+  display: none;
+}
+
+.add-effects-section {
+  position: relative;
+  margin-top: 10px;
+}
+
+.effects-separator {
+  height: 1px;
+  background-color: var(--border-color);
+  margin: 15px 5px 5px 5px;
+}
+
+/* New clean effect buttons styles */
+.add-effect-label {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 20px 0 8px 10px;
+  font-family: 'PP Mondwest', sans-serif;
+  color: var(--text-primary);
+  border-top: 1px solid var(--border-color);
+  padding-top: 15px;
+}
+
+.add-first-effect-label {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 8px 10px; 
+  font-family: 'PP Mondwest', sans-serif;
+  color: var(--text-primary);
+}
+
+.effect-buttons-container {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 0 4px;
+  margin-bottom: 10px;
+}
+
+.plain-effect-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -557,21 +606,42 @@
   background-color: var(--accent-bg);
   color: var(--text-primary);
   border: 1px solid var(--border-color);
-  padding: 8px 12px;
   border-radius: 6px;
-  font-size: 13px;
+  padding: 8px 10px;
+  font-size: 0.8rem;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
+  margin: 0 4px 8px 4px;
+  flex: 0 0 calc(33.333% - 8px);
+  max-width: 100px;
 }
 
-.add-effect-btn:hover {
-  background-color: var(--text-primary);
-  color: var(--accent-bg);
-  transform: translateY(-2px);
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+.plain-effect-btn:hover {
+  background-color: #e5e5e5;
+  transform: translateY(-1px);
 }
 
-.add-effect-btn:active {
-  transform: translateY(0);
-  box-shadow: none;
+@media (prefers-color-scheme: dark) {
+  .plain-effect-btn:hover {
+    background-color: #333336;
+  }
+}
+
+.plain-effect-btn:active {
+  transform: translateY(0px);
+}
+
+/* DON'T hide the effect buttons container */
+.effect-buttons-title,
+.effect-btn,
+.effect-buttons-header,
+.add-effect-section,
+.add-effect-title,
+.add-effect-buttons,
+.add-effect-btn,
+.add-effects-section,
+.effect-buttons-grid,
+.effect-buttons-row,
+.effects-separator {
+  display: none !important; /* Force hide with !important */
 } 
