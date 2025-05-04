@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import React, { useState } from 'react';
-import { BlurSettings } from '../types';
+import { BlurSettings, EffectInstance } from '../types';
 import { useTheme } from '@/context/ThemeContext';
 import { FiMoon, FiSun } from 'react-icons/fi';
 
@@ -27,16 +27,16 @@ export default function Home() {
     type: 'gaussian',
     radius: 5
   });
-  const [effectsOrder, setEffectsOrder] = useState([
-    'color',
-    'blur',
-    'gradient',
-    'threshold',
-    'dither',
-    'halftone',
-    'textDither',
-    'glitch',
-    'grid'
+  const [effectInstances, setEffectInstances] = useState<EffectInstance[]>([
+    { id: 'color-1', type: 'color', enabled: false },
+    { id: 'blur-1', type: 'blur', enabled: false },
+    { id: 'gradient-1', type: 'gradient', enabled: false },
+    { id: 'threshold-1', type: 'threshold', enabled: false },
+    { id: 'dither-1', type: 'dither', enabled: false },
+    { id: 'halftone-1', type: 'halftone', enabled: false },
+    { id: 'textDither-1', type: 'textDither', enabled: false },
+    { id: 'glitch-1', type: 'glitch', enabled: false },
+    { id: 'grid-1', type: 'grid', enabled: false }
   ]);
 
   const toggleSection = (section: string) => {

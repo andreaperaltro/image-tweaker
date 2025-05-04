@@ -78,6 +78,12 @@ Visit [https://image-tweaker.vercel.app/](https://image-tweaker.vercel.app/) to 
   - Load previously saved settings
   - Preserve all effect parameters and their processing order
 
+- **Advanced Effects Management**
+  - Add, remove, and duplicate effects
+  - Reorder effects to control processing sequence
+  - Enable/disable individual effect instances independently
+  - Apply the same effect multiple times with different settings
+
 - **Advanced UI**
   - Dark/light mode toggle for better viewing in different environments
   - Responsive design that works on both desktop and mobile devices
@@ -86,8 +92,8 @@ Visit [https://image-tweaker.vercel.app/](https://image-tweaker.vercel.app/) to 
 
 - **Advanced Image Manipulation**
   - Interactive cropping with aspect ratio presets
-  - Effect reordering to control processing sequence
   - Real-time preview for all adjustments
+  - Clean starting interface with ability to add effects as needed
 
 ## Getting Started
 
@@ -106,12 +112,15 @@ Visit [https://image-tweaker.vercel.app/](https://image-tweaker.vercel.app/) to 
 
 1. Upload an image by dragging and dropping or clicking the upload button
 2. Alternatively, click "Random" to load a placeholder image
-3. Use the control panels on the right to adjust various effects
-4. Effects are applied in real-time as you adjust the settings
-5. Reorder effects using the arrow buttons to change the processing sequence
-6. Save your settings to a JSON file for later use
-7. Load previously saved settings to restore your configuration
-8. Export your result as PNG or SVG with embedded metadata
+3. Add effects from the "Add New Effect" section at the bottom
+4. Use the control panels to adjust each effect's settings
+5. Effects are applied in real-time as you adjust the settings
+6. Reorder effects using the arrow buttons to change the processing sequence
+7. Duplicate effects to apply the same effect multiple times with different settings
+8. Enable/disable effects individually using the toggle switch
+9. Save your settings to a JSON file for later use
+10. Load previously saved settings to restore your configuration
+11. Export your result as PNG or SVG with embedded metadata
 
 ## Help Section
 

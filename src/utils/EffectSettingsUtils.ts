@@ -7,7 +7,7 @@ import { GlitchSettings } from '../components/GlitchUtils';
 import { TextDitherSettings } from '../components/TextDitherUtils';
 import { GradientMapSettings } from '../components/GradientMapUtils';
 import { GridSettings } from '../components/Grid';
-import { BlurSettings } from '../types';
+import { BlurSettings, EffectInstance } from '../types';
 
 export interface EffectSettings {
   ditherSettings: DitherSettings;
@@ -18,7 +18,7 @@ export interface EffectSettings {
   textDitherSettings: TextDitherSettings;
   gradientMapSettings: GradientMapSettings;
   gridSettings: GridSettings;
-  effectsOrder: string[];
+  effectInstances: EffectInstance[];
   blur: BlurSettings;
 }
 

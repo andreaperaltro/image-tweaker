@@ -19,6 +19,7 @@ import { BlurSettings } from '../types'
 import { applyBlur } from './BlurUtils'
 import { EffectSettings } from '../utils/EffectSettingsUtils'
 import { FiUpload, FiShuffle, FiTrash, FiRefreshCw, FiSave, FiFolder, FiImage, FiFileText, FiDownload } from 'react-icons/fi'
+import { EffectInstance } from '../types'
 
 // Define types
 type AspectRatioPreset = '1:1' | '4:3' | '16:9' | '3:2' | '5:4' | '2:1' | '3:4' | '9:16' | '2:3' | '4:5' | '1:2' | 'custom';
@@ -38,7 +39,7 @@ interface MobileControlsProps {
   textDitherSettings: TextDitherSettings;
   gradientMapSettings: GradientMapSettings;
   gridSettings: GridSettings;
-  effectsOrder: string[];
+  effectInstances: EffectInstance[];
   updateDitherSettings: (settings: Partial<DitherSettings>) => void;
   updateHalftoneSettings: (setting: keyof HalftoneSettings, value: any) => void;
   updateColorSettings: (setting: keyof ColorSettings, value: any) => void;
@@ -47,7 +48,10 @@ interface MobileControlsProps {
   updateTextDitherSettings: (settings: Partial<TextDitherSettings>) => void;
   updateGradientMapSettings: (settings: Partial<GradientMapSettings>) => void;
   updateGridSettings: (setting: keyof GridSettings, value: any) => void;
-  updateEffectsOrder: (order: string[]) => void;
+  updateEffectInstances: (instances: EffectInstance[]) => void;
+  addEffect: (type: string) => void;
+  duplicateEffect: (id: string) => void;
+  removeEffect: (id: string) => void;
   onResetImage: () => void;
   onExportPng: () => void;
   onExportSvg: () => void;
@@ -192,18 +196,8 @@ export default function AdvancedEditor({
     opacity: 1
   });
 
-  // Effects order
-  const [effectsOrder, setEffectsOrder] = useState([
-    'color',
-    'blur',
-    'gradient',
-    'threshold',
-    'dither',
-    'halftone',
-    'textDither',
-    'glitch',
-    'grid'
-  ]);
+  // Effects instances instead of simple order array
+  const [effectInstances, setEffectInstances] = useState<EffectInstance[]>([]);
 
   // Glitch settings
   const [glitchSettings, setGlitchSettings] = useState<GlitchSettings>({
@@ -250,19 +244,24 @@ export default function AdvancedEditor({
   // Save settings function
   const handleSaveSettings = (e: React.MouseEvent) => {
     e.preventDefault();
-    const settings = {
+    
+    const settings: EffectSettings = {
       ditherSettings,
       halftoneSettings,
       colorSettings,
       thresholdSettings,
-      glitchSettings,
+      glitchSettings, 
       textDitherSettings,
       gradientMapSettings,
       gridSettings,
-      effectsOrder,
+      effectInstances,
       blur
     };
-    const blob = new Blob([JSON.stringify(settings, null, 2)], { type: 'application/json' });
+    
+    const blob = new Blob([JSON.stringify(settings, null, 2)], {
+      type: 'application/json'
+    });
+    
     saveAs(blob, 'image-tweaker-settings.json');
   };
 
@@ -279,11 +278,6 @@ export default function AdvancedEditor({
       }
     }
   };
-
-  // Initialize the source canvas
-  useEffect(() => {
-    sourceCanvasRef.current = document.createElement('canvas');
-  }, []);
 
   // Handle file drop
   const onDrop = (acceptedFiles: File[]) => {
@@ -785,6 +779,97 @@ export default function AdvancedEditor({
     }));
   };
 
+  // Function to generate a unique ID
+  const generateUniqueId = (type: string) => {
+    // Find all instances of this type
+    const existingInstances = effectInstances.filter(instance => instance.type === type);
+    const maxNumber = existingInstances.reduce((max, instance) => {
+      const instanceNumber = parseInt(instance.id.split('-')[1]);
+      return instanceNumber > max ? instanceNumber : max;
+    }, 0);
+    
+    return `${type}-${maxNumber + 1}`;
+  };
+
+  // Function to add a new effect
+  const addEffect = (type: string) => {
+    const newId = generateUniqueId(type);
+    const newInstance: EffectInstance = {
+      id: newId,
+      type,
+      enabled: false
+    };
+    
+    setEffectInstances(prev => [...prev, newInstance]);
+    
+    // No need to initialize settings here as they are already set with defaults
+    // When the user enables the effect, the settings will be used
+  };
+
+  // Function to duplicate an effect
+  const duplicateEffect = (id: string) => {
+    const effectToDuplicate = effectInstances.find(instance => instance.id === id);
+    if (!effectToDuplicate) return;
+    
+    const newId = generateUniqueId(effectToDuplicate.type);
+    const newInstance: EffectInstance = {
+      id: newId,
+      type: effectToDuplicate.type,
+      enabled: effectToDuplicate.enabled // Copy the enabled state from the original
+    };
+    
+    // Find the index of the effect to duplicate
+    const index = effectInstances.findIndex(instance => instance.id === id);
+    
+    // Insert the duplicated effect right after the original
+    const newInstances = [...effectInstances];
+    newInstances.splice(index + 1, 0, newInstance);
+    
+    setEffectInstances(newInstances);
+    
+    // No settings synchronization needed anymore
+  };
+
+  // Function to remove an effect
+  const removeEffect = (id: string) => {
+    setEffectInstances(prev => prev.filter(instance => instance.id !== id));
+  };
+
+  // Function to update effect instances
+  const updateEffectInstances = (instances: EffectInstance[]) => {
+    setEffectInstances(instances);
+  };
+
+  // Function to toggle effect enabled state
+  const toggleEffectEnabled = (id: string, enabled: boolean) => {
+    setEffectInstances(prev => 
+      prev.map(instance => 
+        instance.id === id ? { ...instance, enabled } : instance
+      )
+    );
+    // We no longer update the corresponding settings' enabled properties
+  };
+
+  // Function to move effect up in the order
+  const moveEffectUp = (id: string) => {
+    const index = effectInstances.findIndex(instance => instance.id === id);
+    if (index > 0) {
+      const newInstances = [...effectInstances];
+      [newInstances[index - 1], newInstances[index]] = [newInstances[index], newInstances[index - 1]];
+      setEffectInstances(newInstances);
+    }
+  };
+
+  // Function to move effect down in the order
+  const moveEffectDown = (id: string) => {
+    const index = effectInstances.findIndex(instance => instance.id === id);
+    if (index < effectInstances.length - 1) {
+      const newInstances = [...effectInstances];
+      [newInstances[index], newInstances[index + 1]] = [newInstances[index + 1], newInstances[index]];
+      setEffectInstances(newInstances);
+    }
+  };
+
   const processImage = useCallback(() => {
     if (!image || !canvasRef.current || !sourceCanvasRef.current) return;
     
@@ -816,62 +901,64 @@ export default function AdvancedEditor({
       // Draw image on source canvas
       sourceCtx.drawImage(img, 0, 0, canvasWidth, canvasHeight);
       
-      // Apply effects in the order specified by effectsOrder
-      effectsOrder.forEach(effectType => {
-        switch (effectType) {
+      // Apply effects based on the effectInstances
+      effectInstances.forEach(instance => {
+        if (!instance.enabled) return;
+        
+        switch (instance.type) {
           case 'color':
-            if (colorSettings.enabled) {
-              applyColorAdjustments(sourceCtx, canvasWidth, canvasHeight, colorSettings);
-            }
+            // Create a copy of the settings with enabled=true for this instance
+            const colorSettingsForInstance = { ...colorSettings, enabled: true };
+            applyColorAdjustments(sourceCtx, canvasWidth, canvasHeight, colorSettingsForInstance);
             break;
             
           case 'gradient':
-            if (gradientMapSettings.enabled) {
-              applyGradientMap(sourceCtx, sourceCanvas, canvasWidth, canvasHeight, gradientMapSettings);
-            }
+            // Create a copy of the settings with enabled=true for this instance
+            const gradientSettingsForInstance = { ...gradientMapSettings, enabled: true };
+            applyGradientMap(sourceCtx, sourceCanvas, canvasWidth, canvasHeight, gradientSettingsForInstance);
             break;
             
           case 'threshold':
-            if (thresholdSettings.enabled) {
-              applyThreshold(sourceCtx, canvasWidth, canvasHeight, thresholdSettings);
-            }
+            // Create a copy of the settings with enabled=true for this instance
+            const thresholdSettingsForInstance = { ...thresholdSettings, enabled: true };
+            applyThreshold(sourceCtx, canvasWidth, canvasHeight, thresholdSettingsForInstance);
             break;
             
           case 'halftone':
-            if (halftoneSettings.enabled) {
-              applyHalftone(sourceCtx, sourceCanvas, canvasWidth, canvasHeight, halftoneSettings);
-            }
+            // Create a copy of the settings with enabled=true for this instance
+            const halftoneSettingsForInstance = { ...halftoneSettings, enabled: true };
+            applyHalftone(sourceCtx, sourceCanvas, canvasWidth, canvasHeight, halftoneSettingsForInstance);
             break;
             
           case 'grid':
-            if (gridSettings.enabled) {
-              const grid = createGrid(canvasWidth, canvasHeight, gridSettings);
-              grid.forEach(cell => renderGridCell(sourceCtx, cell, sourceCanvas, gridSettings));
-            }
+            // Create a copy of the settings with enabled=true for this instance
+            const gridSettingsForInstance = { ...gridSettings, enabled: true };
+            const grid = createGrid(canvasWidth, canvasHeight, gridSettingsForInstance);
+            grid.forEach(cell => renderGridCell(sourceCtx, cell, sourceCanvas, gridSettingsForInstance));
             break;
             
           case 'dither':
-            if (ditherSettings.enabled) {
-              applyDithering(sourceCtx, sourceCanvas, canvasWidth, canvasHeight, ditherSettings);
-            }
+            // Create a copy of the settings with enabled=true for this instance
+            const ditherSettingsForInstance = { ...ditherSettings, enabled: true };
+            applyDithering(sourceCtx, sourceCanvas, canvasWidth, canvasHeight, ditherSettingsForInstance);
             break;
             
           case 'textDither':
-            if (textDitherSettings.enabled) {
-              applyTextDither(sourceCtx, canvasWidth, canvasHeight, textDitherSettings);
-            }
+            // Create a copy of the settings with enabled=true for this instance
+            const textDitherSettingsForInstance = { ...textDitherSettings, enabled: true };
+            applyTextDither(sourceCtx, canvasWidth, canvasHeight, textDitherSettingsForInstance);
             break;
             
           case 'glitch':
-            if (glitchSettings.masterEnabled) {
-              applyGlitch(sourceCtx, sourceCanvas, canvasWidth, canvasHeight, glitchSettings);
-            }
+            // Create a copy of the settings with enabled=true for this instance
+            const glitchSettingsForInstance = { ...glitchSettings, masterEnabled: true, enabled: true };
+            applyGlitch(sourceCtx, sourceCanvas, canvasWidth, canvasHeight, glitchSettingsForInstance);
             break;
 
           case 'blur':
-            if (blur.enabled) {
-              applyBlur(sourceCtx, canvasWidth, canvasHeight, blur);
-            }
+            // Create a copy of the settings with enabled=true for this instance
+            const blurSettingsForInstance = { ...blur, enabled: true };
+            applyBlur(sourceCtx, canvasWidth, canvasHeight, blurSettingsForInstance);
             break;
         }
       });
@@ -898,7 +985,7 @@ export default function AdvancedEditor({
     textDitherSettings,
     glitchSettings,
     gradientMapSettings,
-    effectsOrder,
+    effectInstances,
     blur
   ]);
 
@@ -955,6 +1042,7 @@ export default function AdvancedEditor({
   };
 
   const handleSettingsLoaded = (settings: EffectSettings) => {
+    // Load the various settings 
     setDitherSettings(settings.ditherSettings);
     setHalftoneSettings(settings.halftoneSettings);
     setColorSettings(settings.colorSettings);
@@ -963,7 +1051,25 @@ export default function AdvancedEditor({
     setTextDitherSettings(settings.textDitherSettings);
     setGradientMapSettings(settings.gradientMapSettings);
     setGridSettings(settings.gridSettings);
-    setEffectsOrder(settings.effectsOrder);
+    
+    // Load effect instances if available, otherwise create default ones
+    if (settings.effectInstances && settings.effectInstances.length > 0) {
+      setEffectInstances(settings.effectInstances);
+    } else {
+      // Create default instances if none exist in the loaded settings
+      setEffectInstances([
+        { id: 'color-1', type: 'color', enabled: false },
+        { id: 'blur-1', type: 'blur', enabled: false },
+        { id: 'gradient-1', type: 'gradient', enabled: false },
+        { id: 'threshold-1', type: 'threshold', enabled: false },
+        { id: 'dither-1', type: 'dither', enabled: false },
+        { id: 'halftone-1', type: 'halftone', enabled: false },
+        { id: 'textDither-1', type: 'textDither', enabled: false },
+        { id: 'glitch-1', type: 'glitch', enabled: false },
+        { id: 'grid-1', type: 'grid', enabled: false }
+      ]);
+    }
+    
     onBlurChange(settings.blur);
     
     // Process the image with the new settings
@@ -975,42 +1081,15 @@ export default function AdvancedEditor({
    * Only shows the SVG export button if halftone or dither is the last effect
    */
   const isVectorSvgAvailable = (): boolean => {
-    if (!effectsOrder || effectsOrder.length === 0) return false;
+    if (!effectInstances || effectInstances.length === 0) return false;
     
     // Get the last enabled effect
     const getLastEnabledEffect = () => {
-      for (let i = effectsOrder.length - 1; i >= 0; i--) {
-        const effect = effectsOrder[i];
+      for (let i = effectInstances.length - 1; i >= 0; i--) {
+        const instance = effectInstances[i];
+        if (!instance.enabled) continue;
         
-        switch (effect) {
-          case 'halftone':
-            if (halftoneSettings.enabled) return 'halftone';
-            break;
-          case 'dither':
-            if (ditherSettings.enabled) return 'dither';
-            break;
-          case 'textDither':
-            if (textDitherSettings.enabled) return 'textDither';
-            break;
-          case 'color':
-            if (colorSettings.enabled) return 'color';
-            break;
-          case 'threshold':
-            if (thresholdSettings.enabled) return 'threshold';
-            break;
-          case 'gradient':
-            if (gradientMapSettings.enabled) return 'gradient';
-            break;
-          case 'glitch':
-            if (glitchSettings.masterEnabled) return 'glitch';
-            break;
-          case 'grid':
-            if (gridSettings.enabled) return 'grid';
-            break;
-          case 'blur':
-            if (blur.enabled) return 'blur';
-            break;
-        }
+        return instance.type;
       }
       return null;
     };
@@ -1018,6 +1097,11 @@ export default function AdvancedEditor({
     const lastEnabledEffect = getLastEnabledEffect();
     return lastEnabledEffect === 'halftone' || lastEnabledEffect === 'dither';
   };
+
+  // Initialize the source canvas
+  useEffect(() => {
+    sourceCanvasRef.current = document.createElement('canvas');
+  }, []);
 
   return (
     <div className="flex flex-col lg:flex-row gap-6">
@@ -1174,7 +1258,7 @@ export default function AdvancedEditor({
             textDitherSettings={textDitherSettings}
             gradientMapSettings={gradientMapSettings}
             gridSettings={gridSettings}
-            effectsOrder={effectsOrder}
+            effectInstances={effectInstances}
             updateDitherSettings={(settings) => setDitherSettings(prev => ({ ...prev, ...settings }))}
             updateHalftoneSettings={handleHalftoneChange}
             updateColorSettings={handleColorChange}
@@ -1183,7 +1267,10 @@ export default function AdvancedEditor({
             updateTextDitherSettings={(settings) => setTextDitherSettings(prev => ({ ...prev, ...settings }))}
             updateGradientMapSettings={(settings) => setGradientMapSettings(prev => ({ ...prev, ...settings }))}
             updateGridSettings={handleGridChange}
-            updateEffectsOrder={setEffectsOrder}
+            updateEffectInstances={updateEffectInstances}
+            addEffect={addEffect}
+            duplicateEffect={duplicateEffect}
+            removeEffect={removeEffect}
             onResetImage={resetImage}
             onExportPng={() => canvasRef.current && exportCanvasAsPng(canvasRef.current)}
             onExportSvg={() => canvasRef.current && exportCanvasAsSvg(canvasRef.current)}

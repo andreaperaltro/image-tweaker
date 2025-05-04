@@ -95,15 +95,20 @@ export type TextDitherSettings = {
   resolution: number;
 };
 
-export type BlurSettings = {
+export interface BlurSettings {
   enabled: boolean;
-  type: 'gaussian' | 'radial' | 'motion' | 'tiltShift';
+  type: 'gaussian' | 'radial' | 'motion' | 'tiltshift';
   radius: number;
   centerX?: number;
   centerY?: number;
   angle?: number;
-  focusPoint?: number;
-  focusPointY?: number;
+  focusPosition?: number;
   focusWidth?: number;
   gradient?: number;
-}; 
+}
+
+export interface EffectInstance {
+  id: string;
+  type: string;
+  enabled: boolean;
+} 

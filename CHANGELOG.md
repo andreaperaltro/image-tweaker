@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2025-05-06
+
+### Added
+- Advanced effects management system
+  - Start with zero effects for a cleaner interface
+  - Add effects individually as needed from the "Add New Effect" panel
+  - Duplicate existing effects to apply the same effect with different settings
+  - Independent enable/disable toggles for each effect instance
+- Dynamic effects implementation
+  - Each effect instance now operates independently
+  - Multiple instances of the same effect type can have different enabled states
+  - Full control over the processing chain
+
+### Changed
+- Moved "Add New Effect" container to the bottom of the effects list for better workflow
+- Improved visual styling for the effects interface
+  - Enhanced buttons for adding effects
+  - Better visual indicators for expanded/collapsed effect panels
+  - Improved spacing and layout for effect controls
+- Removed "Controls" title for cleaner interface
+- Streamlined UX flow for adding and managing effects
+
+### Fixed
+- Fixed issues with effect panels not expanding/collapsing properly
+- Resolved problem with duplicate effects sharing the same enabled state
+- Improved CSS transitions for smoother interactions
+- Enhanced effect rendering to support independent effect states
+
 ## [0.2.6.0] - 2025-05-04
 
 ### Added

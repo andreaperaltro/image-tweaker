@@ -54,18 +54,25 @@
 }
 
 .mobile-effect-header {
+  padding: 10px;
+  border-radius: 6px;
+  background-color: rgba(0, 0, 0, 0.05);
+  margin-bottom: 2px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 6px 4px;
-  margin: 2px 0;
-  border-radius: 6px;
-  transition: background-color 0.3s ease;
-  cursor: pointer;
 }
 
 .mobile-effect-header:hover {
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: rgba(0, 0, 0, 0.08);
+}
+
+.mobile-effect-header.section-open {
+  background-color: rgba(0, 0, 0, 0.1);
+  margin-bottom: 0;
+  border-radius: 6px 6px 0 0;
 }
 
 /* Style for the effect order number */
@@ -196,12 +203,22 @@
 .mobile-effect-content {
   max-height: 0;
   overflow: hidden;
-  transition: max-height 0.3s ease;
+  transition: all 0.3s ease;
+  padding: 0;
+  opacity: 0;
+  visibility: hidden;
 }
 
 .mobile-effect-content.open {
-  max-height: unset;
+  max-height: 2000px; /* Use a large enough value to accommodate all content */
+  opacity: 1;
   padding: 10px 0;
+  transition: all 0.3s ease;
+  visibility: visible;
+  background-color: rgba(0, 0, 0, 0.03);
+  border-radius: 0 0 6px 6px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-top: none;
 }
 
 /* Sub-section styling for grouped controls within effects */
@@ -461,4 +478,100 @@
 /* Add dark mode styles - these overrides should no longer be needed since we're using CSS variables */
 @media (prefers-color-scheme: dark) {
   /* Remove the dark mode specific overrides since our variables take care of it */
+}
+
+.effect-action-buttons {
+  display: flex;
+  gap: 4px;
+}
+
+.effect-action-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 5px;
+  transition: all 0.2s ease;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.effect-action-btn:hover {
+  color: var(--text-primary);
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.effect-action-btn:active {
+  background: rgba(0, 0, 0, 0.1);
+  transform: scale(0.95);
+}
+
+.effect-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.add-effect-section {
+  margin-bottom: 16px;
+  padding: 16px;
+  border-radius: 8px;
+  background-color: rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  position: relative;
+  overflow: hidden;
+}
+
+.add-effect-section::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 5px;
+  height: 100%;
+  background: linear-gradient(to bottom, #10b981, #3b82f6);
+}
+
+.add-effect-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  font-family: 'PP Mondwest', sans-serif;
+  color: var(--text-primary);
+}
+
+.add-effect-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.add-effect-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background-color: var(--accent-bg);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.add-effect-btn:hover {
+  background-color: var(--text-primary);
+  color: var(--accent-bg);
+  transform: translateY(-2px);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.add-effect-btn:active {
+  transform: translateY(0);
+  box-shadow: none;
 } 
