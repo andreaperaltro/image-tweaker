@@ -995,8 +995,112 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 <div key={instance.id} className="mobile-effect-section">
                   {renderSectionHeader(instance, 'Glitch Effects')}
                   <div className={`mobile-effect-content ${openSection === instance.id ? 'open' : ''}`}>
-                    {/* Glitch controls */}
-                    {/* ... existing glitch controls ... */}
+                    {/* Main glitch controls */}
+                    <Slider
+                      label="Intensity"
+                      value={glitchSettings.glitchIntensity}
+                      onChange={(value) => updateGlitchSettings({ glitchIntensity: value })}
+                      min={0}
+                      max={100}
+                      step={1}
+                      unit="%"
+                    />
+                    <Slider
+                      label="Density"
+                      value={glitchSettings.glitchDensity}
+                      onChange={(value) => updateGlitchSettings({ glitchDensity: value })}
+                      min={0}
+                      max={100}
+                      step={1}
+                      unit="%"
+                    />
+                    <Slider
+                      label="Size"
+                      value={glitchSettings.glitchSize}
+                      onChange={(value) => updateGlitchSettings({ glitchSize: value })}
+                      min={1}
+                      max={50}
+                      step={1}
+                      unit="px"
+                    />
+                    
+                    <div className="mobile-control-group">
+                      <label className="mobile-control-label">Direction</label>
+                      <select 
+                        className="mobile-select"
+                        value={glitchSettings.glitchDirection}
+                        onChange={(e) => updateGlitchSettings({ glitchDirection: e.target.value as 'horizontal' | 'vertical' | 'both' })}
+                      >
+                        <option value="horizontal">Horizontal</option>
+                        <option value="vertical">Vertical</option>
+                        <option value="both">Both</option>
+                      </select>
+                    </div>
+                    
+                    {/* Channel shift controls */}
+                    <div className="mobile-control-group">
+                      <label className="mobile-control-label">Channel Shift</label>
+                      <label className="mobile-effect-toggle">
+                        <input 
+                          type="checkbox" 
+                          checked={glitchSettings.channelShiftEnabled}
+                          onChange={(e) => updateGlitchSettings({ channelShiftEnabled: e.target.checked })}
+                        />
+                        <span className="mobile-effect-toggle-slider"></span>
+                      </label>
+                    </div>
+                    
+                    {glitchSettings.channelShiftEnabled && (
+                      <>
+                        <Slider
+                          label="Shift Amount"
+                          value={glitchSettings.channelShiftAmount}
+                          onChange={(value) => updateGlitchSettings({ channelShiftAmount: value })}
+                          min={1}
+                          max={20}
+                          step={1}
+                          unit="px"
+                        />
+                        <div className="mobile-control-group">
+                          <label className="mobile-control-label">Shift Mode</label>
+                          <select 
+                            className="mobile-select"
+                            value={glitchSettings.channelShiftMode}
+                            onChange={(e) => updateGlitchSettings({ channelShiftMode: e.target.value as 'rgb' | 'rb' | 'rg' | 'gb' })}
+                          >
+                            <option value="rgb">RGB</option>
+                            <option value="rb">RB</option>
+                            <option value="rg">RG</option>
+                            <option value="gb">GB</option>
+                          </select>
+                        </div>
+                      </>
+                    )}
+                    
+                    {/* Noise controls */}
+                    <div className="mobile-control-group">
+                      <label className="mobile-control-label">Noise</label>
+                      <label className="mobile-effect-toggle">
+                        <input 
+                          type="checkbox" 
+                          checked={glitchSettings.noiseEnabled}
+                          onChange={(e) => updateGlitchSettings({ noiseEnabled: e.target.checked })}
+                        />
+                        <span className="mobile-effect-toggle-slider"></span>
+                      </label>
+                    </div>
+                    
+                    {glitchSettings.noiseEnabled && (
+                      <Slider
+                        label="Noise Amount"
+                        value={glitchSettings.noiseAmount}
+                        onChange={(value) => updateGlitchSettings({ noiseAmount: value })}
+                        min={0}
+                        max={100}
+                        step={1}
+                        unit="%"
+                      />
+                    )}
                   </div>
                 </div>
               );
@@ -1007,7 +1111,91 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                   {renderSectionHeader(instance, 'Grid Transform')}
                   <div className={`mobile-effect-content ${openSection === instance.id ? 'open' : ''}`}>
                     {/* Grid controls */}
-                    {/* ... existing grid controls ... */}
+                    <Slider
+                      label="Columns"
+                      value={gridSettings.columns}
+                      onChange={(value) => updateGridSettings('columns', value)}
+                      min={1}
+                      max={10}
+                      step={1}
+                    />
+                    <Slider
+                      label="Rows"
+                      value={gridSettings.rows}
+                      onChange={(value) => updateGridSettings('rows', value)}
+                      min={1}
+                      max={10}
+                      step={1}
+                    />
+                    
+                    {/* Rotation settings */}
+                    <div className="mobile-control-group">
+                      <label className="mobile-control-label">Apply Rotation</label>
+                      <label className="mobile-effect-toggle">
+                        <input 
+                          type="checkbox" 
+                          checked={gridSettings.applyRotation}
+                          onChange={(e) => updateGridSettings('applyRotation', e.target.checked)}
+                        />
+                        <span className="mobile-effect-toggle-slider"></span>
+                      </label>
+                    </div>
+                    
+                    {gridSettings.applyRotation && (
+                      <Slider
+                        label="Max Rotation"
+                        value={gridSettings.maxRotation}
+                        onChange={(value) => updateGridSettings('maxRotation', value)}
+                        min={1}
+                        max={45}
+                        step={1}
+                        unit="°"
+                      />
+                    )}
+                    
+                    {/* Split settings */}
+                    <div className="mobile-control-group">
+                      <label className="mobile-control-label">Split Cells</label>
+                      <label className="mobile-effect-toggle">
+                        <input 
+                          type="checkbox" 
+                          checked={gridSettings.splitEnabled}
+                          onChange={(e) => updateGridSettings('splitEnabled', e.target.checked)}
+                        />
+                        <span className="mobile-effect-toggle-slider"></span>
+                      </label>
+                    </div>
+                    
+                    {gridSettings.splitEnabled && (
+                      <>
+                        <Slider
+                          label="Split Probability"
+                          value={gridSettings.splitProbability}
+                          onChange={(value) => updateGridSettings('splitProbability', value)}
+                          min={0}
+                          max={1}
+                          step={0.05}
+                          unit=""
+                        />
+                        <Slider
+                          label="Max Split Levels"
+                          value={gridSettings.maxSplitLevels}
+                          onChange={(value) => updateGridSettings('maxSplitLevels', value)}
+                          min={1}
+                          max={4}
+                          step={1}
+                        />
+                        <Slider
+                          label="Min Cell Size"
+                          value={gridSettings.minCellSize}
+                          onChange={(value) => updateGridSettings('minCellSize', value)}
+                          min={10}
+                          max={100}
+                          step={5}
+                          unit="px"
+                        />
+                      </>
+                    )}
                   </div>
                 </div>
               );
