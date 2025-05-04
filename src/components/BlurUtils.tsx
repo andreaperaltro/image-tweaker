@@ -241,8 +241,7 @@ function applyTiltShiftBlur(
   width: number,
   height: number,
   radius: number,
-  focusPoint: number,
-  focusPointY: number,
+  focusPosition: number,
   focusWidth: number,
   gradient: number,
   angle: number
@@ -254,8 +253,8 @@ function applyTiltShiftBlur(
   const tempData = new Uint8ClampedArray(data);
 
   // Convert percentage coordinates to pixel coordinates
-  const focusPointXPixels = (focusPoint / 100) * width;
-  const focusPointYPixels = (focusPointY / 100) * height;
+  const focusPointXPixels = (focusPosition / 100) * width;
+  const focusPointYPixels = 50 / 100 * height; // Fixed at center (50%)
   const focusWidthPixels = (focusWidth / 100) * Math.max(width, height);
   const gradientPixels = Math.max(1, (gradient / 100) * Math.max(width, height));
 
@@ -363,14 +362,13 @@ export function applyBlur(
         settings.angle || 0
       );
       break;
-    case 'tiltShift':
+    case 'tiltshift':
       applyTiltShiftBlur(
         ctx,
         width,
         height,
         settings.radius,
-        settings.focusPoint || 50,
-        settings.focusPointY || 50,
+        settings.focusPosition || 50,
         settings.focusWidth || 25,
         settings.gradient || 12.5,
         settings.angle || 0
