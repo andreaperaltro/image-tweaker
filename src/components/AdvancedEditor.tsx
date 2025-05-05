@@ -813,18 +813,15 @@ export default function AdvancedEditor({
     switch (type) {
       case 'dither':
         defaultSettings = {
+          // Original DitherSettings API properties - these are what actually get used
           enabled: true,
-          type: 'ordered', // Original API property
-          threshold: 128,  // Original API property 
-          colorMode: 'grayscale', // Original API property
+          type: 'ordered',
+          threshold: 128,
+          colorMode: 'grayscale',
           resolution: 30,
           colorDepth: 2,
           darkColor: '#000000',
-          lightColor: '#FFFFFF',
-          // Adding backward compatibility for our new UI controls
-          // These won't affect the actual rendering
-          ditherType: 'ordered',
-          amount: 0.5
+          lightColor: '#FFFFFF'
         };
         break;
       case 'color':
@@ -886,19 +883,7 @@ export default function AdvancedEditor({
         
         // Create a deep copy of the settings
         const settingsCopy = JSON.parse(JSON.stringify(currentSettings));
-        
-        // Add additional properties for specific effect types
-        if (instance.type === 'dither') {
-          // Make sure we preserve the original API properties
-          settingsCopy.type = settingsCopy.type || 'ordered';
-          settingsCopy.threshold = settingsCopy.threshold !== undefined ? settingsCopy.threshold : 128;
-          settingsCopy.colorMode = settingsCopy.colorMode || 'grayscale';
-          
-          // Also preserve our UI-specific properties 
-          settingsCopy.ditherType = settingsCopy.ditherType || settingsCopy.type || 'ordered';
-          settingsCopy.amount = settingsCopy.amount !== undefined ? settingsCopy.amount : 0.5;
-        }
-        
+            
         // Set the copy as instance settings for the new ID
         setInstanceSettings(prev => ({
           ...prev,
@@ -1090,12 +1075,7 @@ export default function AdvancedEditor({
             // Create a copy of the settings with enabled=true
             const ditherSettingsForInstance = { 
               ...JSON.parse(JSON.stringify(settings)), 
-              enabled: true,
-              // Ensure the original API properties are set correctly
-              type: settings.type || settings.ditherType || 'ordered',
-              threshold: settings.threshold !== undefined ? settings.threshold : Math.round((settings.amount || 0.5) * 255),
-              colorMode: settings.colorMode || (settings.uiColorMode === 'bw' ? 'grayscale' : 
-                         settings.uiColorMode === 'rgb' ? 'color' : 'grayscale')
+              enabled: true
             };
             applyDithering(sourceCtx, sourceCanvas, canvasWidth, canvasHeight, ditherSettingsForInstance);
             break;

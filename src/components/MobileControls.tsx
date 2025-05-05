@@ -870,116 +870,62 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               <label className="mobile-control-label">Dither Type</label>
               <select 
                 className="mobile-select"
-                value={settings.ditherType || settings.type || 'ordered'}
-                onChange={(e) => {
-                  // Update both our UI property and the original API property
-                  updateInstanceSettings(instance.id, { 
-                    ditherType: e.target.value,
-                    type: e.target.value // This is what the renderer actually uses
-                  });
-                }}
+                value={settings.type || 'ordered'}
+                onChange={(e) => updateInstanceSettings(instance.id, { type: e.target.value })}
               >
-                <option value="atkinson">Atkinson</option>
-                <option value="floydsteinberg">Floyd-Steinberg</option>
-                <option value="bayer">Bayer 8x8</option>
                 <option value="ordered">Ordered</option>
-                <option value="random">Random</option>
+                <option value="floyd-steinberg">Floyd-Steinberg</option>
+                <option value="jarvis">Jarvis</option>
+                <option value="judice-ninke">Judice-Ninke</option>
+                <option value="stucki">Stucki</option>
+                <option value="burkes">Burkes</option>
               </select>
             </div>
             
             <Slider
-              label="Amount"
-              value={settings.amount !== undefined ? settings.amount : (settings.threshold ? settings.threshold / 255 : 0.5)}
-              onChange={(value) => {
-                // Update both our UI property and the original API threshold
-                updateInstanceSettings(instance.id, { 
-                  amount: value,
-                  threshold: Math.round(value * 255) // Convert 0-1 to 0-255 for original API
-                });
-              }}
+              label="Threshold"
+              value={settings.threshold || 128}
+              onChange={(value) => updateInstanceSettings(instance.id, { threshold: value })}
               min={0}
-              max={1}
-              step={0.01}
-              unit=""
+              max={255}
+              step={1}
             />
             
             <div className="mobile-control-group">
               <label className="mobile-control-label">Color Mode</label>
               <select 
                 className="mobile-select"
-                value={settings.uiColorMode || (settings.colorMode === 'grayscale' ? 'bw' : settings.colorMode === '2-color' ? 'bw' : 'rgb')}
-                onChange={(e) => {
-                  const uiValue = e.target.value;
-                  // Map UI value to original API value
-                  let apiValue = 'grayscale';
-                  if (uiValue === 'rgb') apiValue = 'color';
-                  else if (uiValue === 'bw') apiValue = 'grayscale';
-                  else if (uiValue === 'palette') apiValue = 'color';
-                  
-                  // Update both properties
-                  updateInstanceSettings(instance.id, { 
-                    uiColorMode: uiValue,
-                    colorMode: apiValue // This is what the renderer actually uses
-                  });
-                }}
+                value={settings.colorMode || 'grayscale'}
+                onChange={(e) => updateInstanceSettings(instance.id, { colorMode: e.target.value })}
               >
-                <option value="bw">Black & White</option>
-                <option value="rgb">RGB Color</option>
-                <option value="palette">Color Palette</option>
+                <option value="grayscale">Grayscale</option>
+                <option value="color">Color</option>
+                <option value="2-color">2-Color</option>
               </select>
             </div>
+
+            <Slider
+              label="Resolution"
+              value={settings.resolution || 30}
+              onChange={(value) => updateInstanceSettings(instance.id, { resolution: value })}
+              min={1}
+              max={100}
+              step={1}
+              unit="%"
+            />
             
-            {(settings.uiColorMode === 'palette' || (!settings.uiColorMode && settings.colorMode === 'color')) && (
-              <>
-                <div className="mobile-control-group">
-                  <label className="mobile-control-label">Palette Type</label>
-                  <select 
-                    className="mobile-select"
-                    value={settings.paletteType || 'custom'}
-                    onChange={(e) => updateInstanceSettings(instance.id, { paletteType: e.target.value })}
-                  >
-                    <option value="custom">Custom</option>
-                    <option value="cga">CGA</option>
-                    <option value="gameboy">GameBoy</option>
-                    <option value="grayscale">Grayscale</option>
-                    <option value="c64">Commodore 64</option>
-                    <option value="apple2">Apple II</option>
-                    <option value="pico8">PICO-8</option>
-                    <option value="ega">EGA</option>
-                    <option value="risograph">Risograph</option>
-                    <option value="teletext">Teletext</option>
-                  </select>
-                </div>
-                
-                <Slider
-                  label="Color Count"
-                  value={settings.colorCount !== undefined ? settings.colorCount : settings.colorDepth || 8}
-                  onChange={(value) => updateInstanceSettings(instance.id, { 
-                    colorCount: value,
-                    colorDepth: value // Update original API property
-                  })}
-                  min={2}
-                  max={64}
-                  step={1}
-                />
-              </>
-            )}
+            <Slider
+              label="Color Depth"
+              value={settings.colorDepth || 2}
+              onChange={(value) => updateInstanceSettings(instance.id, { colorDepth: value })}
+              min={2}
+              max={256}
+              step={1}
+              unit=" colors"
+            />
             
-            {/* Color reduction controls */}
-            <div className="mobile-control-group">
-              <label className="mobile-control-label">Apply Color Reduction</label>
-              <label className="mobile-effect-toggle">
-                <input 
-                  type="checkbox" 
-                  checked={settings.applyColorReduction || false}
-                  onChange={(e) => updateInstanceSettings(instance.id, { applyColorReduction: e.target.checked })}
-                />
-                <span className="mobile-effect-toggle-slider"></span>
-              </label>
-            </div>
-            
-            {/* Dark/Light color controls for 2-color mode */}
-            {(settings.uiColorMode === 'bw' || (!settings.uiColorMode && settings.colorMode === 'grayscale')) && (
+            {/* Color controls for 2-color mode */}
+            {settings.colorMode === '2-color' && (
               <>
                 <div className="mobile-control-group">
                   <label className="mobile-control-label">Dark Color</label>
@@ -1001,16 +947,6 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 </div>
               </>
             )}
-            
-            <Slider
-              label="Resolution"
-              value={settings.resolution || 30}
-              onChange={(value) => updateInstanceSettings(instance.id, { resolution: value })}
-              min={1}
-              max={100}
-              step={1}
-              unit="%"
-            />
           </div>
         );
 
