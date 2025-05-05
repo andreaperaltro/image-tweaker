@@ -40,6 +40,7 @@ interface MobileControlsProps {
   gradientMapSettings: GradientMapSettings;
   gridSettings: GridSettings;
   effectInstances: EffectInstance[];
+  instanceSettings: {[id: string]: any};
   updateDitherSettings: (settings: Partial<DitherSettings>) => void;
   updateHalftoneSettings: (setting: keyof HalftoneSettings, value: any) => void;
   updateColorSettings: (setting: keyof ColorSettings, value: any) => void;
@@ -48,6 +49,7 @@ interface MobileControlsProps {
   updateTextDitherSettings: (settings: Partial<TextDitherSettings>) => void;
   updateGradientMapSettings: (settings: Partial<GradientMapSettings>) => void;
   updateGridSettings: (setting: keyof GridSettings, value: any) => void;
+  updateInstanceSettings: (id: string, settings: any) => void;
   updateEffectInstances: (instances: EffectInstance[]) => void;
   addEffect: (type: string) => void;
   duplicateEffect: (id: string) => void;
@@ -198,6 +200,9 @@ export default function AdvancedEditor({
 
   // Effects instances instead of simple order array
   const [effectInstances, setEffectInstances] = useState<EffectInstance[]>([]);
+  
+  // NEW: Store instance-specific settings
+  const [instanceSettings, setInstanceSettings] = useState<{[id: string]: any}>({});
 
   // Glitch settings
   const [glitchSettings, setGlitchSettings] = useState<GlitchSettings>({
@@ -800,10 +805,53 @@ export default function AdvancedEditor({
       enabled: false
     };
     
-    setEffectInstances(prev => [...prev, newInstance]);
+    // Add default settings for the new instance
+    let defaultSettings;
+    switch (type) {
+      case 'color':
+        defaultSettings = { ...colorSettings };
+        break;
+      case 'gradient':
+        defaultSettings = { 
+          ...gradientMapSettings,
+          stops: JSON.parse(JSON.stringify(gradientMapSettings.stops)) 
+        };
+        break;
+      case 'threshold':
+        defaultSettings = { ...thresholdSettings };
+        break;
+      case 'halftone':
+        defaultSettings = { 
+          ...halftoneSettings,
+          channels: { ...halftoneSettings.channels },
+          cmykAngles: { ...halftoneSettings.cmykAngles } 
+        };
+        break;
+      case 'grid':
+        defaultSettings = { ...gridSettings };
+        break;
+      case 'dither':
+        defaultSettings = { ...ditherSettings };
+        break;
+      case 'textDither':
+        defaultSettings = { ...textDitherSettings };
+        break;
+      case 'glitch':
+        defaultSettings = { ...glitchSettings };
+        break;
+      case 'blur':
+        defaultSettings = { ...blur };
+        break;
+      default:
+        defaultSettings = {};
+    }
     
-    // No need to initialize settings here as they are already set with defaults
-    // When the user enables the effect, the settings will be used
+    // Add the instance and its settings
+    setEffectInstances(prev => [...prev, newInstance]);
+    setInstanceSettings(prev => ({ 
+      ...prev, 
+      [newId]: defaultSettings 
+    }));
   };
 
   // Function to duplicate an effect
@@ -825,14 +873,70 @@ export default function AdvancedEditor({
     const newInstances = [...effectInstances];
     newInstances.splice(index + 1, 0, newInstance);
     
-    setEffectInstances(newInstances);
+    // Copy the settings from the original instance
+    const originalSettings = instanceSettings[id] || {};
     
-    // No settings synchronization needed anymore
+    // Add the instance and its settings
+    setEffectInstances(newInstances);
+    setInstanceSettings(prev => ({ 
+      ...prev, 
+      [newId]: JSON.parse(JSON.stringify(originalSettings)) 
+    }));
   };
 
   // Function to remove an effect
   const removeEffect = (id: string) => {
     setEffectInstances(prev => prev.filter(instance => instance.id !== id));
+    
+    // Remove the instance settings
+    setInstanceSettings(prev => {
+      const newSettings = { ...prev };
+      delete newSettings[id];
+      return newSettings;
+    });
+  };
+
+  // Add a helper function to get settings for an instance
+  const getInstanceSettings = (instance: EffectInstance) => {
+    // If instance-specific settings exist, use them
+    if (instanceSettings[instance.id]) {
+      return instanceSettings[instance.id];
+    }
+    
+    // Otherwise, fall back to global settings
+    switch (instance.type) {
+      case 'color':
+        return colorSettings;
+      case 'gradient':
+        return gradientMapSettings;
+      case 'threshold':
+        return thresholdSettings;
+      case 'halftone':
+        return halftoneSettings;
+      case 'grid':
+        return gridSettings;
+      case 'dither':
+        return ditherSettings;
+      case 'textDither':
+        return textDitherSettings;
+      case 'glitch':
+        return glitchSettings;
+      case 'blur':
+        return blur;
+      default:
+        return {};
+    }
+  };
+
+  // Update instance settings
+  const updateInstanceSettings = (id: string, settings: any) => {
+    setInstanceSettings(prev => ({
+      ...prev,
+      [id]: {
+        ...prev[id],
+        ...settings
+      }
+    }));
   };
 
   // Function to update effect instances
@@ -905,62 +1009,89 @@ export default function AdvancedEditor({
       effectInstances.forEach(instance => {
         if (!instance.enabled) return;
         
+        // Get instance-specific settings
+        const settings = getInstanceSettings(instance);
+        
         switch (instance.type) {
           case 'color':
-            // Create a copy of the settings with enabled=true for this instance
-            const colorSettingsForInstance = { ...colorSettings, enabled: true };
+            // Create a copy of the settings with enabled=true
+            const colorSettingsForInstance = { 
+              ...JSON.parse(JSON.stringify(settings)), 
+              enabled: true 
+            };
             applyColorAdjustments(sourceCtx, canvasWidth, canvasHeight, colorSettingsForInstance);
             break;
             
           case 'gradient':
-            // Create a copy of the settings with enabled=true for this instance
-            const gradientSettingsForInstance = { ...gradientMapSettings, enabled: true };
+            // Create a copy of the settings with enabled=true
+            const gradientSettingsForInstance = { 
+              ...JSON.parse(JSON.stringify(settings)), 
+              enabled: true 
+            };
             applyGradientMap(sourceCtx, sourceCanvas, canvasWidth, canvasHeight, gradientSettingsForInstance);
             break;
             
           case 'threshold':
-            // Create a copy of the settings with enabled=true for this instance
-            const thresholdSettingsForInstance = { ...thresholdSettings, enabled: true };
+            // Create a copy of the settings with enabled=true
+            const thresholdSettingsForInstance = { 
+              ...JSON.parse(JSON.stringify(settings)), 
+              enabled: true 
+            };
             applyThreshold(sourceCtx, canvasWidth, canvasHeight, thresholdSettingsForInstance);
             break;
             
           case 'halftone':
-            // Create a copy of the settings with enabled=true for this instance
-            const halftoneSettingsForInstance = { ...halftoneSettings, enabled: true };
+            // Create a copy of the settings with enabled=true
+            const halftoneSettingsForInstance = { 
+              ...JSON.parse(JSON.stringify(settings)), 
+              enabled: true 
+            };
             applyHalftone(sourceCtx, sourceCanvas, canvasWidth, canvasHeight, halftoneSettingsForInstance);
             break;
             
           case 'grid':
-            // Create a copy of the settings with enabled=true for this instance
-            const gridSettingsForInstance = { ...gridSettings, enabled: true };
+            // Create a copy of the settings with enabled=true
+            const gridSettingsForInstance = { 
+              ...JSON.parse(JSON.stringify(settings)), 
+              enabled: true 
+            };
             const grid = createGrid(canvasWidth, canvasHeight, gridSettingsForInstance);
             grid.forEach(cell => renderGridCell(sourceCtx, cell, sourceCanvas, gridSettingsForInstance));
             break;
             
           case 'dither':
-            // Create a copy of the settings with enabled=true for this instance
-            const ditherSettingsForInstance = { ...ditherSettings, enabled: true };
+            // Create a copy of the settings with enabled=true
+            const ditherSettingsForInstance = { 
+              ...JSON.parse(JSON.stringify(settings)), 
+              enabled: true 
+            };
             applyDithering(sourceCtx, sourceCanvas, canvasWidth, canvasHeight, ditherSettingsForInstance);
             break;
             
           case 'textDither':
-            // Create a copy of the settings with enabled=true for this instance
-            const textDitherSettingsForInstance = { ...textDitherSettings, enabled: true };
+            // Create a copy of the settings with enabled=true
+            const textDitherSettingsForInstance = { 
+              ...JSON.parse(JSON.stringify(settings)), 
+              enabled: true 
+            };
             applyTextDither(sourceCtx, canvasWidth, canvasHeight, textDitherSettingsForInstance);
             break;
             
           case 'glitch':
-            // Create a copy of the settings with only masterEnabled=true, not enabled=true
+            // Create a copy of the settings with only masterEnabled=true
             const glitchSettingsForInstance = { 
-              ...glitchSettings, 
+              ...JSON.parse(JSON.stringify(settings)), 
               masterEnabled: true 
             };
             applyGlitch(sourceCtx, sourceCanvas, canvasWidth, canvasHeight, glitchSettingsForInstance);
             break;
 
           case 'blur':
-            // Create a copy of the settings with enabled=true for this instance
-            const blurSettingsForInstance = { ...blur, enabled: true };
+            // Create a copy of the settings with enabled=true
+            const blurSettingsForInstance = { 
+              ...JSON.parse(JSON.stringify(settings)), 
+              enabled: true 
+            };
             applyBlur(sourceCtx, canvasWidth, canvasHeight, blurSettingsForInstance);
             break;
         }
@@ -980,16 +1111,8 @@ export default function AdvancedEditor({
     image,
     canvasWidth,
     canvasHeight,
-    colorSettings,
-    thresholdSettings,
-    halftoneSettings,
-    gridSettings,
-    ditherSettings,
-    textDitherSettings,
-    glitchSettings,
-    gradientMapSettings,
     effectInstances,
-    blur
+    instanceSettings
   ]);
 
   // Process image when it changes
@@ -1262,6 +1385,7 @@ export default function AdvancedEditor({
             gradientMapSettings={gradientMapSettings}
             gridSettings={gridSettings}
             effectInstances={effectInstances}
+            instanceSettings={instanceSettings}
             updateDitherSettings={(settings) => setDitherSettings(prev => ({ ...prev, ...settings }))}
             updateHalftoneSettings={handleHalftoneChange}
             updateColorSettings={handleColorChange}
@@ -1270,6 +1394,7 @@ export default function AdvancedEditor({
             updateTextDitherSettings={(settings) => setTextDitherSettings(prev => ({ ...prev, ...settings }))}
             updateGradientMapSettings={(settings) => setGradientMapSettings(prev => ({ ...prev, ...settings }))}
             updateGridSettings={handleGridChange}
+            updateInstanceSettings={updateInstanceSettings}
             updateEffectInstances={updateEffectInstances}
             addEffect={addEffect}
             duplicateEffect={duplicateEffect}
