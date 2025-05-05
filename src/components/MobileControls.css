@@ -44,6 +44,7 @@
   padding-bottom: 12px;
 }
 
+/* Style for mobile-effect-header to make it more responsive */
 .mobile-effect-header {
   padding: 10px;
   border-radius: 6px;
@@ -54,6 +55,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .mobile-effect-header:hover {
@@ -66,62 +68,28 @@
   border-radius: 6px 6px 0 0;
 }
 
-/* Style for the effect order number */
-.effect-order-number {
-  background: var(--accent-bg);
-  color: var(--text-primary);
-  border-radius: 50%;
-  min-width: 20px;
-  height: 20px;
+/* Improving effect title and toggle layout for small screens */
+.mobile-effect-header .effect-title-container {
   display: flex;
   align-items: center;
-  justify-content: center;
-  margin-right: 8px;
-  font-weight: bold;
-  font-size: 11px;
-  border: 1px solid var(--border-color);
+  flex: 1;
+  min-width: 0;
 }
 
-/* Style for reorder buttons */
-.reorder-buttons {
-  display: flex;
-  flex-direction: row;
-  margin-right: 6px;
-  gap: 2px;
-}
-
-.reorder-btn {
-  background: none;
-  border: none;
-  color: var(--text-secondary);
-  cursor: pointer;
-  font-size: 14px;
-  line-height: 1;
-  padding: 5px;
-  transition: all 0.2s ease;
-  border-radius: 4px;
-  width: 28px;
-  height: 28px;
+.mobile-effect-header .effect-controls-container {
   display: flex;
   align-items: center;
-  justify-content: center;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  width: 100%;
 }
 
-.reorder-btn:hover {
-  color: var(--text-primary);
-  background: rgba(0, 0, 0, 0.05);
-}
-
-.reorder-btn:active {
-  background: rgba(0, 0, 0, 0.1);
-  transform: scale(0.95);
-}
-
-.reorder-btn:disabled {
-  color: var(--text-muted);
-  cursor: not-allowed;
-  background: none;
-  transform: none;
+.mobile-effect-header .effect-title-toggle-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 8px;
 }
 
 .mobile-effect-title {
@@ -131,6 +99,9 @@
   cursor: pointer;
   font-family: 'PP Mondwest', sans-serif;
   color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Add expand indicator icon */
@@ -145,6 +116,48 @@
 /* Rotate indicator when section is open */
 .section-open .mobile-effect-title::after {
   transform: rotate(90deg);
+}
+
+/* Responsive adjustments for mobile */
+@media (max-width: 767px) {
+  .mobile-effect-header {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 8px 10px;
+  }
+  
+  .mobile-effect-header .mobile-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 8px;
+  }
+  
+  .mobile-effect-header .mobile-header-row:last-child {
+    margin-bottom: 0;
+  }
+  
+  .mobile-effect-title {
+    max-width: calc(100% - 50px);
+  }
+}
+
+@media (max-width: 374px) {
+  /* Extra small devices (iPhone SE, etc) */
+  .mobile-effect-title {
+    font-size: 0.95rem;
+  }
+  
+  .mobile-effect-header {
+    padding: 6px 8px;
+  }
+  
+  .effect-order-number {
+    min-width: 18px;
+    height: 18px;
+    font-size: 10px;
+  }
 }
 
 .mobile-effect-toggle {
@@ -241,15 +254,19 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 12px;
-  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .mobile-control-label {
-  display: block;
-  font-size: 14px;
-  min-width: 120px;
-  color: var(--text-secondary);
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  margin-right: 8px;
   font-family: 'PP Mondwest', sans-serif;
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .mobile-select {
@@ -644,4 +661,81 @@
 .effect-buttons-row,
 .effects-separator {
   display: none !important; /* Force hide with !important */
+}
+
+/* Style for the effect order number */
+.effect-order-number {
+  background: var(--accent-bg);
+  color: var(--text-primary);
+  border-radius: 50%;
+  min-width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 8px;
+  font-weight: bold;
+  font-size: 11px;
+  border: 1px solid var(--border-color);
+}
+
+/* Style for reorder buttons */
+.reorder-buttons {
+  display: flex;
+  flex-direction: row;
+  margin-right: 6px;
+  gap: 2px;
+}
+
+.reorder-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 5px;
+  transition: all 0.2s ease;
+  border-radius: 4px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.reorder-btn:hover {
+  color: var(--text-primary);
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.reorder-btn:active {
+  background: rgba(0, 0, 0, 0.1);
+  transform: scale(0.95);
+}
+
+.reorder-btn:disabled {
+  color: var(--text-muted);
+  cursor: not-allowed;
+  background: none;
+  transform: none;
+}
+
+@media (max-width: 480px) {
+  .mobile-control-group {
+    padding: 6px 0;
+  }
+  
+  .mobile-control-label {
+    font-size: 0.85rem;
+    max-width: calc(100% - 50px);
+  }
+}
+
+.mobile-toggle-container {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  min-width: 40px;
+  flex-shrink: 0;
 } 

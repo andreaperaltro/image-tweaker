@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2025-05-10
+
+### Added
+- Dynamic title animation in browser tab with randomized letter-to-number replacements
+- Improved mobile interface for better usability on smaller screens
+- Sticky footer implementation to ensure footer stays at bottom of viewport
+
+### Changed
+- Enhanced mobile layout with better organization of effect controls
+- Improved header layout with effect titles on top line and control buttons on bottom
+- Better responsive design for touch-friendly controls on mobile devices
+
+### Fixed
+- Fixed layout issues where control buttons would overlap on iPhone
+- Resolved mobile layout problems with checkboxes going out of bounds
+- Improved overall mobile experience with cleaner, more accessible UI elements
+- Fixed footer positioning to always stay at the bottom, even with minimal content
+
 ## [0.3.0] - 2025-05-04
 
 ### Added

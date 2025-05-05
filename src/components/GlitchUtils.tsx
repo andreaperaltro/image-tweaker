@@ -86,6 +86,7 @@ export function applyGlitch(
   tempCtx.drawImage(sourceCanvas, 0, 0);
   
   // Apply each enabled effect directly to the temp canvas
+  // Only apply effects that are explicitly enabled
   if (settings.enabled) {
     applyGeneralGlitch(tempCtx, width, height, settings);
   }
@@ -465,6 +466,9 @@ function applyGeneralGlitch(
   height: number,
   settings: GlitchSettings
 ): void {
+  // First check if general glitch is explicitly enabled
+  if (!settings.enabled) return;
+
   const intensity = settings.glitchIntensity / 100;
   if (intensity <= 0) return;
   

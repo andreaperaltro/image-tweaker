@@ -271,9 +271,8 @@ const MobileControls: React.FC<MobileControlsProps> = ({
     
     return (
       <div className={`mobile-effect-header ${openSection === instance.id ? 'section-open' : ''}`}>
-        <div className="flex items-center">
-          {renderEffectControls(instance)}
-          <div className="flex items-center">
+        <div className="mobile-header-row effect-title-toggle-container">
+          <div className="effect-title-container">
             <span className="effect-order-number">
               {orderIndex + 1}
             </span>
@@ -284,15 +283,20 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               {title} ({instance.id})
             </h3>
           </div>
+          <label className="mobile-effect-toggle">
+            <input 
+              type="checkbox" 
+              checked={instance.enabled}
+              onChange={(e) => toggleEffectEnabled(instance.id, e.target.checked)}
+            />
+            <span className="mobile-effect-toggle-slider"></span>
+          </label>
         </div>
-        <label className="mobile-effect-toggle">
-          <input 
-            type="checkbox" 
-            checked={instance.enabled}
-            onChange={(e) => toggleEffectEnabled(instance.id, e.target.checked)}
-          />
-          <span className="mobile-effect-toggle-slider"></span>
-        </label>
+        <div className="mobile-header-row">
+          <div className="effect-controls-container">
+            {renderEffectControls(instance)}
+          </div>
+        </div>
       </div>
     );
   };
@@ -996,58 +1000,78 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                   {renderSectionHeader(instance, 'Glitch Effects')}
                   <div className={`mobile-effect-content ${openSection === instance.id ? 'open' : ''}`}>
                     {/* Main glitch controls */}
-                    <Slider
-                      label="Intensity"
-                      value={glitchSettings.glitchIntensity}
-                      onChange={(value) => updateGlitchSettings({ glitchIntensity: value })}
-                      min={0}
-                      max={100}
-                      step={1}
-                      unit="%"
-                    />
-                    <Slider
-                      label="Density"
-                      value={glitchSettings.glitchDensity}
-                      onChange={(value) => updateGlitchSettings({ glitchDensity: value })}
-                      min={0}
-                      max={100}
-                      step={1}
-                      unit="%"
-                    />
-                    <Slider
-                      label="Size"
-                      value={glitchSettings.glitchSize}
-                      onChange={(value) => updateGlitchSettings({ glitchSize: value })}
-                      min={1}
-                      max={50}
-                      step={1}
-                      unit="px"
-                    />
-                    
                     <div className="mobile-control-group">
-                      <label className="mobile-control-label">Direction</label>
-                      <select 
-                        className="mobile-select"
-                        value={glitchSettings.glitchDirection}
-                        onChange={(e) => updateGlitchSettings({ glitchDirection: e.target.value as 'horizontal' | 'vertical' | 'both' })}
-                      >
-                        <option value="horizontal">Horizontal</option>
-                        <option value="vertical">Vertical</option>
-                        <option value="both">Both</option>
-                      </select>
+                      <label className="mobile-control-label">General Glitch</label>
+                      <div className="mobile-toggle-container">
+                        <label className="mobile-effect-toggle">
+                          <input 
+                            type="checkbox" 
+                            checked={glitchSettings.enabled}
+                            onChange={(e) => updateGlitchSettings({ enabled: e.target.checked })}
+                          />
+                          <span className="mobile-effect-toggle-slider"></span>
+                        </label>
+                      </div>
                     </div>
+                    
+                    {glitchSettings.enabled && (
+                      <>
+                        <Slider
+                          label="Intensity"
+                          value={glitchSettings.glitchIntensity}
+                          onChange={(value) => updateGlitchSettings({ glitchIntensity: value })}
+                          min={0}
+                          max={100}
+                          step={1}
+                          unit="%"
+                        />
+                        <Slider
+                          label="Density"
+                          value={glitchSettings.glitchDensity}
+                          onChange={(value) => updateGlitchSettings({ glitchDensity: value })}
+                          min={0}
+                          max={100}
+                          step={1}
+                          unit="%"
+                        />
+                        <Slider
+                          label="Size"
+                          value={glitchSettings.glitchSize}
+                          onChange={(value) => updateGlitchSettings({ glitchSize: value })}
+                          min={1}
+                          max={50}
+                          step={1}
+                          unit="px"
+                        />
+                        
+                        <div className="mobile-control-group">
+                          <label className="mobile-control-label">Direction</label>
+                          <select 
+                            className="mobile-select"
+                            value={glitchSettings.glitchDirection}
+                            onChange={(e) => updateGlitchSettings({ glitchDirection: e.target.value as 'horizontal' | 'vertical' | 'both' })}
+                          >
+                            <option value="horizontal">Horizontal</option>
+                            <option value="vertical">Vertical</option>
+                            <option value="both">Both</option>
+                          </select>
+                        </div>
+                      </>
+                    )}
                     
                     {/* Channel shift controls */}
                     <div className="mobile-control-group">
                       <label className="mobile-control-label">Channel Shift</label>
-                      <label className="mobile-effect-toggle">
-                        <input 
-                          type="checkbox" 
-                          checked={glitchSettings.channelShiftEnabled}
-                          onChange={(e) => updateGlitchSettings({ channelShiftEnabled: e.target.checked })}
-                        />
-                        <span className="mobile-effect-toggle-slider"></span>
-                      </label>
+                      <div className="mobile-toggle-container">
+                        <label className="mobile-effect-toggle">
+                          <input 
+                            type="checkbox" 
+                            checked={glitchSettings.channelShiftEnabled}
+                            onChange={(e) => updateGlitchSettings({ channelShiftEnabled: e.target.checked })}
+                          />
+                          <span className="mobile-effect-toggle-slider"></span>
+                        </label>
+                      </div>
                     </div>
                     
                     {glitchSettings.channelShiftEnabled && (
@@ -1080,14 +1104,16 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                     {/* Noise controls */}
                     <div className="mobile-control-group">
                       <label className="mobile-control-label">Noise</label>
-                      <label className="mobile-effect-toggle">
-                        <input 
-                          type="checkbox" 
-                          checked={glitchSettings.noiseEnabled}
-                          onChange={(e) => updateGlitchSettings({ noiseEnabled: e.target.checked })}
-                        />
-                        <span className="mobile-effect-toggle-slider"></span>
-                      </label>
+                      <div className="mobile-toggle-container">
+                        <label className="mobile-effect-toggle">
+                          <input 
+                            type="checkbox" 
+                            checked={glitchSettings.noiseEnabled}
+                            onChange={(e) => updateGlitchSettings({ noiseEnabled: e.target.checked })}
+                          />
+                          <span className="mobile-effect-toggle-slider"></span>
+                        </label>
+                      </div>
                     </div>
                     
                     {glitchSettings.noiseEnabled && (
@@ -1100,6 +1126,142 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                         step={1}
                         unit="%"
                       />
+                    )}
+
+                    {/* Pixel Sorting controls */}
+                    <div className="mobile-control-group">
+                      <label className="mobile-control-label">Pixel Sorting</label>
+                      <div className="mobile-toggle-container">
+                        <label className="mobile-effect-toggle">
+                          <input 
+                            type="checkbox" 
+                            checked={glitchSettings.pixelSortingEnabled}
+                            onChange={(e) => updateGlitchSettings({ pixelSortingEnabled: e.target.checked })}
+                          />
+                          <span className="mobile-effect-toggle-slider"></span>
+                        </label>
+                      </div>
+                    </div>
+                    
+                    {glitchSettings.pixelSortingEnabled && (
+                      <>
+                        <Slider
+                          label="Threshold"
+                          value={glitchSettings.pixelSortingThreshold}
+                          onChange={(value) => updateGlitchSettings({ pixelSortingThreshold: value })}
+                          min={0}
+                          max={1}
+                          step={0.01}
+                        />
+                        <div className="mobile-control-group">
+                          <label className="mobile-control-label">Direction</label>
+                          <select 
+                            className="mobile-select"
+                            value={glitchSettings.pixelSortingDirection}
+                            onChange={(e) => updateGlitchSettings({ pixelSortingDirection: e.target.value as 'horizontal' | 'vertical' | 'both' })}
+                          >
+                            <option value="horizontal">Horizontal</option>
+                            <option value="vertical">Vertical</option>
+                            <option value="both">Both</option>
+                          </select>
+                        </div>
+                      </>
+                    )}
+                    
+                    {/* Scan Lines controls */}
+                    <div className="mobile-control-group">
+                      <label className="mobile-control-label">Scan Lines</label>
+                      <div className="mobile-toggle-container">
+                        <label className="mobile-effect-toggle">
+                          <input 
+                            type="checkbox" 
+                            checked={glitchSettings.scanLinesEnabled}
+                            onChange={(e) => updateGlitchSettings({ scanLinesEnabled: e.target.checked })}
+                          />
+                          <span className="mobile-effect-toggle-slider"></span>
+                        </label>
+                      </div>
+                    </div>
+                    
+                    {glitchSettings.scanLinesEnabled && (
+                      <>
+                        <Slider
+                          label="Count"
+                          value={glitchSettings.scanLinesCount}
+                          onChange={(value) => updateGlitchSettings({ scanLinesCount: value })}
+                          min={1}
+                          max={100}
+                          step={1}
+                        />
+                        <Slider
+                          label="Intensity"
+                          value={glitchSettings.scanLinesIntensity}
+                          onChange={(value) => updateGlitchSettings({ scanLinesIntensity: value })}
+                          min={0}
+                          max={100}
+                          step={1}
+                          unit="%"
+                        />
+                        <div className="mobile-control-group">
+                          <label className="mobile-control-label">Direction</label>
+                          <select 
+                            className="mobile-select"
+                            value={glitchSettings.scanLinesDirection}
+                            onChange={(e) => updateGlitchSettings({ scanLinesDirection: e.target.value as 'horizontal' | 'vertical' | 'both' })}
+                          >
+                            <option value="horizontal">Horizontal</option>
+                            <option value="vertical">Vertical</option>
+                            <option value="both">Both</option>
+                          </select>
+                        </div>
+                      </>
+                    )}
+                    
+                    {/* Blocks controls */}
+                    <div className="mobile-control-group">
+                      <label className="mobile-control-label">Blocks</label>
+                      <div className="mobile-toggle-container">
+                        <label className="mobile-effect-toggle">
+                          <input 
+                            type="checkbox" 
+                            checked={glitchSettings.blocksEnabled}
+                            onChange={(e) => updateGlitchSettings({ blocksEnabled: e.target.checked })}
+                          />
+                          <span className="mobile-effect-toggle-slider"></span>
+                        </label>
+                      </div>
+                    </div>
+                    
+                    {glitchSettings.blocksEnabled && (
+                      <>
+                        <Slider
+                          label="Size"
+                          value={glitchSettings.blocksSize}
+                          onChange={(value) => updateGlitchSettings({ blocksSize: value })}
+                          min={5}
+                          max={50}
+                          step={1}
+                          unit="px"
+                        />
+                        <Slider
+                          label="Offset"
+                          value={glitchSettings.blocksOffset}
+                          onChange={(value) => updateGlitchSettings({ blocksOffset: value })}
+                          min={0}
+                          max={50}
+                          step={1}
+                          unit="%"
+                        />
+                        <Slider
+                          label="Density"
+                          value={glitchSettings.blocksDensity}
+                          onChange={(value) => updateGlitchSettings({ blocksDensity: value })}
+                          min={0}
+                          max={100}
+                          step={1}
+                          unit="%"
+                        />
+                      </>
                     )}
                   </div>
                 </div>

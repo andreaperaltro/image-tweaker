@@ -950,8 +950,11 @@ export default function AdvancedEditor({
             break;
             
           case 'glitch':
-            // Create a copy of the settings with enabled=true for this instance
-            const glitchSettingsForInstance = { ...glitchSettings, masterEnabled: true, enabled: true };
+            // Create a copy of the settings with only masterEnabled=true, not enabled=true
+            const glitchSettingsForInstance = { 
+              ...glitchSettings, 
+              masterEnabled: true 
+            };
             applyGlitch(sourceCtx, sourceCanvas, canvasWidth, canvasHeight, glitchSettingsForInstance);
             break;
 

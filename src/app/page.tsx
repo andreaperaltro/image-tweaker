@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 import { BlurSettings, EffectInstance } from '../types';
 import { useTheme } from '@/context/ThemeContext';
 import { FiMoon, FiSun } from 'react-icons/fi';
+import DynamicTitle from '@/components/DynamicTitle';
 
 // Import the AdvancedEditor component with dynamic import to avoid SSR issues
 const AdvancedEditor = dynamic(() => import('@/components/AdvancedEditor'), {
@@ -44,7 +45,9 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-[var(--primary-bg)] text-[var(--text-primary)] transition-colors duration-200">
+    <main className="min-h-screen bg-[var(--primary-bg)] text-[var(--text-primary)] transition-colors duration-200 flex flex-col">
+      <DynamicTitle baseTitle="ImageTweaker" />
+      
       <header className="bg-[var(--header-bg)] text-white p-3 border-b-2 border-gray-700 sticky top-0 z-50">
         <div className="container mx-auto">
           <div className="flex justify-between items-center">
@@ -314,8 +317,8 @@ export default function Home() {
         </div>
       </header>
 
-      <div className="container mx-auto py-4 md:py-6 px-2 md:px-3">
-        <div className="border-2 border-[var(--border-color)] p-2 md:p-3">
+      <div className="container mx-auto py-4 md:py-6 px-2 md:px-3 flex-grow flex flex-col">
+        <div className="border-2 border-[var(--border-color)] p-2 md:p-3 flex-grow">
           <AdvancedEditor
             blur={blurSettings}
             onBlurChange={setBlurSettings}
@@ -323,7 +326,7 @@ export default function Home() {
         </div>
       </div>
 
-      <footer className="bg-[var(--header-bg)] text-white p-3 mt-4 md:mt-8 border-t-2 border-gray-700">
+      <footer className="bg-[var(--header-bg)] text-white p-3 border-t-2 border-gray-700 mt-auto">
         <div className="container mx-auto text-center">
           <p className="text-xs pp-mondwest-font uppercase">ImageTweaker | Image manipulation app</p>
           <p className="text-xs text-gray-400 pp-mondwest-font">
