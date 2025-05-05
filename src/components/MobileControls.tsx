@@ -16,6 +16,12 @@ import { saveEffectSettings, loadEffectSettings, EffectSettings } from '../utils
 import { isVectorExportAvailable } from './ExportUtils'
 import { FiFileText, FiPlus, FiCopy, FiTrash2, FiArrowUp, FiArrowDown } from 'react-icons/fi'
 
+// Add interface for gradient stop
+interface GradientStopType {
+  position: number;
+  color: string;
+}
+
 interface MobileControlsProps {
   ditherSettings: DitherSettings
   halftoneSettings: HalftoneSettings
@@ -114,7 +120,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
   
   // Helper function to handle color changes with debounce
   const handleColorChange = (
-    updateFn: (settings: any) => void, 
+    updateFn: (instance: EffectInstance, settings: any) => void | ((settings: any) => void), 
     colorKey: string, 
     newColor: string
   ) => {
@@ -125,17 +131,36 @@ const MobileControls: React.FC<MobileControlsProps> = ({
     }
     
     // Debounce the actual state update
-    if (colorKey.startsWith('stops')) {
-      // Special handling for gradient stops array
-      setTimeout(() => {
-        updateFn({ [colorKey]: newColor });
-      }, 100);
-    } else {
-      // Simple property update
-      setTimeout(() => {
-        updateFn({ [colorKey]: newColor });
-      }, 100);
+    setTimeout(() => {
+      if (typeof updateFn === 'function') {
+        if (updateFn.length === 1) {
+          // For global settings
+          (updateFn as (settings: any) => void)({ [colorKey]: newColor });
+        } else if (updateFn.length === 2) {
+          // For instance-specific settings (this won't get called directly)
+          console.warn("Instance required for instance-specific color updates");
+        }
+      }
+    }, 100);
+  };
+
+  // New helper for instance-specific color change
+  const handleInstanceColorChange = (
+    instance: EffectInstance,
+    updateFn: (instance: EffectInstance, settings: any) => void,
+    colorKey: string,
+    newColor: string
+  ) => {
+    // Update UI immediately for better feedback
+    const inputElement = document.activeElement as HTMLInputElement;
+    if (inputElement && inputElement.type === 'color') {
+      inputElement.value = newColor;
     }
+    
+    // Debounce the actual state update
+    setTimeout(() => {
+      updateFn(instance, { [colorKey]: newColor });
+    }, 100);
   };
 
   // Special handler for gradient stops which need array manipulation
@@ -387,6 +412,54 @@ const MobileControls: React.FC<MobileControlsProps> = ({
     }
   };
 
+  // Modified updateColorSettings function that uses instance-specific settings
+  const handleColorSettingsChange = (instance: EffectInstance, setting: keyof ColorSettings, value: any) => {
+    // Update instance-specific settings
+    updateInstanceSettings(instance.id, { [setting]: value });
+  };
+
+  // Modified updateHalftoneSettings function that uses instance-specific settings
+  const handleHalftoneSettingsChange = (instance: EffectInstance, setting: keyof HalftoneSettings, value: any) => {
+    // Update instance-specific settings
+    updateInstanceSettings(instance.id, { [setting]: value });
+  };
+
+  // Modified updateDitherSettings function that uses instance-specific settings
+  const handleDitherSettingsChange = (instance: EffectInstance, settings: Partial<DitherSettings>) => {
+    // Update instance-specific settings
+    updateInstanceSettings(instance.id, settings);
+  };
+
+  // Modified updateThresholdSettings function that uses instance-specific settings
+  const handleThresholdSettingsChange = (instance: EffectInstance, settings: Partial<ThresholdSettings>) => {
+    // Update instance-specific settings
+    updateInstanceSettings(instance.id, settings);
+  };
+
+  // Modified updateGlitchSettings function that uses instance-specific settings
+  const handleGlitchSettingsChange = (instance: EffectInstance, settings: Partial<GlitchSettings>) => {
+    // Update instance-specific settings
+    updateInstanceSettings(instance.id, settings);
+  };
+
+  // Modified updateTextDitherSettings function that uses instance-specific settings
+  const handleTextDitherSettingsChange = (instance: EffectInstance, settings: Partial<TextDitherSettings>) => {
+    // Update instance-specific settings
+    updateInstanceSettings(instance.id, settings);
+  };
+
+  // Modified updateGridSettings function that uses instance-specific settings
+  const handleGridSettingsChange = (instance: EffectInstance, setting: keyof GridSettings, value: any) => {
+    // Update instance-specific settings
+    updateInstanceSettings(instance.id, { [setting]: value });
+  };
+
+  // Modified handleBlurChange function that uses instance-specific settings
+  const handleBlurChange = (instance: EffectInstance, settings: BlurSettings) => {
+    // Update instance-specific settings
+    updateInstanceSettings(instance.id, settings);
+  };
+
   // Update the renderEffectContent function to use instance-specific settings
   const renderEffectContent = (instance: EffectInstance) => {
     // Don't render anything if the section is closed
@@ -403,8 +476,8 @@ const MobileControls: React.FC<MobileControlsProps> = ({
             {/* Color adjustments controls */}
             <Slider
               label="Brightness"
-              value={colorSettings.brightness}
-              onChange={(value) => updateColorSettings('brightness', value)}
+              value={settings.brightness}
+              onChange={(value) => updateInstanceSettings(instance.id, { brightness: value })}
               min={0}
               max={200}
               step={1}
@@ -412,8 +485,8 @@ const MobileControls: React.FC<MobileControlsProps> = ({
             />
             <Slider
               label="Contrast"
-              value={colorSettings.contrast}
-              onChange={(value) => updateColorSettings('contrast', value)}
+              value={settings.contrast}
+              onChange={(value) => updateInstanceSettings(instance.id, { contrast: value })}
               min={0}
               max={200}
               step={1}
@@ -421,8 +494,8 @@ const MobileControls: React.FC<MobileControlsProps> = ({
             />
             <Slider
               label="Saturation"
-              value={colorSettings.saturation}
-              onChange={(value) => updateColorSettings('saturation', value)}
+              value={settings.saturation}
+              onChange={(value) => updateInstanceSettings(instance.id, { saturation: value })}
               min={0}
               max={200}
               step={1}
@@ -430,8 +503,8 @@ const MobileControls: React.FC<MobileControlsProps> = ({
             />
             <Slider
               label="Hue Shift"
-              value={colorSettings.hueShift}
-              onChange={(value) => updateColorSettings('hueShift', value)}
+              value={settings.hueShift}
+              onChange={(value) => updateInstanceSettings(instance.id, { hueShift: value })}
               min={-180}
               max={180}
               step={1}
@@ -442,8 +515,8 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               <label className="mobile-effect-toggle">
                 <input 
                   type="checkbox" 
-                  checked={colorSettings.invert}
-                  onChange={(e) => updateColorSettings('invert', e.target.checked)}
+                  checked={settings.invert}
+                  onChange={(e) => updateInstanceSettings(instance.id, { invert: e.target.checked })}
                 />
                 <span className="mobile-effect-toggle-slider"></span>
               </label>
@@ -459,10 +532,11 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               <label className="mobile-control-label">Blur Type</label>
               <select 
                 className="mobile-select"
-                value={blur.type || 'gaussian'}
-                onChange={(e) => onBlurChange({ ...blur, type: e.target.value as any })}
+                value={settings.type || 'gaussian'}
+                onChange={(e) => updateInstanceSettings(instance.id, { type: e.target.value })}
               >
                 <option value="gaussian">Gaussian</option>
+                <option value="box">Box</option>
                 <option value="radial">Radial</option>
                 <option value="motion">Motion</option>
                 <option value="tiltshift">Tilt Shift</option>
@@ -471,27 +545,28 @@ const MobileControls: React.FC<MobileControlsProps> = ({
 
             <Slider
               label="Radius"
-              value={blur.radius || 0}
-              onChange={(value) => onBlurChange({ ...blur, radius: value })}
-              min={0}
-              max={200}
+              value={settings.radius || 1}
+              onChange={(value) => updateInstanceSettings(instance.id, { radius: value })}
+              min={1}
+              max={50}
               step={1}
+              unit="px"
             />
 
-            {blur.type === 'radial' && (
+            {settings.type === 'radial' && (
               <>
                 <Slider
                   label="Center X"
-                  value={blur.centerX || 50}
-                  onChange={(value) => onBlurChange({ ...blur, centerX: value })}
+                  value={settings.centerX || 50}
+                  onChange={(value) => updateInstanceSettings(instance.id, { centerX: value })}
                   min={0}
                   max={100}
                   step={1}
                 />
                 <Slider
                   label="Center Y"
-                  value={blur.centerY || 50}
-                  onChange={(value) => onBlurChange({ ...blur, centerY: value })}
+                  value={settings.centerY || 50}
+                  onChange={(value) => updateInstanceSettings(instance.id, { centerY: value })}
                   min={0}
                   max={100}
                   step={1}
@@ -499,23 +574,23 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               </>
             )}
 
-            {blur.type === 'motion' && (
+            {settings.type === 'motion' && (
               <Slider
                 label="Angle"
-                value={blur.angle || 0}
-                onChange={(value) => onBlurChange({ ...blur, angle: value })}
+                value={settings.angle || 0}
+                onChange={(value) => updateInstanceSettings(instance.id, { angle: value })}
                 min={0}
                 max={360}
                 step={1}
               />
             )}
 
-            {blur.type === 'tiltshift' && (
+            {settings.type === 'tiltshift' && (
               <>
                 <Slider
                   label="Focus Position"
-                  value={blur.focusPosition || 50}
-                  onChange={(value) => onBlurChange({ ...blur, focusPosition: value })}
+                  value={settings.focusPosition || 50}
+                  onChange={(value) => updateInstanceSettings(instance.id, { focusPosition: value })}
                   min={0}
                   max={100}
                   step={1}
@@ -523,8 +598,8 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 />
                 <Slider
                   label="Focus Width"
-                  value={blur.focusWidth || 25}
-                  onChange={(value) => onBlurChange({ ...blur, focusWidth: value })}
+                  value={settings.focusWidth || 25}
+                  onChange={(value) => updateInstanceSettings(instance.id, { focusWidth: value })}
                   min={0}
                   max={100}
                   step={1}
@@ -532,8 +607,8 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 />
                 <Slider
                   label="Angle"
-                  value={blur.angle || 0}
-                  onChange={(value) => onBlurChange({ ...blur, angle: value })}
+                  value={settings.angle || 0}
+                  onChange={(value) => updateInstanceSettings(instance.id, { angle: value })}
                   min={0}
                   max={180}
                   step={1}
@@ -541,8 +616,8 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 />
                 <Slider
                   label="Gradient"
-                  value={blur.gradient || 12.5}
-                  onChange={(value) => onBlurChange({ ...blur, gradient: value })}
+                  value={settings.gradient || 12.5}
+                  onChange={(value) => updateInstanceSettings(instance.id, { gradient: value })}
                   min={0}
                   max={100}
                   step={1}
@@ -556,7 +631,6 @@ const MobileControls: React.FC<MobileControlsProps> = ({
       case 'gradient':
         // Lookup the index to use as a key for instance identification
         const gradientInstanceIndex = effectInstances.findIndex(i => i.id === instance.id);
-        const gradientSettings = settings as GradientMapSettings;
         
         return (
           <div className={`mobile-effect-content ${openSection === instance.id ? 'open' : ''}`}>
@@ -565,7 +639,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               <label className="mobile-control-label">Blend Mode</label>
               <select 
                 className="mobile-select"
-                value={gradientSettings.blendMode}
+                value={settings.blendMode}
                 onChange={(e) => {
                   // Update instance-specific settings
                   updateInstanceSettings(instance.id, { 
@@ -594,7 +668,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
             
             <Slider
               label="Opacity"
-              value={gradientSettings.opacity}
+              value={settings.opacity}
               onChange={(value) => updateInstanceSettings(instance.id, { opacity: value })}
               min={0}
               max={1}
@@ -607,13 +681,13 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               <div 
                 className="w-full h-12 rounded border border-[var(--border-color)] mt-1 shadow-inner" 
                 style={{
-                  background: getGradientPreviewStyle(gradientSettings.stops)
+                  background: getGradientPreviewStyle(settings.stops)
                 }}
               ></div>
             </div>
             
             {/* Render dynamic gradient stops */}
-            {gradientSettings.stops.map((stop, index) => (
+            {settings.stops.map((stop: GradientStopType, index: number) => (
               <div key={`stop-${gradientInstanceIndex}-${index}`} className="mobile-control-group">
                 <div className="flex items-center gap-2 w-full">
                   <input 
@@ -622,7 +696,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                     style={{ width: '32px', minWidth: '32px', height: '32px' }}
                     value={stop.color}
                     onChange={(e) => {
-                      const newStops = [...gradientSettings.stops];
+                      const newStops = [...settings.stops];
                       newStops[index] = { ...stop, color: e.target.value };
                       updateInstanceSettings(instance.id, { stops: newStops });
                     }}
@@ -635,17 +709,17 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                     value={stop.position}
                     onChange={(e) => {
                       const newPosition = parseInt(e.target.value);
-                      const newStops = [...gradientSettings.stops];
+                      const newStops = [...settings.stops];
                       newStops[index] = { ...stop, position: newPosition };
                       updateInstanceSettings(instance.id, { stops: newStops });
                     }}
                   />
                   <span className="text-xs text-[var(--text-secondary)] w-10 text-right">{stop.position}%</span>
-                  {gradientSettings.stops.length > 2 && (
+                  {settings.stops.length > 2 && (
                     <button 
                       className="slider-button"
                       onClick={() => {
-                        const newStops = gradientSettings.stops.filter((_, i) => i !== index);
+                        const newStops = settings.stops.filter((_: GradientStopType, i: number) => i !== index);
                         updateInstanceSettings(instance.id, { stops: newStops });
                       }}
                       aria-label="Remove color stop"
@@ -663,7 +737,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 className="mobile-action-button w-full"
                 onClick={() => {
                   // Find a middle position between existing stops
-                  const sortedStops = [...gradientSettings.stops].sort((a, b) => a.position - b.position);
+                  const sortedStops = [...settings.stops].sort((a, b) => a.position - b.position);
                   let newPosition = 50; // Default middle position
                   
                   if (sortedStops.length >= 2) {
@@ -684,7 +758,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                   
                   // Add new stop with a random color
                   const randomColor = `#${Math.floor(Math.random()*16777215).toString(16).padStart(6, '0')}`;
-                  const newStops = [...gradientSettings.stops, { position: newPosition, color: randomColor }];
+                  const newStops = [...settings.stops, { position: newPosition, color: randomColor }];
                   updateInstanceSettings(instance.id, { stops: newStops });
                 }}
               >
@@ -702,8 +776,8 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               <label className="mobile-control-label">Mode</label>
               <select 
                 className="mobile-select"
-                value={thresholdSettings.mode}
-                onChange={(e) => updateThresholdSettings({ mode: e.target.value as 'solid' | 'gradient' })}
+                value={settings.mode}
+                onChange={(e) => updateInstanceSettings(instance.id, { mode: e.target.value as 'solid' | 'gradient' })}
               >
                 <option value="solid">Solid</option>
                 <option value="gradient">Gradient</option>
@@ -711,22 +785,22 @@ const MobileControls: React.FC<MobileControlsProps> = ({
             </div>
             <Slider
               label="Threshold"
-              value={thresholdSettings.threshold}
-              onChange={(value) => updateThresholdSettings({ threshold: value })}
+              value={settings.threshold}
+              onChange={(value) => updateInstanceSettings(instance.id, { threshold: value })}
               min={0}
               max={255}
               step={1}
             />
             
-            {thresholdSettings.mode === 'solid' && (
+            {settings.mode === 'solid' && (
               <>
                 <div className="mobile-control-group">
                   <label className="mobile-control-label">Dark Color</label>
                   <input 
                     type="color" 
                     className="mobile-color-picker"
-                    value={thresholdSettings.darkColor}
-                    onChange={(e) => handleColorChange(updateThresholdSettings, 'darkColor', e.target.value)}
+                    value={settings.darkColor}
+                    onChange={(e) => updateInstanceSettings(instance.id, { darkColor: e.target.value })}
                   />
                 </div>
                 
@@ -735,22 +809,22 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                   <input 
                     type="color" 
                     className="mobile-color-picker"
-                    value={thresholdSettings.lightColor}
-                    onChange={(e) => handleColorChange(updateThresholdSettings, 'lightColor', e.target.value)}
+                    value={settings.lightColor}
+                    onChange={(e) => updateInstanceSettings(instance.id, { lightColor: e.target.value })}
                   />
                 </div>
               </>
             )}
             
-            {thresholdSettings.mode === 'gradient' && (
+            {settings.mode === 'gradient' && (
               <>
                 <div className="mobile-control-group">
                   <label className="mobile-control-label">Dark Color Start</label>
                   <input 
                     type="color" 
                     className="mobile-color-picker"
-                    value={thresholdSettings.darkColorStart}
-                    onChange={(e) => handleColorChange(updateThresholdSettings, 'darkColorStart', e.target.value)}
+                    value={settings.darkColorStart}
+                    onChange={(e) => updateInstanceSettings(instance.id, { darkColorStart: e.target.value })}
                   />
                 </div>
                 
@@ -759,8 +833,8 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                   <input 
                     type="color" 
                     className="mobile-color-picker"
-                    value={thresholdSettings.darkColorEnd}
-                    onChange={(e) => handleColorChange(updateThresholdSettings, 'darkColorEnd', e.target.value)}
+                    value={settings.darkColorEnd}
+                    onChange={(e) => updateInstanceSettings(instance.id, { darkColorEnd: e.target.value })}
                   />
                 </div>
                 
@@ -769,8 +843,8 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                   <input 
                     type="color" 
                     className="mobile-color-picker"
-                    value={thresholdSettings.lightColorStart}
-                    onChange={(e) => handleColorChange(updateThresholdSettings, 'lightColorStart', e.target.value)}
+                    value={settings.lightColorStart}
+                    onChange={(e) => updateInstanceSettings(instance.id, { lightColorStart: e.target.value })}
                   />
                 </div>
                 
@@ -779,8 +853,8 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                   <input 
                     type="color" 
                     className="mobile-color-picker"
-                    value={thresholdSettings.lightColorEnd}
-                    onChange={(e) => handleColorChange(updateThresholdSettings, 'lightColorEnd', e.target.value)}
+                    value={settings.lightColorEnd}
+                    onChange={(e) => updateInstanceSettings(instance.id, { lightColorEnd: e.target.value })}
                   />
                 </div>
               </>
@@ -791,88 +865,90 @@ const MobileControls: React.FC<MobileControlsProps> = ({
       case 'dither':
         return (
           <div className={`mobile-effect-content ${openSection === instance.id ? 'open' : ''}`}>
-            {/* Dither controls */}
+            {/* Dithering controls */}
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Dither Type</label>
+              <select 
+                className="mobile-select"
+                value={settings.ditherType}
+                onChange={(e) => updateInstanceSettings(instance.id, { ditherType: e.target.value })}
+              >
+                <option value="atkinson">Atkinson</option>
+                <option value="floydsteinberg">Floyd-Steinberg</option>
+                <option value="bayer">Bayer 8x8</option>
+                <option value="ordered">Ordered</option>
+                <option value="random">Random</option>
+              </select>
+            </div>
+            
+            <Slider
+              label="Amount"
+              value={settings.amount}
+              onChange={(value) => updateInstanceSettings(instance.id, { amount: value })}
+              min={0}
+              max={1}
+              step={0.01}
+              unit=""
+            />
+            
             <div className="mobile-control-group">
               <label className="mobile-control-label">Color Mode</label>
               <select 
                 className="mobile-select"
-                value={ditherSettings.colorMode}
-                onChange={(e) => updateDitherSettings({ colorMode: e.target.value as DitherColorMode })}
+                value={settings.colorMode}
+                onChange={(e) => updateInstanceSettings(instance.id, { colorMode: e.target.value })}
               >
-                <option value="grayscale">Grayscale</option>
-                <option value="color">Color</option>
-                <option value="2-color">2 Color Palette</option>
+                <option value="bw">Black & White</option>
+                <option value="rgb">RGB Color</option>
+                <option value="palette">Color Palette</option>
               </select>
             </div>
-
-            <div className="mobile-control-group">
-              <label className="mobile-control-label">Type</label>
-              <select 
-                className="mobile-select"
-                value={ditherSettings.type}
-                onChange={(e) => updateDitherSettings({ type: e.target.value as DitherType })}
-              >
-                <option value="ordered">Ordered</option>
-                <option value="floyd-steinberg">Floyd-Steinberg</option>
-                <option value="jarvis">Jarvis</option>
-                <option value="judice-ninke">Judice & Ninke</option>
-                <option value="stucki">Stucki</option>
-                <option value="burkes">Burkes</option>
-              </select>
-            </div>
-
-            <Slider
-              label="Resolution"
-              value={ditherSettings.resolution}
-              onChange={(value) => updateDitherSettings({ resolution: value })}
-              min={1}
-              max={100}
-              step={1}
-            />
-
-            <Slider
-              label="Threshold"
-              value={ditherSettings.threshold}
-              onChange={(value) => updateDitherSettings({ threshold: value })}
-              min={0}
-              max={255}
-              step={1}
-            />
             
-            {ditherSettings.colorMode !== '2-color' && (
-              <Slider
-                label="Color Depth"
-                value={ditherSettings.colorDepth}
-                onChange={(value) => updateDitherSettings({ colorDepth: value })}
-                min={2}
-                max={256}
-                step={1}
-              />
-            )}
-
-            {ditherSettings.colorMode === '2-color' && (
+            {settings.colorMode === 'palette' && (
               <>
                 <div className="mobile-control-group">
-                  <label className="mobile-control-label">Dark Color</label>
-                  <input 
-                    type="color" 
-                    className="mobile-color-picker"
-                    value={ditherSettings.darkColor}
-                    onChange={(e) => updateDitherSettings({ darkColor: e.target.value })}
-                  />
+                  <label className="mobile-control-label">Palette Type</label>
+                  <select 
+                    className="mobile-select"
+                    value={settings.paletteType}
+                    onChange={(e) => updateInstanceSettings(instance.id, { paletteType: e.target.value })}
+                  >
+                    <option value="custom">Custom</option>
+                    <option value="cga">CGA</option>
+                    <option value="gameboy">GameBoy</option>
+                    <option value="grayscale">Grayscale</option>
+                    <option value="c64">Commodore 64</option>
+                    <option value="apple2">Apple II</option>
+                    <option value="pico8">PICO-8</option>
+                    <option value="ega">EGA</option>
+                    <option value="risograph">Risograph</option>
+                    <option value="teletext">Teletext</option>
+                  </select>
                 </div>
                 
-                <div className="mobile-control-group">
-                  <label className="mobile-control-label">Light Color</label>
-                  <input 
-                    type="color" 
-                    className="mobile-color-picker"
-                    value={ditherSettings.lightColor}
-                    onChange={(e) => updateDitherSettings({ lightColor: e.target.value })}
-                  />
-                </div>
+                <Slider
+                  label="Color Count"
+                  value={settings.colorCount}
+                  onChange={(value) => updateInstanceSettings(instance.id, { colorCount: value })}
+                  min={2}
+                  max={64}
+                  step={1}
+                />
               </>
             )}
+            
+            {/* Color reduction controls */}
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Apply Color Reduction</label>
+              <label className="mobile-effect-toggle">
+                <input 
+                  type="checkbox" 
+                  checked={settings.applyColorReduction}
+                  onChange={(e) => updateInstanceSettings(instance.id, { applyColorReduction: e.target.checked })}
+                />
+                <span className="mobile-effect-toggle-slider"></span>
+              </label>
+            </div>
           </div>
         );
 
@@ -884,8 +960,8 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               <label className="mobile-control-label">Shape</label>
               <select 
                 className="mobile-select"
-                value={halftoneSettings.shape}
-                onChange={(e) => updateHalftoneSettings('shape', e.target.value as HalftoneShape)}
+                value={settings.shape}
+                onChange={(e) => updateInstanceSettings(instance.id, { shape: e.target.value as HalftoneShape })}
               >
                 <option value="circle">Circle</option>
                 <option value="square">Square</option>
@@ -902,8 +978,8 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               <label className="mobile-control-label">Pattern</label>
               <select 
                 className="mobile-select"
-                value={halftoneSettings.arrangement}
-                onChange={(e) => updateHalftoneSettings('arrangement', e.target.value as HalftoneArrangement)}
+                value={settings.arrangement}
+                onChange={(e) => updateInstanceSettings(instance.id, { arrangement: e.target.value as HalftoneArrangement })}
               >
                 <option value="grid">Grid</option>
                 <option value="hexagonal">Hexagonal</option>
@@ -915,8 +991,8 @@ const MobileControls: React.FC<MobileControlsProps> = ({
             
             <Slider
               label="Cell Size"
-              value={halftoneSettings.cellSize}
-              onChange={(value) => updateHalftoneSettings('cellSize', value)}
+              value={settings.cellSize}
+              onChange={(value) => updateInstanceSettings(instance.id, { cellSize: value })}
               min={2}
               max={30}
               step={1}
@@ -924,16 +1000,16 @@ const MobileControls: React.FC<MobileControlsProps> = ({
             />
             <Slider
               label="Dot Scale"
-              value={halftoneSettings.dotScaleFactor}
-              onChange={(value) => updateHalftoneSettings('dotScaleFactor', value)}
+              value={settings.dotScaleFactor}
+              onChange={(value) => updateInstanceSettings(instance.id, { dotScaleFactor: value })}
               min={0.1}
               max={1.5}
               step={0.05}
             />
             <Slider
               label="Mix Amount"
-              value={halftoneSettings.mix}
-              onChange={(value) => updateHalftoneSettings('mix', value)}
+              value={settings.mix}
+              onChange={(value) => updateInstanceSettings(instance.id, { mix: value })}
               min={0}
               max={100}
               step={1}
@@ -945,8 +1021,8 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               <label className="mobile-effect-toggle">
                 <input 
                   type="checkbox" 
-                  checked={halftoneSettings.colored}
-                  onChange={(e) => updateHalftoneSettings('colored', e.target.checked)}
+                  checked={settings.colored}
+                  onChange={(e) => updateInstanceSettings(instance.id, { colored: e.target.checked })}
                 />
                 <span className="mobile-effect-toggle-slider"></span>
               </label>
@@ -957,8 +1033,8 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               <label className="mobile-effect-toggle">
                 <input 
                   type="checkbox" 
-                  checked={halftoneSettings.invertBrightness}
-                  onChange={(e) => updateHalftoneSettings('invertBrightness', e.target.checked)}
+                  checked={settings.invertBrightness}
+                  onChange={(e) => updateInstanceSettings(instance.id, { invertBrightness: e.target.checked })}
                 />
                 <span className="mobile-effect-toggle-slider"></span>
               </label>
@@ -975,15 +1051,15 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               <input 
                 type="text" 
                 className="mobile-select"
-                value={textDitherSettings.text}
-                onChange={(e) => updateTextDitherSettings({ text: e.target.value })}
+                value={settings.text}
+                onChange={(e) => updateInstanceSettings(instance.id, { text: e.target.value })}
               />
             </div>
             
             <Slider
               label="Font Size"
-              value={textDitherSettings.fontSize}
-              onChange={(value) => updateTextDitherSettings({ fontSize: value })}
+              value={settings.fontSize}
+              onChange={(value) => updateInstanceSettings(instance.id, { fontSize: value })}
               min={6}
               max={24}
               step={1}
@@ -992,8 +1068,8 @@ const MobileControls: React.FC<MobileControlsProps> = ({
             
             <Slider
               label="Resolution"
-              value={textDitherSettings.resolution}
-              onChange={(value) => updateTextDitherSettings({ resolution: value })}
+              value={settings.resolution}
+              onChange={(value) => updateInstanceSettings(instance.id, { resolution: value })}
               min={0.5}
               max={4}
               step={0.1}
@@ -1003,8 +1079,8 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               <label className="mobile-control-label">Color Mode</label>
               <select 
                 className="mobile-select"
-                value={textDitherSettings.colorMode}
-                onChange={(e) => updateTextDitherSettings({ colorMode: e.target.value as 'monochrome' | 'colored' })}
+                value={settings.colorMode}
+                onChange={(e) => updateInstanceSettings(instance.id, { colorMode: e.target.value as 'monochrome' | 'colored' })}
               >
                 <option value="monochrome">Monochrome</option>
                 <option value="colored">Colored</option>
@@ -1013,8 +1089,8 @@ const MobileControls: React.FC<MobileControlsProps> = ({
             
             <Slider
               label="Contrast"
-              value={textDitherSettings.contrast}
-              onChange={(value) => updateTextDitherSettings({ contrast: value })}
+              value={settings.contrast}
+              onChange={(value) => updateInstanceSettings(instance.id, { contrast: value })}
               min={0}
               max={2}
               step={0.1}
@@ -1032,20 +1108,20 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 <label className="mobile-effect-toggle">
                   <input 
                     type="checkbox" 
-                    checked={glitchSettings.enabled}
-                    onChange={(e) => updateGlitchSettings({ enabled: e.target.checked })}
+                    checked={settings.enabled}
+                    onChange={(e) => updateInstanceSettings(instance.id, { enabled: e.target.checked })}
                   />
                   <span className="mobile-effect-toggle-slider"></span>
                 </label>
               </div>
             </div>
             
-            {glitchSettings.enabled && (
+            {settings.enabled && (
               <>
                 <Slider
                   label="Intensity"
-                  value={glitchSettings.glitchIntensity}
-                  onChange={(value) => updateGlitchSettings({ glitchIntensity: value })}
+                  value={settings.glitchIntensity}
+                  onChange={(value) => updateInstanceSettings(instance.id, { glitchIntensity: value })}
                   min={0}
                   max={100}
                   step={1}
@@ -1053,8 +1129,8 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 />
                 <Slider
                   label="Density"
-                  value={glitchSettings.glitchDensity}
-                  onChange={(value) => updateGlitchSettings({ glitchDensity: value })}
+                  value={settings.glitchDensity}
+                  onChange={(value) => updateInstanceSettings(instance.id, { glitchDensity: value })}
                   min={0}
                   max={100}
                   step={1}
@@ -1062,8 +1138,8 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 />
                 <Slider
                   label="Size"
-                  value={glitchSettings.glitchSize}
-                  onChange={(value) => updateGlitchSettings({ glitchSize: value })}
+                  value={settings.glitchSize}
+                  onChange={(value) => updateInstanceSettings(instance.id, { glitchSize: value })}
                   min={1}
                   max={50}
                   step={1}
@@ -1074,8 +1150,8 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                   <label className="mobile-control-label">Direction</label>
                   <select 
                     className="mobile-select"
-                    value={glitchSettings.glitchDirection}
-                    onChange={(e) => updateGlitchSettings({ glitchDirection: e.target.value as 'horizontal' | 'vertical' | 'both' })}
+                    value={settings.glitchDirection}
+                    onChange={(e) => updateInstanceSettings(instance.id, { glitchDirection: e.target.value as 'horizontal' | 'vertical' | 'both' })}
                   >
                     <option value="horizontal">Horizontal</option>
                     <option value="vertical">Vertical</option>
@@ -1092,20 +1168,20 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 <label className="mobile-effect-toggle">
                   <input 
                     type="checkbox" 
-                    checked={glitchSettings.channelShiftEnabled}
-                    onChange={(e) => updateGlitchSettings({ channelShiftEnabled: e.target.checked })}
+                    checked={settings.channelShiftEnabled}
+                    onChange={(e) => updateInstanceSettings(instance.id, { channelShiftEnabled: e.target.checked })}
                   />
                   <span className="mobile-effect-toggle-slider"></span>
                 </label>
               </div>
             </div>
             
-            {glitchSettings.channelShiftEnabled && (
+            {settings.channelShiftEnabled && (
               <>
                 <Slider
                   label="Shift Amount"
-                  value={glitchSettings.channelShiftAmount}
-                  onChange={(value) => updateGlitchSettings({ channelShiftAmount: value })}
+                  value={settings.channelShiftAmount}
+                  onChange={(value) => updateInstanceSettings(instance.id, { channelShiftAmount: value })}
                   min={1}
                   max={20}
                   step={1}
@@ -1115,8 +1191,8 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                   <label className="mobile-control-label">Shift Mode</label>
                   <select 
                     className="mobile-select"
-                    value={glitchSettings.channelShiftMode}
-                    onChange={(e) => updateGlitchSettings({ channelShiftMode: e.target.value as 'rgb' | 'rb' | 'rg' | 'gb' })}
+                    value={settings.channelShiftMode}
+                    onChange={(e) => updateInstanceSettings(instance.id, { channelShiftMode: e.target.value as 'rgb' | 'rb' | 'rg' | 'gb' })}
                   >
                     <option value="rgb">RGB</option>
                     <option value="rb">RB</option>
@@ -1134,19 +1210,19 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 <label className="mobile-effect-toggle">
                   <input 
                     type="checkbox" 
-                    checked={glitchSettings.noiseEnabled}
-                    onChange={(e) => updateGlitchSettings({ noiseEnabled: e.target.checked })}
+                    checked={settings.noiseEnabled}
+                    onChange={(e) => updateInstanceSettings(instance.id, { noiseEnabled: e.target.checked })}
                   />
                   <span className="mobile-effect-toggle-slider"></span>
                 </label>
               </div>
             </div>
             
-            {glitchSettings.noiseEnabled && (
+            {settings.noiseEnabled && (
               <Slider
                 label="Noise Amount"
-                value={glitchSettings.noiseAmount}
-                onChange={(value) => updateGlitchSettings({ noiseAmount: value })}
+                value={settings.noiseAmount}
+                onChange={(value) => updateInstanceSettings(instance.id, { noiseAmount: value })}
                 min={0}
                 max={100}
                 step={1}
@@ -1161,20 +1237,20 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 <label className="mobile-effect-toggle">
                   <input 
                     type="checkbox" 
-                    checked={glitchSettings.pixelSortingEnabled}
-                    onChange={(e) => updateGlitchSettings({ pixelSortingEnabled: e.target.checked })}
+                    checked={settings.pixelSortingEnabled}
+                    onChange={(e) => updateInstanceSettings(instance.id, { pixelSortingEnabled: e.target.checked })}
                   />
                   <span className="mobile-effect-toggle-slider"></span>
                 </label>
               </div>
             </div>
             
-            {glitchSettings.pixelSortingEnabled && (
+            {settings.pixelSortingEnabled && (
               <>
                 <Slider
                   label="Threshold"
-                  value={glitchSettings.pixelSortingThreshold}
-                  onChange={(value) => updateGlitchSettings({ pixelSortingThreshold: value })}
+                  value={settings.pixelSortingThreshold}
+                  onChange={(value) => updateInstanceSettings(instance.id, { pixelSortingThreshold: value })}
                   min={0}
                   max={1}
                   step={0.01}
@@ -1183,8 +1259,8 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                   <label className="mobile-control-label">Direction</label>
                   <select 
                     className="mobile-select"
-                    value={glitchSettings.pixelSortingDirection}
-                    onChange={(e) => updateGlitchSettings({ pixelSortingDirection: e.target.value as 'horizontal' | 'vertical' | 'both' })}
+                    value={settings.pixelSortingDirection}
+                    onChange={(e) => updateInstanceSettings(instance.id, { pixelSortingDirection: e.target.value as 'horizontal' | 'vertical' | 'both' })}
                   >
                     <option value="horizontal">Horizontal</option>
                     <option value="vertical">Vertical</option>
@@ -1201,28 +1277,28 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 <label className="mobile-effect-toggle">
                   <input 
                     type="checkbox" 
-                    checked={glitchSettings.scanLinesEnabled}
-                    onChange={(e) => updateGlitchSettings({ scanLinesEnabled: e.target.checked })}
+                    checked={settings.scanLinesEnabled}
+                    onChange={(e) => updateInstanceSettings(instance.id, { scanLinesEnabled: e.target.checked })}
                   />
                   <span className="mobile-effect-toggle-slider"></span>
                 </label>
               </div>
             </div>
             
-            {glitchSettings.scanLinesEnabled && (
+            {settings.scanLinesEnabled && (
               <>
                 <Slider
                   label="Count"
-                  value={glitchSettings.scanLinesCount}
-                  onChange={(value) => updateGlitchSettings({ scanLinesCount: value })}
+                  value={settings.scanLinesCount}
+                  onChange={(value) => updateInstanceSettings(instance.id, { scanLinesCount: value })}
                   min={1}
                   max={100}
                   step={1}
                 />
                 <Slider
                   label="Intensity"
-                  value={glitchSettings.scanLinesIntensity}
-                  onChange={(value) => updateGlitchSettings({ scanLinesIntensity: value })}
+                  value={settings.scanLinesIntensity}
+                  onChange={(value) => updateInstanceSettings(instance.id, { scanLinesIntensity: value })}
                   min={0}
                   max={100}
                   step={1}
@@ -1232,8 +1308,8 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                   <label className="mobile-control-label">Direction</label>
                   <select 
                     className="mobile-select"
-                    value={glitchSettings.scanLinesDirection}
-                    onChange={(e) => updateGlitchSettings({ scanLinesDirection: e.target.value as 'horizontal' | 'vertical' | 'both' })}
+                    value={settings.scanLinesDirection}
+                    onChange={(e) => updateInstanceSettings(instance.id, { scanLinesDirection: e.target.value as 'horizontal' | 'vertical' | 'both' })}
                   >
                     <option value="horizontal">Horizontal</option>
                     <option value="vertical">Vertical</option>
@@ -1250,20 +1326,20 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 <label className="mobile-effect-toggle">
                   <input 
                     type="checkbox" 
-                    checked={glitchSettings.blocksEnabled}
-                    onChange={(e) => updateGlitchSettings({ blocksEnabled: e.target.checked })}
+                    checked={settings.blocksEnabled}
+                    onChange={(e) => updateInstanceSettings(instance.id, { blocksEnabled: e.target.checked })}
                   />
                   <span className="mobile-effect-toggle-slider"></span>
                 </label>
               </div>
             </div>
             
-            {glitchSettings.blocksEnabled && (
+            {settings.blocksEnabled && (
               <>
                 <Slider
                   label="Size"
-                  value={glitchSettings.blocksSize}
-                  onChange={(value) => updateGlitchSettings({ blocksSize: value })}
+                  value={settings.blocksSize}
+                  onChange={(value) => updateInstanceSettings(instance.id, { blocksSize: value })}
                   min={5}
                   max={50}
                   step={1}
@@ -1271,8 +1347,8 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 />
                 <Slider
                   label="Offset"
-                  value={glitchSettings.blocksOffset}
-                  onChange={(value) => updateGlitchSettings({ blocksOffset: value })}
+                  value={settings.blocksOffset}
+                  onChange={(value) => updateInstanceSettings(instance.id, { blocksOffset: value })}
                   min={0}
                   max={50}
                   step={1}
@@ -1280,8 +1356,8 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 />
                 <Slider
                   label="Density"
-                  value={glitchSettings.blocksDensity}
-                  onChange={(value) => updateGlitchSettings({ blocksDensity: value })}
+                  value={settings.blocksDensity}
+                  onChange={(value) => updateInstanceSettings(instance.id, { blocksDensity: value })}
                   min={0}
                   max={100}
                   step={1}
@@ -1298,16 +1374,16 @@ const MobileControls: React.FC<MobileControlsProps> = ({
             {/* Grid controls */}
             <Slider
               label="Columns"
-              value={gridSettings.columns}
-              onChange={(value) => updateGridSettings('columns', value)}
+              value={settings.columns}
+              onChange={(value) => updateInstanceSettings(instance.id, { columns: value })}
               min={1}
               max={10}
               step={1}
             />
             <Slider
               label="Rows"
-              value={gridSettings.rows}
-              onChange={(value) => updateGridSettings('rows', value)}
+              value={settings.rows}
+              onChange={(value) => updateInstanceSettings(instance.id, { rows: value })}
               min={1}
               max={10}
               step={1}
@@ -1319,18 +1395,18 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               <label className="mobile-effect-toggle">
                 <input 
                   type="checkbox" 
-                  checked={gridSettings.applyRotation}
-                  onChange={(e) => updateGridSettings('applyRotation', e.target.checked)}
+                  checked={settings.applyRotation}
+                  onChange={(e) => updateInstanceSettings(instance.id, { applyRotation: e.target.checked })}
                 />
                 <span className="mobile-effect-toggle-slider"></span>
               </label>
             </div>
             
-            {gridSettings.applyRotation && (
+            {settings.applyRotation && (
               <Slider
                 label="Max Rotation"
-                value={gridSettings.maxRotation}
-                onChange={(value) => updateGridSettings('maxRotation', value)}
+                value={settings.maxRotation}
+                onChange={(value) => updateInstanceSettings(instance.id, { maxRotation: value })}
                 min={1}
                 max={45}
                 step={1}
@@ -1344,19 +1420,19 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               <label className="mobile-effect-toggle">
                 <input 
                   type="checkbox" 
-                  checked={gridSettings.splitEnabled}
-                  onChange={(e) => updateGridSettings('splitEnabled', e.target.checked)}
+                  checked={settings.splitEnabled}
+                  onChange={(e) => updateInstanceSettings(instance.id, { splitEnabled: e.target.checked })}
                 />
                 <span className="mobile-effect-toggle-slider"></span>
               </label>
             </div>
             
-            {gridSettings.splitEnabled && (
+            {settings.splitEnabled && (
               <>
                 <Slider
                   label="Split Probability"
-                  value={gridSettings.splitProbability}
-                  onChange={(value) => updateGridSettings('splitProbability', value)}
+                  value={settings.splitProbability}
+                  onChange={(value) => updateInstanceSettings(instance.id, { splitProbability: value })}
                   min={0}
                   max={1}
                   step={0.05}
@@ -1364,16 +1440,16 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 />
                 <Slider
                   label="Max Split Levels"
-                  value={gridSettings.maxSplitLevels}
-                  onChange={(value) => updateGridSettings('maxSplitLevels', value)}
+                  value={settings.maxSplitLevels}
+                  onChange={(value) => updateInstanceSettings(instance.id, { maxSplitLevels: value })}
                   min={1}
                   max={4}
                   step={1}
                 />
                 <Slider
                   label="Min Cell Size"
-                  value={gridSettings.minCellSize}
-                  onChange={(value) => updateGridSettings('minCellSize', value)}
+                  value={settings.minCellSize}
+                  onChange={(value) => updateInstanceSettings(instance.id, { minCellSize: value })}
                   min={10}
                   max={100}
                   step={5}
