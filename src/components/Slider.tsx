@@ -19,17 +19,25 @@ const Slider: React.FC<SliderProps> = ({
   step = 1,
   unit = ''
 }) => {
+  // Use a safe value for calculations
+  const safeValue = value === undefined || value === null ? min : value;
+  
   const handleIncrement = () => {
-    const newValue = Math.min(max, value + step);
+    const newValue = Math.min(max, safeValue + step);
     onChange(newValue);
   };
 
   const handleDecrement = () => {
-    const newValue = Math.max(min, value - step);
+    const newValue = Math.max(min, safeValue - step);
     onChange(newValue);
   };
 
   const formatValue = (val: number) => {
+    // Handle undefined or null values
+    if (val === undefined || val === null) {
+      return '0';
+    }
+    
     if (step >= 1) return Math.round(val).toString();
     return val.toFixed(2);
   };
@@ -45,7 +53,7 @@ const Slider: React.FC<SliderProps> = ({
           type="button"
           className="slider-button"
           onClick={handleDecrement}
-          disabled={value <= min}
+          disabled={safeValue <= min}
         >
           -
         </button>
@@ -54,14 +62,14 @@ const Slider: React.FC<SliderProps> = ({
           min={min}
           max={max}
           step={step}
-          value={value}
+          value={safeValue}
           onChange={(e) => onChange(parseFloat(e.target.value))}
         />
         <button
           type="button"
           className="slider-button"
           onClick={handleIncrement}
-          disabled={value >= max}
+          disabled={safeValue >= max}
         >
           +
         </button>

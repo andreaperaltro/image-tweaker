@@ -798,90 +798,117 @@ export default function AdvancedEditor({
 
   // Function to add a new effect
   const addEffect = (type: string) => {
-    const newId = generateUniqueId(type);
+    const id = generateUniqueId(type);
+    
+    // Add the new instance to state
     const newInstance: EffectInstance = {
-      id: newId,
+      id,
       type,
-      enabled: false
+      enabled: true // Enable new effects by default
     };
     
-    // Add default settings for the new instance
-    let defaultSettings;
+    // Create default instance-specific settings based on effect type
+    let defaultSettings = {};
+    
     switch (type) {
-      case 'color':
-        defaultSettings = { ...colorSettings };
-        break;
-      case 'gradient':
-        defaultSettings = { 
-          ...gradientMapSettings,
-          stops: JSON.parse(JSON.stringify(gradientMapSettings.stops)) 
+      case 'dither':
+        defaultSettings = {
+          enabled: true,
+          type: 'ordered',
+          threshold: 128,
+          colorMode: 'bw',
+          resolution: 30,
+          colorDepth: 2,
+          darkColor: '#000000',
+          lightColor: '#FFFFFF',
+          ditherType: 'ordered',
+          amount: 0.5,
+          paletteType: 'custom',
+          colorCount: 8,
+          applyColorReduction: false
         };
         break;
-      case 'threshold':
-        defaultSettings = { ...thresholdSettings };
+      case 'color':
+        defaultSettings = { ...colorSettings, enabled: true };
         break;
       case 'halftone':
-        defaultSettings = { 
-          ...halftoneSettings,
-          channels: { ...halftoneSettings.channels },
-          cmykAngles: { ...halftoneSettings.cmykAngles } 
-        };
+        defaultSettings = { ...halftoneSettings, enabled: true };
         break;
-      case 'grid':
-        defaultSettings = { ...gridSettings };
+      case 'gradient':
+        defaultSettings = { ...gradientMapSettings, enabled: true };
         break;
-      case 'dither':
-        defaultSettings = { ...ditherSettings };
+      case 'threshold':
+        defaultSettings = { ...thresholdSettings, enabled: true };
         break;
       case 'textDither':
-        defaultSettings = { ...textDitherSettings };
+        defaultSettings = { ...textDitherSettings, enabled: true };
+        break;
+      case 'grid':
+        defaultSettings = { ...gridSettings, enabled: true };
         break;
       case 'glitch':
-        defaultSettings = { ...glitchSettings };
+        defaultSettings = { ...glitchSettings, enabled: true };
         break;
       case 'blur':
-        defaultSettings = { ...blur };
+        defaultSettings = { ...blur, enabled: true };
         break;
       default:
-        defaultSettings = {};
+        break;
     }
     
-    // Add the instance and its settings
+    // Add the new instance first
     setEffectInstances(prev => [...prev, newInstance]);
-    setInstanceSettings(prev => ({ 
-      ...prev, 
-      [newId]: defaultSettings 
+    
+    // Then set its specific settings
+    setInstanceSettings(prev => ({
+      ...prev,
+      [id]: defaultSettings
     }));
   };
 
   // Function to duplicate an effect
   const duplicateEffect = (id: string) => {
-    const effectToDuplicate = effectInstances.find(instance => instance.id === id);
-    if (!effectToDuplicate) return;
+    const instance = effectInstances.find(instance => instance.id === id);
     
-    const newId = generateUniqueId(effectToDuplicate.type);
-    const newInstance: EffectInstance = {
-      id: newId,
-      type: effectToDuplicate.type,
-      enabled: effectToDuplicate.enabled // Copy the enabled state from the original
-    };
-    
-    // Find the index of the effect to duplicate
-    const index = effectInstances.findIndex(instance => instance.id === id);
-    
-    // Insert the duplicated effect right after the original
-    const newInstances = [...effectInstances];
-    newInstances.splice(index + 1, 0, newInstance);
-    
-    // Copy the settings from the original instance
-    const originalSettings = instanceSettings[id] || {};
-    
-    // Add the instance and its settings
-    setEffectInstances(newInstances);
-    setInstanceSettings(prev => ({ 
-      ...prev, 
-      [newId]: JSON.parse(JSON.stringify(originalSettings)) 
-    }));
+    if (instance) {
+      // Generate a new ID based on the original type with an incremented counter
+      const existingCount = effectInstances.filter(i => i.type === instance.type).length;
+      const newId = `${instance.type}-${existingCount + 1}`;
+      
+      // Create a new instance with the same properties but a new ID
+      const newInstance: EffectInstance = {
+        ...instance,
+        id: newId
+      };
+      
+      // Copy the instance settings if they exist
+      if (instanceSettings[instance.id]) {
+        const currentSettings = instanceSettings[instance.id];
+        
+        // Create a deep copy of the settings
+        const settingsCopy = JSON.parse(JSON.stringify(currentSettings));
+        
+        // Add additional properties for specific effect types
+        if (instance.type === 'dither') {
+          // Add default properties for dither type if not present
+          settingsCopy.amount = settingsCopy.amount || 0.5;
+          settingsCopy.ditherType = settingsCopy.ditherType || 'ordered';
+          settingsCopy.colorMode = settingsCopy.colorMode || 'bw';
+          settingsCopy.paletteType = settingsCopy.paletteType || 'custom';
+          settingsCopy.colorCount = settingsCopy.colorCount || 8;
+          settingsCopy.applyColorReduction = settingsCopy.applyColorReduction || false;
+        }
+        
+        // Set the copy as instance settings for the new ID
+        setInstanceSettings(prev => ({
+          ...prev,
+          [newId]: settingsCopy
+        }));
+      }
+      
+      // Add the new instance to the effect instances array
+      setEffectInstances(prev => [...prev, newInstance]);
+    }
   };
 
   // Function to remove an effect

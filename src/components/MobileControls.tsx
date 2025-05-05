@@ -870,7 +870,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               <label className="mobile-control-label">Dither Type</label>
               <select 
                 className="mobile-select"
-                value={settings.ditherType}
+                value={settings.ditherType || 'ordered'}
                 onChange={(e) => updateInstanceSettings(instance.id, { ditherType: e.target.value })}
               >
                 <option value="atkinson">Atkinson</option>
@@ -883,7 +883,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
             
             <Slider
               label="Amount"
-              value={settings.amount}
+              value={settings.amount !== undefined ? settings.amount : 0.5}
               onChange={(value) => updateInstanceSettings(instance.id, { amount: value })}
               min={0}
               max={1}
@@ -895,7 +895,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               <label className="mobile-control-label">Color Mode</label>
               <select 
                 className="mobile-select"
-                value={settings.colorMode}
+                value={settings.colorMode || 'bw'}
                 onChange={(e) => updateInstanceSettings(instance.id, { colorMode: e.target.value })}
               >
                 <option value="bw">Black & White</option>
@@ -904,13 +904,13 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               </select>
             </div>
             
-            {settings.colorMode === 'palette' && (
+            {(settings.colorMode === 'palette' || settings.colorMode === undefined) && (
               <>
                 <div className="mobile-control-group">
                   <label className="mobile-control-label">Palette Type</label>
                   <select 
                     className="mobile-select"
-                    value={settings.paletteType}
+                    value={settings.paletteType || 'custom'}
                     onChange={(e) => updateInstanceSettings(instance.id, { paletteType: e.target.value })}
                   >
                     <option value="custom">Custom</option>
@@ -928,7 +928,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 
                 <Slider
                   label="Color Count"
-                  value={settings.colorCount}
+                  value={settings.colorCount !== undefined ? settings.colorCount : 8}
                   onChange={(value) => updateInstanceSettings(instance.id, { colorCount: value })}
                   min={2}
                   max={64}
@@ -943,7 +943,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               <label className="mobile-effect-toggle">
                 <input 
                   type="checkbox" 
-                  checked={settings.applyColorReduction}
+                  checked={settings.applyColorReduction || false}
                   onChange={(e) => updateInstanceSettings(instance.id, { applyColorReduction: e.target.checked })}
                 />
                 <span className="mobile-effect-toggle-slider"></span>
