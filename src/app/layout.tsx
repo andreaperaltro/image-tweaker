@@ -2,6 +2,7 @@ import React from 'react';
 import './globals.css';
 import type { Metadata, Viewport } from 'next';
 import { ThemeProvider } from '@/context/ThemeContext';
+import Head from 'next/head';
 
 export const metadata: Metadata = {
   title: 'ImageTweaker',
@@ -39,6 +40,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="h-full">
+      <head>
+        <link rel="icon" href="/favicon.png" type="image/png" />
+        <link rel="shortcut icon" href="/favicon.ico" />
+      </head>
       <body className="h-full dark:bg-gray-900 dark:text-white transition-colors duration-200">
         <ThemeProvider>
           {children}

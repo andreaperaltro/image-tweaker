@@ -40,6 +40,21 @@ Visit [https://image-tweaker.vercel.app/](https://image-tweaker.vercel.app/) to 
   - Color depth control (2-256 colors)
   - Grayscale, Color, and 2-Color Palette modes
   - Custom color selection in 2-Color mode
+  - Logical UI organization with intuitive control ordering
+
+- **Slice Shift Effect**
+  - Create vertical and/or horizontal slicing effects
+  - Multiple pattern options (Random, Alternating, Wave, Rearrange, Repeat)
+  - Control over number of slices and shift intensity
+  - Background color option for exposed areas
+  - Context-sensitive controls that adapt based on selected pattern
+
+- **Mosaic Shift Effect**
+  - Create tile-based displacement effects
+  - Customizable cell size and shift amount
+  - Directional options (horizontal, vertical, or both)
+  - Pattern selection (Random, Alternating, Wave)
+  - Background color support for exposed areas
 
 - **Halftone**
   - Multiple arrangements (Grid, Spiral, Concentric)

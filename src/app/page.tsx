@@ -289,6 +289,30 @@ export default function Home() {
                       <li><strong>Crop Image:</strong> Open the cropping interface with aspect ratio presets</li>
                     </ul>
                   )
+                },
+                {
+                  title: 'Slice Shift Effect',
+                  content: (
+                    <ul className="list-disc pl-4 space-y-1 text-gray-300">
+                      <li><strong>Direction:</strong> Apply slicing horizontally, vertically, or both</li>
+                      <li><strong>Slice Count:</strong> Number of slices to create (1-50)</li>
+                      <li><strong>Pattern:</strong> Choose between Random, Alternating, Wave, Rearrange, and Repeat patterns</li>
+                      <li><strong>Intensity:</strong> Controls shift amount for Random, Alternating, and Wave patterns</li>
+                      <li><strong>Background Color:</strong> Set color for exposed areas when slices are moved</li>
+                    </ul>
+                  )
+                },
+                {
+                  title: 'Mosaic Shift Effect',
+                  content: (
+                    <ul className="list-disc pl-4 space-y-1 text-gray-300">
+                      <li><strong>Cell Size:</strong> Size of each mosaic tile (5-100px)</li>
+                      <li><strong>Shift Amount:</strong> Distance to offset tiles (0-100%)</li>
+                      <li><strong>Direction:</strong> Apply offsetting horizontally, vertically, or both</li>
+                      <li><strong>Pattern:</strong> Choose between Random, Alternating, and Wave patterns</li>
+                      <li><strong>Background Color:</strong> Set color for exposed areas when tiles are moved</li>
+                    </ul>
+                  )
                 }
               ].map((section) => (
                 <div key={section.title} className="border-t border-gray-700 pt-2">

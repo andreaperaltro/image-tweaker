@@ -111,4 +111,21 @@ export interface EffectInstance {
   id: string;
   type: string;
   enabled: boolean;
-} 
+}
+
+import { ShiftPattern } from './components/MosaicShift';
+import { SliceShiftSettings } from './components/SliceShift';
+
+export type MosaicShiftSettings = {
+  enabled: boolean;
+  columns: number;
+  rows: number;
+  maxOffsetX: number;
+  maxOffsetY: number;
+  pattern: ShiftPattern;
+  intensity: number;
+  seed: number;
+  preserveEdges: boolean;
+  randomRotation: boolean;
+  maxRotation: number;
+}; 

@@ -5,6 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2025-05-14
+
+### Added
+- New Slice Shift filter that creates vertical and horizontal slicing effects
+  - Support for vertical, horizontal, or both directions
+  - Multiple pattern options: Random, Alternating, Wave, Rearrange, and Repeat
+  - Background color option to fill exposed areas when slices are moved
+  - Intensity control for random, alternating, and wave patterns
+- New Mosaic Shift filter for tile-based displacement effects
+  - Customizable cell size with shift amount controls
+  - Directional options (horizontal, vertical, or both)
+  - Pattern selection (Random, Alternating, Wave)
+  - Background color support for exposed areas
+- Enhanced help section with comprehensive documentation for all new features
+
+### Changed
+- Reorganized dither settings UI to follow a logical order:
+  - Dither type (with Floyd-Steinberg as default)
+  - Resolution
+  - Threshold
+  - Color mode
+  - Color depth
+  - Color pickers for 2-color mode
+- Improved Slice Shift effect to dynamically show/hide intensity control based on pattern selection
+- Better user experience with context-sensitive controls that only display relevant options
+
+### Fixed
+- Fixed favicon issues to ensure proper display across browsers
+- Enhanced mobile experience with better touch controls for new effects
+- Improved overall performance when applying multiple effects
+
 ## [0.3.1] - 2025-05-05
 
 ### Added

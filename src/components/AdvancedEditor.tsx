@@ -20,6 +20,8 @@ import { applyBlur } from './BlurUtils'
 import { EffectSettings } from '../utils/EffectSettingsUtils'
 import { FiUpload, FiShuffle, FiTrash, FiRefreshCw, FiSave, FiFolder, FiImage, FiFileText, FiDownload } from 'react-icons/fi'
 import { EffectInstance } from '../types'
+import { applyMosaicShift, MosaicShiftSettings } from './MosaicShift'
+import { applySliceShift, SliceShiftSettings } from './SliceShift'
 
 // Define types
 type AspectRatioPreset = '1:1' | '4:3' | '16:9' | '3:2' | '5:4' | '2:1' | '3:4' | '9:16' | '2:3' | '4:5' | '1:2' | 'custom';
@@ -61,6 +63,10 @@ interface MobileControlsProps {
   blur: BlurSettings;
   onBlurChange: (settings: BlurSettings) => void;
   onSettingsLoaded: (settings: EffectSettings) => void;
+  mosaicShiftSettings: MosaicShiftSettings;
+  updateMosaicShiftSettings: (settings: Partial<MosaicShiftSettings>) => void;
+  sliceShiftSettings: SliceShiftSettings;
+  updateSliceShiftSettings: (settings: Partial<SliceShiftSettings>) => void;
 }
 
 export default function AdvancedEditor({
@@ -150,9 +156,9 @@ export default function AdvancedEditor({
   // Dither settings
   const [ditherSettings, setDitherSettings] = useState<DitherSettings>({
     enabled: false,
-    type: 'ordered' as 'ordered',
+    type: 'floyd-steinberg',
     threshold: 128,
-    colorMode: 'grayscale' as 'grayscale',
+    colorMode: 'grayscale',
     resolution: 30,
     colorDepth: 2,
     darkColor: '#000000',
@@ -246,6 +252,39 @@ export default function AdvancedEditor({
   // Add the ref and handler functions at the top of the component
   const saveButtonRef = React.useRef<HTMLInputElement>(null);
 
+  // MosaicShift settings
+  const [mosaicShiftSettings, setMosaicShiftSettings] = useState<MosaicShiftSettings>({
+    enabled: false,
+    columns: 8,
+    rows: 8,
+    maxOffsetX: 50,
+    maxOffsetY: 50,
+    pattern: 'random',
+    intensity: 50,
+    seed: Math.random() * 1000,
+    preserveEdges: true,
+    randomRotation: false,
+    maxRotation: 15,
+    backgroundColor: '#000000',
+    useBackgroundColor: false
+  });
+
+  // SliceShift settings
+  const [sliceShiftSettings, setSliceShiftSettings] = useState<SliceShiftSettings>({
+    enabled: false,
+    slices: 40,
+    direction: 'vertical',
+    maxOffset: 20,
+    mode: 'random',
+    intensity: 50,
+    seed: Math.random() * 1000,
+    feathering: false,
+    featherAmount: 20,
+    rearrangeMode: 'random',
+    backgroundColor: '#000000',
+    useBackgroundColor: false
+  });
+
   // Save settings function
   const handleSaveSettings = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -260,7 +299,9 @@ export default function AdvancedEditor({
       gradientMapSettings,
       gridSettings,
       effectInstances,
-      blur
+      blur,
+      mosaicShiftSettings,
+      sliceShiftSettings
     };
     
     const blob = new Blob([JSON.stringify(settings, null, 2)], {
@@ -654,7 +695,7 @@ export default function AdvancedEditor({
     // Reset dither settings
     setDitherSettings({
       enabled: false,
-      type: 'ordered',
+      type: 'floyd-steinberg',
       threshold: 128,
       colorMode: 'grayscale',
       resolution: 8,
@@ -700,6 +741,39 @@ export default function AdvancedEditor({
       blocksSize: 20,
       blocksOffset: 0,
       blocksDensity: 0.3
+    });
+
+    // Reset mosaic shift settings
+    setMosaicShiftSettings({
+      enabled: false,
+      columns: 8,
+      rows: 8,
+      maxOffsetX: 50,
+      maxOffsetY: 50,
+      pattern: 'random',
+      intensity: 50,
+      seed: Math.random() * 1000,
+      preserveEdges: true,
+      randomRotation: false,
+      maxRotation: 15,
+      backgroundColor: '#000000',
+      useBackgroundColor: false
+    });
+
+    // Reset slice shift settings
+    setSliceShiftSettings({
+      enabled: false,
+      slices: 40,
+      direction: 'vertical',
+      maxOffset: 20,
+      mode: 'random',
+      intensity: 50,
+      seed: Math.random() * 1000,
+      feathering: false,
+      featherAmount: 20,
+      rearrangeMode: 'random',
+      backgroundColor: '#000000',
+      useBackgroundColor: false
     });
 
     // Process the image with reset settings
@@ -815,7 +889,7 @@ export default function AdvancedEditor({
         defaultSettings = {
           // Original DitherSettings API properties - these are what actually get used
           enabled: true,
-          type: 'ordered',
+          type: 'floyd-steinberg',
           threshold: 128,
           colorMode: 'grayscale',
           resolution: 30,
@@ -847,6 +921,20 @@ export default function AdvancedEditor({
         break;
       case 'blur':
         defaultSettings = { ...blur, enabled: true };
+        break;
+      case 'mosaicShift':
+        defaultSettings = { 
+          ...mosaicShiftSettings, 
+          enabled: true,
+          seed: Math.random() * 1000 // Generate a new random seed for each new effect
+        };
+        break;
+      case 'sliceShift':
+        defaultSettings = { 
+          ...sliceShiftSettings, 
+          enabled: true,
+          seed: Math.random() * 1000 // Generate a new random seed for each new effect
+        };
         break;
       default:
         break;
@@ -935,6 +1023,10 @@ export default function AdvancedEditor({
         return glitchSettings;
       case 'blur':
         return blur;
+      case 'mosaicShift':
+        return mosaicShiftSettings;
+      case 'sliceShift':
+        return sliceShiftSettings;
       default:
         return {};
     }
@@ -1106,6 +1198,24 @@ export default function AdvancedEditor({
             };
             applyBlur(sourceCtx, canvasWidth, canvasHeight, blurSettingsForInstance);
             break;
+
+          case 'mosaicShift':
+            // Create a copy of the settings with enabled=true
+            const mosaicShiftSettingsForInstance = { 
+              ...JSON.parse(JSON.stringify(settings)), 
+              enabled: true 
+            };
+            applyMosaicShift(sourceCtx, sourceCanvas, canvasWidth, canvasHeight, mosaicShiftSettingsForInstance);
+            break;
+
+          case 'sliceShift':
+            // Create a copy of the settings with enabled=true
+            const sliceShiftSettingsForInstance = { 
+              ...JSON.parse(JSON.stringify(settings)), 
+              enabled: true 
+            };
+            applySliceShift(sourceCtx, sourceCanvas, canvasWidth, canvasHeight, sliceShiftSettingsForInstance);
+            break;
         }
       });
       
@@ -1189,6 +1299,21 @@ export default function AdvancedEditor({
     setTextDitherSettings(settings.textDitherSettings);
     setGradientMapSettings(settings.gradientMapSettings);
     setGridSettings(settings.gridSettings);
+    setMosaicShiftSettings(settings.mosaicShiftSettings);
+    setSliceShiftSettings(settings.sliceShiftSettings || {
+      enabled: false,
+      slices: 40,
+      direction: 'vertical',
+      maxOffset: 20,
+      mode: 'random',
+      intensity: 50,
+      seed: Math.random() * 1000,
+      feathering: false,
+      featherAmount: 20,
+      rearrangeMode: 'random',
+      backgroundColor: '#000000',
+      useBackgroundColor: false
+    });
     
     // Load effect instances if available, otherwise create default ones
     if (settings.effectInstances && settings.effectInstances.length > 0) {
@@ -1204,7 +1329,9 @@ export default function AdvancedEditor({
         { id: 'halftone-1', type: 'halftone', enabled: false },
         { id: 'textDither-1', type: 'textDither', enabled: false },
         { id: 'glitch-1', type: 'glitch', enabled: false },
-        { id: 'grid-1', type: 'grid', enabled: false }
+        { id: 'grid-1', type: 'grid', enabled: false },
+        { id: 'mosaicShift-1', type: 'mosaicShift', enabled: false },
+        { id: 'sliceShift-1', type: 'sliceShift', enabled: false },
       ]);
     }
     
@@ -1418,6 +1545,10 @@ export default function AdvancedEditor({
             blur={blur}
             onBlurChange={(newBlur) => onBlurChange(newBlur)}
             onSettingsLoaded={handleSettingsLoaded}
+            mosaicShiftSettings={mosaicShiftSettings}
+            updateMosaicShiftSettings={(settings) => setMosaicShiftSettings(prev => ({ ...prev, ...settings }))}
+            sliceShiftSettings={sliceShiftSettings}
+            updateSliceShiftSettings={(settings) => setSliceShiftSettings(prev => ({ ...prev, ...settings }))}
           />
         </div>
       </div>

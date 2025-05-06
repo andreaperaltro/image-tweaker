@@ -3,9 +3,10 @@
   "version": "0.2.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start -p ${PORT:-3000}",
+    "dev": "node dev-server.js",
+    "dev:next": "node favicon-fix.js && next dev",
+    "build": "node favicon-fix.js && next build",
+    "start": "next start",
     "lint": "next lint",
     "deploy": "next build && touch out/.nojekyll && git add out/ && git commit -m \"Deploy to gh-pages\" && git subtree push --prefix out origin gh-pages",
     "postinstall": "node scripts/setup-fonts.js"

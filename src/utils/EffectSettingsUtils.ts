@@ -7,7 +7,8 @@ import { GlitchSettings } from '../components/GlitchUtils';
 import { TextDitherSettings } from '../components/TextDitherUtils';
 import { GradientMapSettings } from '../components/GradientMapUtils';
 import { GridSettings } from '../components/Grid';
-import { BlurSettings, EffectInstance } from '../types';
+import { BlurSettings, EffectInstance, MosaicShiftSettings } from '../types';
+import { SliceShiftSettings } from '../components/SliceShift';
 
 export interface EffectSettings {
   ditherSettings: DitherSettings;
@@ -20,6 +21,8 @@ export interface EffectSettings {
   gridSettings: GridSettings;
   effectInstances: EffectInstance[];
   blur: BlurSettings;
+  mosaicShiftSettings: MosaicShiftSettings;
+  sliceShiftSettings: SliceShiftSettings;
 }
 
 export const saveEffectSettings = (settings: EffectSettings) => {

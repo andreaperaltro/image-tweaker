@@ -15,6 +15,8 @@ import { BlurSettings, EffectInstance } from '../types'
 import { saveEffectSettings, loadEffectSettings, EffectSettings } from '../utils/EffectSettingsUtils'
 import { isVectorExportAvailable } from './ExportUtils'
 import { FiFileText, FiPlus, FiCopy, FiTrash2, FiArrowUp, FiArrowDown } from 'react-icons/fi'
+import { MosaicShiftSettings, ShiftPattern } from './MosaicShift'
+import { SliceShiftSettings } from './SliceShift'
 
 // Add interface for gradient stop
 interface GradientStopType {
@@ -53,6 +55,10 @@ interface MobileControlsProps {
   blur: BlurSettings
   onBlurChange: (settings: BlurSettings) => void
   onSettingsLoaded?: (settings: EffectSettings) => void
+  mosaicShiftSettings: MosaicShiftSettings
+  updateMosaicShiftSettings: (settings: Partial<MosaicShiftSettings>) => void
+  sliceShiftSettings: SliceShiftSettings
+  updateSliceShiftSettings: (settings: Partial<SliceShiftSettings>) => void
 }
 
 // Debounce function to limit update frequency
@@ -109,7 +115,11 @@ const MobileControls: React.FC<MobileControlsProps> = ({
   onCropImage,
   blur,
   onBlurChange,
-  onSettingsLoaded
+  onSettingsLoaded,
+  mosaicShiftSettings,
+  updateMosaicShiftSettings,
+  sliceShiftSettings,
+  updateSliceShiftSettings
 }) => {
   const [openSection, setOpenSection] = useState<string | null>(null)
 
@@ -341,7 +351,9 @@ const MobileControls: React.FC<MobileControlsProps> = ({
       gradientMapSettings,
       gridSettings,
       effectInstances,
-      blur
+      blur,
+      mosaicShiftSettings,
+      sliceShiftSettings
     };
     saveEffectSettings(settings);
   };
@@ -870,17 +882,27 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               <label className="mobile-control-label">Dither Type</label>
               <select 
                 className="mobile-select"
-                value={settings.type || 'ordered'}
+                value={settings.type || 'floyd-steinberg'}
                 onChange={(e) => updateInstanceSettings(instance.id, { type: e.target.value })}
               >
-                <option value="ordered">Ordered</option>
                 <option value="floyd-steinberg">Floyd-Steinberg</option>
+                <option value="ordered">Ordered</option>
                 <option value="jarvis">Jarvis</option>
                 <option value="judice-ninke">Judice-Ninke</option>
                 <option value="stucki">Stucki</option>
                 <option value="burkes">Burkes</option>
               </select>
             </div>
+            
+            <Slider
+              label="Resolution"
+              value={settings.resolution || 30}
+              onChange={(value) => updateInstanceSettings(instance.id, { resolution: value })}
+              min={1}
+              max={100}
+              step={1}
+              unit="%"
+            />
             
             <Slider
               label="Threshold"
@@ -903,26 +925,19 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 <option value="2-color">2-Color</option>
               </select>
             </div>
-
-            <Slider
-              label="Resolution"
-              value={settings.resolution || 30}
-              onChange={(value) => updateInstanceSettings(instance.id, { resolution: value })}
-              min={1}
-              max={100}
-              step={1}
-              unit="%"
-            />
             
-            <Slider
-              label="Color Depth"
-              value={settings.colorDepth || 2}
-              onChange={(value) => updateInstanceSettings(instance.id, { colorDepth: value })}
-              min={2}
-              max={256}
-              step={1}
-              unit=" colors"
-            />
+            {/* Color Depth - Only show if not in 2-color mode */}
+            {settings.colorMode !== '2-color' && (
+              <Slider
+                label="Color Depth"
+                value={settings.colorDepth || 2}
+                onChange={(value) => updateInstanceSettings(instance.id, { colorDepth: value })}
+                min={2}
+                max={256}
+                step={1}
+                unit=" colors"
+              />
+            )}
             
             {/* Color controls for 2-color mode */}
             {settings.colorMode === '2-color' && (
@@ -1458,6 +1473,283 @@ const MobileControls: React.FC<MobileControlsProps> = ({
           </div>
         );
 
+      case 'mosaicShift':
+        return (
+          <div className={`mobile-effect-content ${openSection === instance.id ? 'open' : ''}`}>
+            {/* Mosaic Shift controls */}
+            <Slider
+              label="Columns"
+              value={settings.columns}
+              onChange={(value) => updateInstanceSettings(instance.id, { columns: value })}
+              min={2}
+              max={20}
+              step={1}
+            />
+            <Slider
+              label="Rows"
+              value={settings.rows}
+              onChange={(value) => updateInstanceSettings(instance.id, { rows: value })}
+              min={2}
+              max={20}
+              step={1}
+            />
+            
+            <Slider
+              label="Max X Offset"
+              value={settings.maxOffsetX}
+              onChange={(value) => updateInstanceSettings(instance.id, { maxOffsetX: value })}
+              min={0}
+              max={200}
+              step={1}
+              unit="px"
+            />
+            
+            <Slider
+              label="Max Y Offset"
+              value={settings.maxOffsetY}
+              onChange={(value) => updateInstanceSettings(instance.id, { maxOffsetY: value })}
+              min={0}
+              max={200}
+              step={1}
+              unit="px"
+            />
+            
+            <Slider
+              label="Intensity"
+              value={settings.intensity}
+              onChange={(value) => updateInstanceSettings(instance.id, { intensity: value })}
+              min={0}
+              max={100}
+              step={1}
+              unit="%"
+            />
+            
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Shift Pattern</label>
+              <select 
+                className="mobile-select"
+                value={settings.pattern}
+                onChange={(e) => updateInstanceSettings(instance.id, { pattern: e.target.value as ShiftPattern })}
+              >
+                <option value="random">Random</option>
+                <option value="wave">Wave</option>
+                <option value="radial">Radial</option>
+                <option value="spiral">Spiral</option>
+              </select>
+            </div>
+            
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Preserve Edges</label>
+              <label className="mobile-effect-toggle">
+                <input 
+                  type="checkbox" 
+                  checked={settings.preserveEdges}
+                  onChange={(e) => updateInstanceSettings(instance.id, { preserveEdges: e.target.checked })}
+                />
+                <span className="mobile-effect-toggle-slider"></span>
+              </label>
+            </div>
+            
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Random Rotation</label>
+              <label className="mobile-effect-toggle">
+                <input 
+                  type="checkbox" 
+                  checked={settings.randomRotation}
+                  onChange={(e) => updateInstanceSettings(instance.id, { randomRotation: e.target.checked })}
+                />
+                <span className="mobile-effect-toggle-slider"></span>
+              </label>
+            </div>
+            
+            {settings.randomRotation && (
+              <Slider
+                label="Max Rotation"
+                value={settings.maxRotation}
+                onChange={(value) => updateInstanceSettings(instance.id, { maxRotation: value })}
+                min={0}
+                max={180}
+                step={1}
+                unit="°"
+              />
+            )}
+            
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Use Background Color</label>
+              <label className="mobile-effect-toggle">
+                <input 
+                  type="checkbox" 
+                  checked={settings.useBackgroundColor}
+                  onChange={(e) => updateInstanceSettings(instance.id, { useBackgroundColor: e.target.checked })}
+                />
+                <span className="mobile-effect-toggle-slider"></span>
+              </label>
+            </div>
+            
+            {settings.useBackgroundColor && (
+              <div className="mobile-control-group">
+                <label className="mobile-control-label">Background Color</label>
+                <input 
+                  type="color" 
+                  className="mobile-color-picker"
+                  value={settings.backgroundColor || '#000000'}
+                  onChange={(e) => updateInstanceSettings(instance.id, { backgroundColor: e.target.value })}
+                />
+              </div>
+            )}
+            
+            <div className="mobile-control-group">
+              <button 
+                className="mobile-action-button w-full"
+                onClick={() => updateInstanceSettings(instance.id, { seed: Math.random() * 1000 })}
+              >
+                Randomize
+              </button>
+            </div>
+          </div>
+        );
+
+      case 'sliceShift':
+        return (
+          <div className={`mobile-effect-content ${openSection === instance.id ? 'open' : ''}`}>
+            {/* Slice Shift controls */}
+            <Slider
+              label="Number of Slices"
+              value={settings.slices}
+              onChange={(value) => updateInstanceSettings(instance.id, { slices: value })}
+              min={5}
+              max={100}
+              step={1}
+            />
+            
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Direction</label>
+              <select 
+                className="mobile-select"
+                value={settings.direction}
+                onChange={(e) => updateInstanceSettings(instance.id, { direction: e.target.value })}
+              >
+                <option value="vertical">Vertical Slices</option>
+                <option value="horizontal">Horizontal Slices</option>
+                <option value="both">Both Directions</option>
+              </select>
+            </div>
+            
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Effect Mode</label>
+              <select 
+                className="mobile-select"
+                value={settings.mode}
+                onChange={(e) => updateInstanceSettings(instance.id, { mode: e.target.value })}
+              >
+                <option value="random">Random Offset</option>
+                <option value="alternating">Alternating Offset</option>
+                <option value="wave">Wave Offset</option>
+                <option value="rearrange">Rearrange Slices</option>
+                <option value="repeat">Repeat Slices</option>
+              </select>
+            </div>
+            
+            {settings.mode === 'rearrange' && (
+              <div className="mobile-control-group">
+                <label className="mobile-control-label">Rearrange Pattern</label>
+                <select 
+                  className="mobile-select"
+                  value={settings.rearrangeMode}
+                  onChange={(e) => updateInstanceSettings(instance.id, { rearrangeMode: e.target.value })}
+                >
+                  <option value="random">Random</option>
+                  <option value="reverse">Reverse</option>
+                  <option value="alternate">Alternate (even/odd)</option>
+                  <option value="shuffle">Shuffle</option>
+                </select>
+              </div>
+            )}
+            
+            {(settings.mode === 'random' || settings.mode === 'alternating' || settings.mode === 'wave') && (
+              <Slider
+                label="Max Offset"
+                value={settings.maxOffset}
+                onChange={(value) => updateInstanceSettings(instance.id, { maxOffset: value })}
+                min={0}
+                max={100}
+                step={1}
+                unit="px"
+              />
+            )}
+            
+            {/* Only show intensity slider for modes where it applies */}
+            {(settings.mode === 'random' || settings.mode === 'alternating' || settings.mode === 'wave') && (
+              <Slider
+                label="Intensity"
+                value={settings.intensity}
+                onChange={(value) => updateInstanceSettings(instance.id, { intensity: value })}
+                min={0}
+                max={100}
+                step={1}
+                unit="%"
+              />
+            )}
+            
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Edge Feathering</label>
+              <label className="mobile-effect-toggle">
+                <input 
+                  type="checkbox" 
+                  checked={settings.feathering}
+                  onChange={(e) => updateInstanceSettings(instance.id, { feathering: e.target.checked })}
+                />
+                <span className="mobile-effect-toggle-slider"></span>
+              </label>
+            </div>
+            
+            {settings.feathering && (
+              <Slider
+                label="Feather Amount"
+                value={settings.featherAmount}
+                onChange={(value) => updateInstanceSettings(instance.id, { featherAmount: value })}
+                min={0}
+                max={100}
+                step={1}
+                unit="%"
+              />
+            )}
+            
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Use Background Color</label>
+              <label className="mobile-effect-toggle">
+                <input 
+                  type="checkbox" 
+                  checked={settings.useBackgroundColor}
+                  onChange={(e) => updateInstanceSettings(instance.id, { useBackgroundColor: e.target.checked })}
+                />
+                <span className="mobile-effect-toggle-slider"></span>
+              </label>
+            </div>
+            
+            {settings.useBackgroundColor && (
+              <div className="mobile-control-group">
+                <label className="mobile-control-label">Background Color</label>
+                <input 
+                  type="color" 
+                  className="mobile-color-picker"
+                  value={settings.backgroundColor || '#000000'}
+                  onChange={(e) => updateInstanceSettings(instance.id, { backgroundColor: e.target.value })}
+                />
+              </div>
+            )}
+            
+            <div className="mobile-control-group">
+              <button 
+                className="mobile-action-button w-full"
+                onClick={() => updateInstanceSettings(instance.id, { seed: Math.random() * 1000 })}
+              >
+                Randomize
+              </button>
+            </div>
+          </div>
+        );
+
       default:
         return null;
     }
@@ -1551,6 +1843,18 @@ const MobileControls: React.FC<MobileControlsProps> = ({
             onClick={() => addEffect('grid')}
           >
             <FiPlus size={12} /> Grid
+          </button>
+          <button 
+            className="plain-effect-btn" 
+            onClick={() => addEffect('mosaicShift')}
+          >
+            <FiPlus size={12} /> Mosaic Shift
+          </button>
+          <button 
+            className="plain-effect-btn" 
+            onClick={() => addEffect('sliceShift')}
+          >
+            <FiPlus size={12} /> Slice Shift
           </button>
         </div>
       </div>
