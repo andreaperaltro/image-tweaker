@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1] - 2025-05-07
+
+### Changed
+- Improved UI by hiding internal effect IDs (like "gradient-1") from the interface
+- Added automatic effect numbering when multiple instances of the same effect exist
+- Changed default development server port to 3001 to avoid common port conflicts
+
+### Fixed
+- Fixed port conflict issues when another service is running on port 3000
+- Improved effect title display for better usability and cleaner interface
+
 ## [0.4.0] - 2025-05-06
 
 ### Added

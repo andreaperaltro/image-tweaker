@@ -23,6 +23,7 @@ export interface EffectSettings {
   blur: BlurSettings;
   mosaicShiftSettings: MosaicShiftSettings;
   sliceShiftSettings: SliceShiftSettings;
+  instanceSettings?: {[id: string]: any};
 }
 
 export const saveEffectSettings = (settings: EffectSettings) => {

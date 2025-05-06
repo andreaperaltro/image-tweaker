@@ -319,7 +319,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               className="mobile-effect-title"
               onClick={() => toggleSection(instance.id)}
             >
-              {title} ({instance.id})
+              {title}
             </h3>
           </div>
           <label className="mobile-effect-toggle">
@@ -353,7 +353,8 @@ const MobileControls: React.FC<MobileControlsProps> = ({
       effectInstances,
       blur,
       mosaicShiftSettings,
-      sliceShiftSettings
+      sliceShiftSettings,
+      instanceSettings
     };
     saveEffectSettings(settings);
   };
@@ -1757,15 +1758,27 @@ const MobileControls: React.FC<MobileControlsProps> = ({
 
   // Update the rendering of sections to use the new renderEffectContent function
   const renderEffectSection = (instance: EffectInstance) => {
-    const title = instance.type === 'color' ? 'Color Adjustments' :
-                instance.type === 'halftone' ? 'Halftone Effect' : 
-                instance.type === 'grid' ? 'Grid Effect' :
-                instance.type === 'dither' ? 'Dithering' :
-                instance.type === 'textDither' ? 'Text Dithering' :
-                instance.type === 'glitch' ? 'Glitch Effect' :
-                instance.type === 'blur' ? 'Blur Effect' :
-                instance.type === 'gradient' ? 'Gradient Map' :
-                instance.type === 'threshold' ? 'Threshold' : 'Effect';
+    // Get the index to help with title numbering
+    const sameTypeEffects = effectInstances.filter(i => i.type === instance.type);
+    const sameTypeCount = sameTypeEffects.length;
+    const instanceIndex = sameTypeEffects.findIndex(i => i.id === instance.id);
+    
+    // Create a more descriptive title if there are multiple effects of the same type
+    const baseTitle = 
+      instance.type === 'color' ? 'Color Adjustments' :
+      instance.type === 'halftone' ? 'Halftone Effect' : 
+      instance.type === 'grid' ? 'Grid Effect' :
+      instance.type === 'dither' ? 'Dithering' :
+      instance.type === 'textDither' ? 'Text Dithering' :
+      instance.type === 'glitch' ? 'Glitch Effect' :
+      instance.type === 'blur' ? 'Blur Effect' :
+      instance.type === 'gradient' ? 'Gradient Map' :
+      instance.type === 'threshold' ? 'Threshold' :
+      instance.type === 'mosaicShift' ? 'Mosaic Shift' :
+      instance.type === 'sliceShift' ? 'Slice Shift' : 'Effect';
+    
+    // Add numbering only if there are multiple effects of the same type
+    const title = sameTypeCount > 1 ? `${baseTitle} ${instanceIndex + 1}` : baseTitle;
                 
     return (
       <div key={instance.id} className="mobile-effect-section">
