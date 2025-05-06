@@ -128,4 +128,6 @@ export type MosaicShiftSettings = {
   preserveEdges: boolean;
   randomRotation: boolean;
   maxRotation: number;
+  backgroundColor: string;
+  useBackgroundColor: boolean;
 }; 
