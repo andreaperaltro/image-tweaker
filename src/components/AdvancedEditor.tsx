@@ -17,7 +17,7 @@ import { saveAs } from 'file-saver'
 import MobileControls from './MobileControls'
 import { BlurSettings } from '../types'
 import { applyBlur } from './BlurUtils'
-import { EffectSettings } from '../utils/EffectSettingsUtils'
+import { EffectSettings, saveEffectSettings } from '../utils/EffectSettingsUtils'
 import { FiUpload, FiShuffle, FiTrash, FiRefreshCw, FiSave, FiFolder, FiImage, FiFileText, FiDownload } from 'react-icons/fi'
 import { EffectInstance } from '../types'
 import { applyMosaicShift, MosaicShiftSettings } from './MosaicShift'
@@ -294,13 +294,14 @@ export default function AdvancedEditor({
   // Add state for new effects
   const [posterizeSettings, setPosterizeSettings] = useState<PosterizeSettings>({
     enabled: false,
-    levels: 8,
+    levels: 2,
     colorMode: 'rgb',
     preserveLuminance: true,
     dithering: false,
     ditherAmount: 50
   });
 
+  // Find Edges settings
   const [findEdgesSettings, setFindEdgesSettings] = useState<FindEdgesSettings>({
     enabled: false,
     algorithm: 'sobel',
@@ -320,7 +321,7 @@ export default function AdvancedEditor({
       halftoneSettings,
       colorSettings,
       thresholdSettings,
-      glitchSettings, 
+      glitchSettings,
       textDitherSettings,
       gradientMapSettings,
       gridSettings,
@@ -328,14 +329,11 @@ export default function AdvancedEditor({
       blur,
       mosaicShiftSettings,
       sliceShiftSettings,
+      posterizeSettings,
+      findEdgesSettings,
       instanceSettings
     };
-    
-    const blob = new Blob([JSON.stringify(settings, null, 2)], {
-      type: 'application/json'
-    });
-    
-    saveAs(blob, 'image-tweaker-settings.json');
+    saveEffectSettings(settings);
   };
 
   // Load settings function
@@ -806,7 +804,7 @@ export default function AdvancedEditor({
     // Reset posterize settings
     setPosterizeSettings({
       enabled: false,
-      levels: 8,
+      levels: 2,
       colorMode: 'rgb',
       preserveLuminance: true,
       dithering: false,
