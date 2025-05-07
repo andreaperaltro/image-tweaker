@@ -1,4 +1,32 @@
 // Common types used across components
+import type { DitherSettings } from './components/DitherUtils';
+import type { HalftoneSettings } from './components/Halftone';
+import type { ColorSettings } from './components/ColorUtils';
+import type { ThresholdSettings } from './components/ThresholdUtils';
+import type { GlitchSettings } from './components/GlitchUtils';
+import type { TextDitherSettings } from './components/TextDitherUtils';
+import type { GradientMapSettings } from './components/GradientMapUtils';
+import type { GridSettings } from './components/Grid';
+import type { ShiftPattern } from './components/MosaicShift';
+import type { SliceShiftSettings } from './components/SliceShift';
+import type { PosterizeSettings } from './components/Posterize';
+import type { FindEdgesSettings } from './components/FindEdges';
+
+// Re-export all imported types
+export type {
+  DitherSettings,
+  HalftoneSettings,
+  ColorSettings,
+  ThresholdSettings,
+  GlitchSettings,
+  TextDitherSettings,
+  GradientMapSettings,
+  GridSettings,
+  ShiftPattern,
+  SliceShiftSettings,
+  PosterizeSettings,
+  FindEdgesSettings
+};
 
 // Effect settings types
 export type ColorAdjustmentSettings = {
@@ -7,92 +35,6 @@ export type ColorAdjustmentSettings = {
   saturation: number;
   hue: number;
   invert: boolean;
-};
-
-export type GradientMapSettings = {
-  enabled: boolean;
-  opacity: number;
-  blendMode: string;
-  darkColor: string;
-  midColor: string;
-  lightColor: string;
-};
-
-export type GlitchSettings = {
-  enabled: boolean;
-  intensity: number;
-  density: number;
-  direction: 'horizontal' | 'vertical' | 'both';
-  glitchSize: number;
-};
-
-export type HalftoneSettings = {
-  enabled: boolean;
-  cellSize: number;
-  mix: number;
-  colored: boolean;
-  enableCMYK: boolean;
-  arrangement: 'grid' | 'spiral' | 'concentric';
-  shape: 'circle' | 'square' | 'diamond' | 'line' | 'cross' | 'ellipse' | 'triangle' | 'hexagon';
-  angleOffset: number;
-  sizeVariation: number;
-  dotScaleFactor: number;
-  invertBrightness: boolean;
-  spiralTightness: number;
-  spiralExpansion: number;
-  spiralRotation: number;
-  spiralCenterX: number;
-  spiralCenterY: number;
-  concentricCenterX: number;
-  concentricCenterY: number;
-  concentricRingSpacing: number;
-  channels: {
-    cyan: boolean;
-    magenta: boolean;
-    yellow: boolean;
-    black: boolean;
-  };
-  cmykAngles: {
-    cyan: number;
-    magenta: number;
-    yellow: number;
-    black: number;
-  };
-};
-
-export type GridSettings = {
-  enabled: boolean;
-  columns: number;
-  rows: number;
-  applyRotation: boolean;
-  maxRotation: number;
-  splitEnabled: boolean;
-  splitProbability: number;
-  maxSplitLevels: number;
-  minCellSize: number;
-};
-
-export type DitherSettings = {
-  enabled: boolean;
-  type: 'ordered' | 'floydSteinberg' | 'atkinson';
-  threshold: number;
-  colorMode: 'grayscale' | 'color' | 'twoColor';
-  resolution: number;
-  colorDepth: number;
-  darkColor: string;
-  lightColor: string;
-};
-
-export type TextDitherSettings = {
-  enabled: boolean;
-  text: string;
-  fontSize: number;
-  fontFamily: string;
-  colorMode: 'monochrome' | 'colored';
-  contrast: number;
-  brightness: number;
-  invert: boolean;
-  resolution: number;
 };
 
 export interface BlurSettings {
@@ -112,19 +54,6 @@ export interface EffectInstance {
   type: string;
   enabled: boolean;
 }
-
-import { DitherSettings } from './components/DitherUtils';
-import { HalftoneSettings } from './components/Halftone';
-import { ColorSettings } from './components/ColorUtils';
-import { ThresholdSettings } from './components/ThresholdUtils';
-import { GlitchSettings } from './components/GlitchUtils';
-import { TextDitherSettings } from './components/TextDitherUtils';
-import { GradientMapSettings } from './components/GradientMapUtils';
-import { GridSettings } from './components/Grid';
-import { ShiftPattern } from './components/MosaicShift';
-import { SliceShiftSettings } from './components/SliceShift';
-import { PosterizeSettings } from './components/Posterize';
-import { FindEdgesSettings } from './components/FindEdges';
 
 export type MosaicShiftSettings = {
   enabled: boolean;
