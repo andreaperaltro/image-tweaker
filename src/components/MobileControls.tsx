@@ -1,5 +1,6 @@
 'use client'
 
+
 import React, { useState, useRef, useCallback, useEffect } from 'react'
 import './MobileControls.css'
 import { DitherSettings, DitherColorMode, DitherType } from './DitherUtils'
@@ -17,6 +18,8 @@ import { isVectorExportAvailable } from './ExportUtils'
 import { FiFileText, FiPlus, FiCopy, FiTrash2, FiArrowUp, FiArrowDown } from 'react-icons/fi'
 import { MosaicShiftSettings, ShiftPattern } from './MosaicShift'
 import { SliceShiftSettings } from './SliceShift'
+import { PosterizeSettings } from './Posterize'
+import { FindEdgesSettings, EdgeDetectionAlgorithm } from './FindEdges'
 
 // Add interface for gradient stop
 interface GradientStopType {
@@ -59,6 +62,10 @@ interface MobileControlsProps {
   updateMosaicShiftSettings: (settings: Partial<MosaicShiftSettings>) => void
   sliceShiftSettings: SliceShiftSettings
   updateSliceShiftSettings: (settings: Partial<SliceShiftSettings>) => void
+  posterizeSettings: PosterizeSettings
+  updatePosterizeSettings: (settings: Partial<PosterizeSettings>) => void
+  findEdgesSettings: FindEdgesSettings
+  updateFindEdgesSettings: (settings: Partial<FindEdgesSettings>) => void
 }
 
 // Debounce function to limit update frequency
@@ -119,7 +126,11 @@ const MobileControls: React.FC<MobileControlsProps> = ({
   mosaicShiftSettings,
   updateMosaicShiftSettings,
   sliceShiftSettings,
-  updateSliceShiftSettings
+  updateSliceShiftSettings,
+  posterizeSettings,
+  updatePosterizeSettings,
+  findEdgesSettings,
+  updateFindEdgesSettings
 }) => {
   const [openSection, setOpenSection] = useState<string | null>(null)
 
@@ -354,6 +365,8 @@ const MobileControls: React.FC<MobileControlsProps> = ({
       blur,
       mosaicShiftSettings,
       sliceShiftSettings,
+      posterizeSettings,
+      findEdgesSettings,
       instanceSettings
     };
     saveEffectSettings(settings);
@@ -1751,6 +1764,142 @@ const MobileControls: React.FC<MobileControlsProps> = ({
           </div>
         );
 
+      case 'posterize':
+        return (
+          <div className={`mobile-effect-content ${openSection === instance.id ? 'open' : ''}`}>
+            <Slider
+              label="Levels"
+              value={settings.levels}
+              onChange={(value) => updateInstanceSettings(instance.id, { levels: value })}
+              min={2}
+              max={256}
+              step={1}
+            />
+            
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Color Mode</label>
+              <select 
+                className="mobile-select"
+                value={settings.colorMode}
+                onChange={(e) => updateInstanceSettings(instance.id, { colorMode: e.target.value as 'rgb' | 'hsv' | 'lab' })}
+              >
+                <option value="rgb">RGB</option>
+                <option value="hsv">HSV</option>
+                <option value="lab">LAB</option>
+              </select>
+            </div>
+
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Preserve Luminance</label>
+              <label className="mobile-effect-toggle">
+                <input 
+                  type="checkbox" 
+                  checked={settings.preserveLuminance}
+                  onChange={(e) => updateInstanceSettings(instance.id, { preserveLuminance: e.target.checked })}
+                />
+                <span className="mobile-effect-toggle-slider"></span>
+              </label>
+            </div>
+
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Dithering</label>
+              <label className="mobile-effect-toggle">
+                <input 
+                  type="checkbox" 
+                  checked={settings.dithering}
+                  onChange={(e) => updateInstanceSettings(instance.id, { dithering: e.target.checked })}
+                />
+                <span className="mobile-effect-toggle-slider"></span>
+              </label>
+            </div>
+
+            {settings.dithering && (
+              <Slider
+                label="Dither Amount"
+                value={settings.ditherAmount}
+                onChange={(value) => updateInstanceSettings(instance.id, { ditherAmount: value })}
+                min={0}
+                max={100}
+                step={1}
+                unit="%"
+              />
+            )}
+          </div>
+        );
+
+      case 'findEdges':
+        return (
+          <div className={`mobile-effect-content ${openSection === instance.id ? 'open' : ''}`}>
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Algorithm</label>
+              <select 
+                className="mobile-select"
+                value={settings.algorithm}
+                onChange={(e) => updateInstanceSettings(instance.id, { algorithm: e.target.value as EdgeDetectionAlgorithm })}
+              >
+                <option value="sobel">Sobel</option>
+                <option value="prewitt">Prewitt</option>
+                <option value="canny">Canny</option>
+                <option value="laplacian">Laplacian</option>
+              </select>
+            </div>
+
+            <Slider
+              label="Intensity"
+              value={settings.intensity}
+              onChange={(value) => updateInstanceSettings(instance.id, { intensity: value })}
+              min={0}
+              max={100}
+              step={1}
+              unit="%"
+            />
+
+            <Slider
+              label="Threshold"
+              value={settings.threshold}
+              onChange={(value) => updateInstanceSettings(instance.id, { threshold: value })}
+              min={0}
+              max={255}
+              step={1}
+            />
+
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Color Mode</label>
+              <select 
+                className="mobile-select"
+                value={settings.colorMode}
+                onChange={(e) => updateInstanceSettings(instance.id, { colorMode: e.target.value as 'grayscale' | 'color' | 'inverted' })}
+              >
+                <option value="grayscale">Grayscale</option>
+                <option value="color">Color</option>
+                <option value="inverted">Inverted</option>
+              </select>
+            </div>
+
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Invert</label>
+              <label className="mobile-effect-toggle">
+                <input 
+                  type="checkbox" 
+                  checked={settings.invert}
+                  onChange={(e) => updateInstanceSettings(instance.id, { invert: e.target.checked })}
+                />
+                <span className="mobile-effect-toggle-slider"></span>
+              </label>
+            </div>
+
+            <Slider
+              label="Blur Radius"
+              value={settings.blurRadius}
+              onChange={(value) => updateInstanceSettings(instance.id, { blurRadius: value })}
+              min={0}
+              max={10}
+              step={0.5}
+              unit="px"
+            />
+          </div>
+        );
+
       default:
         return null;
     }
@@ -1774,8 +1923,10 @@ const MobileControls: React.FC<MobileControlsProps> = ({
       instance.type === 'blur' ? 'Blur Effect' :
       instance.type === 'gradient' ? 'Gradient Map' :
       instance.type === 'threshold' ? 'Threshold' :
-      instance.type === 'mosaicShift' ? 'Mosaic Shift' :
-      instance.type === 'sliceShift' ? 'Slice Shift' : 'Effect';
+      instance.type === 'mosaicShift' ? 'Mosaic' :
+      instance.type === 'sliceShift' ? 'Slice' :
+      instance.type === 'posterize' ? 'Posterize' :
+      instance.type === 'findEdges' ? 'Find Edges' : 'Effect';
     
     // Add numbering only if there are multiple effects of the same type
     const title = sameTypeCount > 1 ? `${baseTitle} ${instanceIndex + 1}` : baseTitle;
@@ -1861,13 +2012,25 @@ const MobileControls: React.FC<MobileControlsProps> = ({
             className="plain-effect-btn" 
             onClick={() => addEffect('mosaicShift')}
           >
-            <FiPlus size={12} /> Mosaic Shift
+            <FiPlus size={12} /> Mosaic
           </button>
           <button 
             className="plain-effect-btn" 
             onClick={() => addEffect('sliceShift')}
           >
-            <FiPlus size={12} /> Slice Shift
+            <FiPlus size={12} /> Slice
+          </button>
+          <button 
+            className="plain-effect-btn" 
+            onClick={() => addEffect('posterize')}
+          >
+            <FiPlus size={12} /> Posterize
+          </button>
+          <button 
+            className="plain-effect-btn" 
+            onClick={() => addEffect('findEdges')}
+          >
+            <FiPlus size={12} /> Find Edges
           </button>
         </div>
       </div>

@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
-import { ColorSettings, applyColorAdjustments } from './ColorUtils'
+import { ColorSettings, applyColorAdjustments, BlendMode } from './ColorUtils'
 import { GridSettings, GridCell, createGrid, renderGridCell } from './Grid'
 import { HalftoneSettings, HalftoneArrangement, HalftoneShape, applyHalftone } from './Halftone'
 import { exportAsPng, exportAsSvg } from './SvgExport'
@@ -22,6 +22,8 @@ import { FiUpload, FiShuffle, FiTrash, FiRefreshCw, FiSave, FiFolder, FiImage, F
 import { EffectInstance } from '../types'
 import { applyMosaicShift, MosaicShiftSettings } from './MosaicShift'
 import { applySliceShift, SliceShiftSettings } from './SliceShift'
+import { applyPosterize, PosterizeSettings } from './Posterize'
+import { applyFindEdges, FindEdgesSettings } from './FindEdges'
 
 // Define types
 type AspectRatioPreset = '1:1' | '4:3' | '16:9' | '3:2' | '5:4' | '2:1' | '3:4' | '9:16' | '2:3' | '4:5' | '1:2' | 'custom';
@@ -67,6 +69,10 @@ interface MobileControlsProps {
   updateMosaicShiftSettings: (settings: Partial<MosaicShiftSettings>) => void;
   sliceShiftSettings: SliceShiftSettings;
   updateSliceShiftSettings: (settings: Partial<SliceShiftSettings>) => void;
+  posterizeSettings: PosterizeSettings;
+  updatePosterizeSettings: (settings: Partial<PosterizeSettings>) => void;
+  findEdgesSettings: FindEdgesSettings;
+  updateFindEdgesSettings: (settings: Partial<FindEdgesSettings>) => void;
 }
 
 export default function AdvancedEditor({
@@ -285,6 +291,26 @@ export default function AdvancedEditor({
     useBackgroundColor: false
   });
 
+  // Add state for new effects
+  const [posterizeSettings, setPosterizeSettings] = useState<PosterizeSettings>({
+    enabled: false,
+    levels: 8,
+    colorMode: 'rgb',
+    preserveLuminance: true,
+    dithering: false,
+    ditherAmount: 50
+  });
+
+  const [findEdgesSettings, setFindEdgesSettings] = useState<FindEdgesSettings>({
+    enabled: false,
+    algorithm: 'sobel',
+    intensity: 50,
+    threshold: 128,
+    invert: false,
+    colorMode: 'grayscale',
+    blurRadius: 0
+  });
+
   // Save settings function
   const handleSaveSettings = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -301,7 +327,8 @@ export default function AdvancedEditor({
       effectInstances,
       blur,
       mosaicShiftSettings,
-      sliceShiftSettings
+      sliceShiftSettings,
+      instanceSettings
     };
     
     const blob = new Blob([JSON.stringify(settings, null, 2)], {
@@ -776,6 +803,27 @@ export default function AdvancedEditor({
       useBackgroundColor: false
     });
 
+    // Reset posterize settings
+    setPosterizeSettings({
+      enabled: false,
+      levels: 8,
+      colorMode: 'rgb',
+      preserveLuminance: true,
+      dithering: false,
+      ditherAmount: 50
+    });
+
+    // Reset find edges settings
+    setFindEdgesSettings({
+      enabled: false,
+      algorithm: 'sobel',
+      intensity: 50,
+      threshold: 128,
+      invert: false,
+      colorMode: 'grayscale',
+      blurRadius: 0
+    });
+
     // Process the image with reset settings
     processImage();
   };
@@ -878,7 +926,7 @@ export default function AdvancedEditor({
     const newInstance: EffectInstance = {
       id,
       type,
-      enabled: true // Enable new effects by default
+      enabled: false // Enable new effects by default
     };
     
     // Create default instance-specific settings based on effect type
@@ -899,7 +947,18 @@ export default function AdvancedEditor({
         };
         break;
       case 'color':
-        defaultSettings = { ...colorSettings, enabled: true };
+        defaultSettings = {
+          enabled: true,
+          hueShift: 0,
+          saturation: 100,
+          brightness: 100,
+          contrast: 100,
+          posterize: 0,
+          invert: false,
+          glitchIntensity: 0,
+          glitchSeed: Math.random(),
+          blendMode: 'normal' as BlendMode
+        };
         break;
       case 'halftone':
         defaultSettings = { ...halftoneSettings, enabled: true };
@@ -934,6 +993,18 @@ export default function AdvancedEditor({
           ...sliceShiftSettings, 
           enabled: true,
           seed: Math.random() * 1000 // Generate a new random seed for each new effect
+        };
+        break;
+      case 'posterize':
+        defaultSettings = { 
+          ...posterizeSettings, 
+          enabled: true
+        };
+        break;
+      case 'findEdges':
+        defaultSettings = { 
+          ...findEdgesSettings, 
+          enabled: true
         };
         break;
       default:
@@ -1118,12 +1189,23 @@ export default function AdvancedEditor({
         
         switch (instance.type) {
           case 'color':
-            // Create a copy of the settings with enabled=true
-            const colorSettingsForInstance = { 
-              ...JSON.parse(JSON.stringify(settings)), 
-              enabled: true 
-            };
-            applyColorAdjustments(sourceCtx, canvasWidth, canvasHeight, colorSettingsForInstance);
+            // Only apply if enabled in instance settings
+            if (settings.enabled) {
+              // Create a copy of the settings to ensure we have all required properties
+              const colorSettingsForInstance: ColorSettings = {
+                enabled: true,
+                hueShift: Number(settings.hueShift) || 0,
+                saturation: Number(settings.saturation) || 100,
+                brightness: Number(settings.brightness) || 100,
+                contrast: Number(settings.contrast) || 100,
+                posterize: Number(settings.posterize) || 0,
+                invert: Boolean(settings.invert),
+                glitchIntensity: Number(settings.glitchIntensity) || 0,
+                glitchSeed: Number(settings.glitchSeed) || Math.random(),
+                blendMode: settings.blendMode || 'normal'
+              };
+              applyColorAdjustments(sourceCtx, canvasWidth, canvasHeight, colorSettingsForInstance);
+            }
             break;
             
           case 'gradient':
@@ -1216,6 +1298,14 @@ export default function AdvancedEditor({
             };
             applySliceShift(sourceCtx, sourceCanvas, canvasWidth, canvasHeight, sliceShiftSettingsForInstance);
             break;
+
+          case 'posterize':
+            applyPosterize(sourceCtx, sourceCanvas, canvasWidth, canvasHeight, settings);
+            break;
+
+          case 'findEdges':
+            applyFindEdges(sourceCtx, sourceCanvas, canvasWidth, canvasHeight, settings);
+            break;
         }
       });
       
@@ -1234,7 +1324,9 @@ export default function AdvancedEditor({
     canvasWidth,
     canvasHeight,
     effectInstances,
-    instanceSettings
+    instanceSettings,
+    posterizeSettings,
+    findEdgesSettings
   ]);
 
   // Process image when it changes
@@ -1314,6 +1406,11 @@ export default function AdvancedEditor({
       backgroundColor: '#000000',
       useBackgroundColor: false
     });
+    
+    // Load instance-specific settings if available
+    if (settings.instanceSettings) {
+      setInstanceSettings(settings.instanceSettings);
+    }
     
     // Load effect instances if available, otherwise create default ones
     if (settings.effectInstances && settings.effectInstances.length > 0) {
@@ -1549,6 +1646,10 @@ export default function AdvancedEditor({
             updateMosaicShiftSettings={(settings) => setMosaicShiftSettings(prev => ({ ...prev, ...settings }))}
             sliceShiftSettings={sliceShiftSettings}
             updateSliceShiftSettings={(settings) => setSliceShiftSettings(prev => ({ ...prev, ...settings }))}
+            posterizeSettings={posterizeSettings}
+            updatePosterizeSettings={(settings) => setPosterizeSettings(prev => ({ ...prev, ...settings }))}
+            findEdgesSettings={findEdgesSettings}
+            updateFindEdgesSettings={(settings) => setFindEdgesSettings(prev => ({ ...prev, ...settings }))}
           />
         </div>
       </div>

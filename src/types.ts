@@ -113,8 +113,18 @@ export interface EffectInstance {
   enabled: boolean;
 }
 
+import { DitherSettings } from './components/DitherUtils';
+import { HalftoneSettings } from './components/Halftone';
+import { ColorSettings } from './components/ColorUtils';
+import { ThresholdSettings } from './components/ThresholdUtils';
+import { GlitchSettings } from './components/GlitchUtils';
+import { TextDitherSettings } from './components/TextDitherUtils';
+import { GradientMapSettings } from './components/GradientMapUtils';
+import { GridSettings } from './components/Grid';
 import { ShiftPattern } from './components/MosaicShift';
 import { SliceShiftSettings } from './components/SliceShift';
+import { PosterizeSettings } from './components/Posterize';
+import { FindEdgesSettings } from './components/FindEdges';
 
 export type MosaicShiftSettings = {
   enabled: boolean;
@@ -130,4 +140,22 @@ export type MosaicShiftSettings = {
   maxRotation: number;
   backgroundColor: string;
   useBackgroundColor: boolean;
-}; 
+};
+
+export interface EffectSettings {
+  ditherSettings: DitherSettings;
+  halftoneSettings: HalftoneSettings;
+  colorSettings: ColorSettings;
+  thresholdSettings: ThresholdSettings;
+  glitchSettings: GlitchSettings;
+  textDitherSettings: TextDitherSettings;
+  gradientMapSettings: GradientMapSettings;
+  gridSettings: GridSettings;
+  effectInstances: EffectInstance[];
+  blur: BlurSettings;
+  mosaicShiftSettings: MosaicShiftSettings;
+  sliceShiftSettings: SliceShiftSettings;
+  posterizeSettings: PosterizeSettings;
+  findEdgesSettings: FindEdgesSettings;
+  instanceSettings?: {[id: string]: any};
+} 

@@ -9,6 +9,8 @@ import { GradientMapSettings } from '../components/GradientMapUtils';
 import { GridSettings } from '../components/Grid';
 import { BlurSettings, EffectInstance, MosaicShiftSettings } from '../types';
 import { SliceShiftSettings } from '../components/SliceShift';
+import { PosterizeSettings } from '../components/Posterize';
+import { FindEdgesSettings } from '../components/FindEdges';
 
 export interface EffectSettings {
   ditherSettings: DitherSettings;
@@ -23,6 +25,8 @@ export interface EffectSettings {
   blur: BlurSettings;
   mosaicShiftSettings: MosaicShiftSettings;
   sliceShiftSettings: SliceShiftSettings;
+  posterizeSettings: PosterizeSettings;
+  findEdgesSettings: FindEdgesSettings;
   instanceSettings?: {[id: string]: any};
 }
 

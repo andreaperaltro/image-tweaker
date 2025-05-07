@@ -1,167 +1,77 @@
-# ImageTweaker
+# Image Tweaker
 
-A modern web application for real-time image processing and manipulation, featuring a robust set of image effects and filters that run entirely in your browser.
-
-## Live Demo
-
-Visit [https://image-tweaker.vercel.app/](https://image-tweaker.vercel.app/) to try the application.
+A powerful web-based image manipulation tool that allows you to apply various effects and transformations to your images.
 
 ## Features
 
-- **Color Adjustments**
-  - Hue shift (-180° to +180°)
-  - Saturation (0-200%)
-  - Brightness (0-200%)
-  - Contrast (0-200%)
-  - Invert colors
+- Multiple image effects:
+  - Color adjustments (hue, saturation, brightness, contrast)
+  - Posterize
+  - Find Edges
+  - Dithering
+  - Halftone
+  - Glitch
+  - Threshold
+  - Gradient Map
+  - Grid
+  - Mosaic Shift
+  - Slice Shift
+  - Blur
 
-- **Blur Effects**
-  - Gaussian blur with adjustable radius
-  - Radial blur with customizable center point
-  - Motion blur with angle control
-  - Tilt-shift blur with focus point, width, and gradient controls
-  - Optimized kernel calculations for smooth results
+- Export options:
+  - PNG export
+  - Vector SVG export (for compatible effects)
+  - Save/load effect settings
 
-- **Gradient Map**
-  - Dynamic color stops (add and remove as many colors as needed)
-  - 16 blend modes
-  - Opacity control
-  - Interactive gradient preview
-  - Position control for each color stop
-
-- **Threshold Effects**
-  - Solid and gradient modes
-  - Customizable threshold levels (0-255)
-  - Custom color selection for both modes
-
-- **Dithering**
-  - Multiple algorithms (Ordered, Floyd-Steinberg, Atkinson)
-  - Adjustable resolution
-  - Color depth control (2-256 colors)
-  - Grayscale, Color, and 2-Color Palette modes
-  - Custom color selection in 2-Color mode
-  - Logical UI organization with intuitive control ordering
-
-- **Slice Shift Effect**
-  - Create vertical and/or horizontal slicing effects
-  - Multiple pattern options (Random, Alternating, Wave, Rearrange, Repeat)
-  - Control over number of slices and shift intensity
-  - Background color option for exposed areas
-  - Context-sensitive controls that adapt based on selected pattern
-
-- **Mosaic Shift Effect**
-  - Create tile-based displacement effects
-  - Customizable cell size and shift amount
-  - Directional options (horizontal, vertical, or both)
-  - Pattern selection (Random, Alternating, Wave)
-  - Background color support for exposed areas
-
-- **Halftone**
-  - Multiple arrangements (Grid, Spiral, Concentric)
-  - Various shapes (Circle, Square, Diamond, Line, Cross, Ellipse, Triangle, Hexagon)
-  - CMYK mode with independent channel control
-  - Size variation and dot scaling
-  - Monochrome or color options
-
-- **Text Dither**
-  - Custom character patterns
-  - Adjustable font size and resolution
-  - Monochrome and color modes
-  - Contrast and brightness controls
-
-- **Glitch Effects**
-  - Pixel sorting with threshold and direction controls
-  - RGB channel shifting
-  - Scan lines with customizable count and intensity
-  - Noise generation
-  - Block displacement
-  - General glitch distortion
-
-- **Grid Effects**
-  - Customizable columns and rows
-  - Rotation control
-  - Recursive splitting with probability controls
-  - Minimum cell size protection
-
-- **Export Options**
-  - PNG export with embedded metadata
-  - True vector SVG export for halftone and dithering effects (not just embedded raster images)
-  - Timestamp naming to prevent overwriting previous exports
-
-- **Settings Management**
-  - Save effect settings to JSON file
-  - Load previously saved settings
-  - Preserve all effect parameters and their processing order
-
-- **Advanced Effects Management**
-  - Add, remove, and duplicate effects
-  - Reorder effects to control processing sequence
-  - Enable/disable individual effect instances independently
-  - Apply the same effect multiple times with different settings
-
-- **Advanced UI**
-  - Dark/light mode toggle for better viewing in different environments
-  - Responsive design that works on both desktop and mobile devices
-  - Consistent theming with a visually pleasing color scheme
-  - Custom app icon for mobile home screens
-
-- **Advanced Image Manipulation**
-  - Interactive cropping with aspect ratio presets
-  - Real-time preview for all adjustments
-  - Clean starting interface with ability to add effects as needed
+- User-friendly interface:
+  - Drag and drop image upload
+  - Real-time effect preview
+  - Mobile-responsive design
+  - Effect stacking and ordering
 
 ## Getting Started
 
-1. Clone the repository
+### Prerequisites
+
+- Node.js (v14 or higher)
+- npm (v6 or higher)
+
+### Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/yourusername/image-tweaker.git
+cd image-tweaker
+```
+
 2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Run the development server:
-   ```bash
-   npm run dev
-   ```
-4. Open [http://localhost:3000](http://localhost:3000) in your browser
+```bash
+npm install
+```
+
+3. Start the development server:
+```bash
+npm run dev
+```
+
+4. Open [http://localhost:3001](http://localhost:3001) in your browser.
 
 ## Usage
 
-1. Upload an image by dragging and dropping or clicking the upload button
-2. Alternatively, click "Random" to load a placeholder image
-3. Add effects from the "Add New Effect" section at the bottom
-4. Use the control panels to adjust each effect's settings
-5. Effects are applied in real-time as you adjust the settings
-6. Reorder effects using the arrow buttons to change the processing sequence
-7. Duplicate effects to apply the same effect multiple times with different settings
-8. Enable/disable effects individually using the toggle switch
-9. Save your settings to a JSON file for later use
-10. Load previously saved settings to restore your configuration
-11. Export your result as PNG or SVG with embedded metadata
+1. Upload an image by dragging and dropping it onto the canvas or using the upload button
+2. Add effects from the control panel
+3. Adjust effect settings in real-time
+4. Export your modified image as PNG or SVG
+5. Save your effect settings for later use
 
-## Help Section
+## Development
 
-The application includes a comprehensive help section accessible by clicking the "?" button in the top-right corner. This provides detailed information about:
-
-- Navigation tips
-- Getting started guide
-- Description of all top bar controls
-- Detailed explanation of each effect and its parameters
-- Export options
-- Settings management
-
-## Technical Details
-
-- Built with Next.js and TypeScript
-- Responsive design with Tailwind CSS
-- All processing happens client-side (no server uploads)
-- Pure JavaScript implementation for image processing
-- Custom PNG metadata implementation
-- SVG export with RDF metadata
-- PP Mondwest font for a distinctive UI
+The project is built with:
+- React
+- TypeScript
+- Tailwind CSS
+- Canvas API for image processing
 
 ## License
 
-MIT License
-
-## Author
-
-Created by [Andrea Perato](https://andreaperato.com) with AI assistance 
+This project is licensed under the MIT License - see the LICENSE file for details. 
