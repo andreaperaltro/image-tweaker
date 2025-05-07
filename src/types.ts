@@ -11,6 +11,7 @@ import type { ShiftPattern } from './components/MosaicShift';
 import type { SliceShiftSettings } from './components/SliceShift';
 import type { PosterizeSettings } from './components/Posterize';
 import type { FindEdgesSettings } from './components/FindEdges';
+import type { BlobSettings } from './components/Blob';
 
 // Re-export all imported types
 export type {
@@ -25,7 +26,8 @@ export type {
   ShiftPattern,
   SliceShiftSettings,
   PosterizeSettings,
-  FindEdgesSettings
+  FindEdgesSettings,
+  BlobSettings
 };
 
 // Effect settings types
@@ -86,5 +88,6 @@ export interface EffectSettings {
   sliceShiftSettings: SliceShiftSettings;
   posterizeSettings: PosterizeSettings;
   findEdgesSettings: FindEdgesSettings;
+  blobSettings: BlobSettings;
   instanceSettings?: {[id: string]: any};
 } 

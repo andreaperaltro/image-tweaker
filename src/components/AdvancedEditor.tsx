@@ -24,6 +24,7 @@ import { applyMosaicShift, MosaicShiftSettings } from './MosaicShift'
 import { applySliceShift, SliceShiftSettings } from './SliceShift'
 import { applyPosterize, PosterizeSettings } from './Posterize'
 import { applyFindEdges, FindEdgesSettings } from './FindEdges'
+import { applyBlob, BlobSettings } from './Blob'
 
 // Define types
 type AspectRatioPreset = '1:1' | '4:3' | '16:9' | '3:2' | '5:4' | '2:1' | '3:4' | '9:16' | '2:3' | '4:5' | '1:2' | 'custom';
@@ -310,6 +311,25 @@ export default function AdvancedEditor({
     invert: false,
     colorMode: 'grayscale',
     blurRadius: 0
+  });
+
+  // Add Blob settings state
+  const [blobSettings, setBlobSettings] = useState<BlobSettings>({
+    enabled: false,
+    cellSize: 8,
+    mix: 100,
+    colored: false,
+    arrangement: 'grid',
+    shape: 'circle',
+    connectionType: 'straight',
+    connectionStrength: 2,
+    connectionColor: '#000000',
+    minDistance: 10,
+    maxDistance: 50,
+    angleOffset: 0,
+    sizeVariation: 0,
+    dotScaleFactor: 0.8,
+    invertBrightness: false
   });
 
   // Save settings function
@@ -1005,6 +1025,12 @@ export default function AdvancedEditor({
           enabled: true
         };
         break;
+      case 'blob':
+        defaultSettings = { 
+          ...blobSettings, 
+          enabled: true 
+        };
+        break;
       default:
         break;
     }
@@ -1096,6 +1122,8 @@ export default function AdvancedEditor({
         return mosaicShiftSettings;
       case 'sliceShift':
         return sliceShiftSettings;
+      case 'blob':
+        return blobSettings;
       default:
         return {};
     }
@@ -1304,6 +1332,10 @@ export default function AdvancedEditor({
           case 'findEdges':
             applyFindEdges(sourceCtx, sourceCanvas, canvasWidth, canvasHeight, settings);
             break;
+
+          case 'blob':
+            applyBlob(sourceCtx, sourceCanvas, canvasWidth, canvasHeight, settings);
+            break;
         }
       });
       
@@ -1427,6 +1459,7 @@ export default function AdvancedEditor({
         { id: 'grid-1', type: 'grid', enabled: false },
         { id: 'mosaicShift-1', type: 'mosaicShift', enabled: false },
         { id: 'sliceShift-1', type: 'sliceShift', enabled: false },
+        { id: 'blob-1', type: 'blob', enabled: false },
       ]);
     }
     
