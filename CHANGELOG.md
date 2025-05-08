@@ -5,13 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.4.3] - 2023-06-11
+## [0.5.2] - 2025-05-08
 
 ### Added
 - Added direct PayPal donate link in the header for supporting the project
 - Styled donate button with yellow accent color for better visibility
 
-## [0.4.2] - 2023-06-10
+## [0.5.1] - 2025-05-08
 
 ### Added
 - Added timestamp to exported video filenames to match PNG export style
@@ -28,6 +28,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed effect processing for smoother UI updates
 - Corrected Reset button to reset all effects instead of just glitch settings
 - Fixed button hover states for better readability
+
+## [0.5.0] - 2025-05-08
+
+### Added
+- Added animation effects
 
 ## [0.4.1] - 2025-05-07
 
