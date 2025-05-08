@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.2] - 2023-06-10
+
+### Added
+- Added timestamp to exported video filenames to match PNG export style
+- Improved image preview performance with optimized effect processing
+
+### Changed
+- Fixed animation duration to 5 seconds for better performance
+- Aligned animation UI colors with the rest of the app's color scheme
+- Updated animation controls to match the app's design language
+
+### Fixed
+- Fixed original aspect ratio issues with uploaded images
+- Improved effect rendering performance using willReadFrequently context option
+- Fixed effect processing for smoother UI updates
+- Corrected Reset button to reset all effects instead of just glitch settings
+- Fixed button hover states for better readability
+
 ## [0.4.1] - 2025-05-07
 
 ### Changed

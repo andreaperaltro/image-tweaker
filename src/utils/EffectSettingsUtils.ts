@@ -11,23 +11,25 @@ import { BlurSettings, EffectInstance, MosaicShiftSettings } from '../types';
 import { SliceShiftSettings } from '../components/SliceShift';
 import { PosterizeSettings } from '../components/Posterize';
 import { FindEdgesSettings } from '../components/FindEdges';
+import { BlobSettings } from '../components/Blob';
 
 export interface EffectSettings {
-  ditherSettings: DitherSettings;
-  halftoneSettings: HalftoneSettings;
-  colorSettings: ColorSettings;
-  thresholdSettings: ThresholdSettings;
-  glitchSettings: GlitchSettings;
-  textDitherSettings: TextDitherSettings;
-  gradientMapSettings: GradientMapSettings;
-  gridSettings: GridSettings;
-  effectInstances: EffectInstance[];
-  blur: BlurSettings;
-  mosaicShiftSettings: MosaicShiftSettings;
-  sliceShiftSettings: SliceShiftSettings;
-  posterizeSettings: PosterizeSettings;
-  findEdgesSettings: FindEdgesSettings;
+  effectInstances?: EffectInstance[];
   instanceSettings?: {[id: string]: any};
+  ditherSettings?: DitherSettings;
+  halftoneSettings?: HalftoneSettings;
+  colorSettings?: ColorSettings;
+  thresholdSettings?: ThresholdSettings;
+  glitchSettings?: GlitchSettings;
+  textDitherSettings?: TextDitherSettings;
+  gradientMapSettings?: GradientMapSettings;
+  gridSettings?: GridSettings;
+  blur?: BlurSettings;
+  mosaicShiftSettings?: MosaicShiftSettings;
+  sliceShiftSettings?: SliceShiftSettings;
+  posterizeSettings?: PosterizeSettings;
+  findEdgesSettings?: FindEdgesSettings;
+  blobSettings?: BlobSettings;
 }
 
 export const saveEffectSettings = (settings: EffectSettings) => {

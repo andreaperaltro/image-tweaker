@@ -21,13 +21,21 @@ A powerful web-based image manipulation tool that allows you to apply various ef
 - Export options:
   - PNG export
   - Vector SVG export (for compatible effects)
+  - Video export (MP4) for animations
   - Save/load effect settings
+
+- Animation support:
+  - Create animated transitions between effect states
+  - Adjustable keyframes with effect parameters
+  - 5-second animation duration
+  - Export animations as MP4 videos
 
 - User-friendly interface:
   - Drag and drop image upload
   - Real-time effect preview
   - Mobile-responsive design
   - Effect stacking and ordering
+  - Proper aspect ratio preservation for uploaded images
 
 ## Getting Started
 

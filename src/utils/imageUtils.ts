@@ -101,22 +101,9 @@ export function drawCoverImage(
   height: number,
   image: HTMLImageElement
 ) {
-  const imgRatio = image.naturalWidth / image.naturalHeight;
-  const canvasRatio = width / height;
-  let drawWidth = width;
-  let drawHeight = height;
-  let offsetX = 0;
-  let offsetY = 0;
-
-  if (imgRatio > canvasRatio) {
-    drawWidth = height * imgRatio;
-    offsetX = (width - drawWidth) / 2;
-  } else {
-    drawHeight = width / imgRatio;
-    offsetY = (height - drawHeight) / 2;
-  }
-
-  ctx.drawImage(image, offsetX, offsetY, drawWidth, drawHeight);
+  // Since we're ensuring canvas matches image aspect ratio,
+  // we can just draw the image to fill the entire canvas
+  ctx.drawImage(image, 0, 0, width, height);
 }
 
 // Types for halftone arrangements and shapes

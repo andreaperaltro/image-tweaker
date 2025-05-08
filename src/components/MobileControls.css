@@ -634,13 +634,15 @@
 }
 
 .plain-effect-btn:hover {
-  background-color: #e5e5e5;
+  background-color: var(--header-bg);
+  color: white;
   transform: translateY(-1px);
 }
 
 @media (prefers-color-scheme: dark) {
   .plain-effect-btn:hover {
-    background-color: #333336;
+    background-color: var(--header-bg);
+    color: white;
   }
 }
 

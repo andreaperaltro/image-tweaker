@@ -579,8 +579,11 @@ function generateColorPalette(imageData: ImageData, numColors: number): number[]
   // K-means clustering
   const maxIterations = 10;
   for (let iter = 0; iter < maxIterations; iter++) {
-    // Assign pixels to nearest centroid
-    const clusters: number[][][] = Array(numColors).fill(0).map(() => []);
+    // Assign pixels to nearest centroid - create array of empty arrays manually
+    const clusters: number[][][] = [];
+    for (let i = 0; i < numColors; i++) {
+      clusters.push([]);
+    }
     
     for (const pixel of pixels) {
       let minDist = Infinity;
