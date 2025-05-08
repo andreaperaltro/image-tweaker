@@ -8,8 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.4.3] - 2023-06-11
 
 ### Added
-- Added PayPal donate button in the header for supporting the project
-- Improved button styling with subtle animations on hover
+- Added direct PayPal donate link in the header for supporting the project
+- Styled donate button with yellow accent color for better visibility
 
 ## [0.4.2] - 2023-06-10
 

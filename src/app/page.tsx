@@ -72,13 +72,15 @@ export default function Home() {
               >
                 ?
               </button>
-              <div 
-                id="donate-button-container" 
-                className="ml-1"
+              <a
+                href="https://www.paypal.com/donate/?hosted_button_id=BNU8J2MRNS4D4"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-yellow-400 hover:text-yellow-300 transition-colors text-sm flex items-center font-medium"
                 title="Support the project"
               >
-                <div id="donate-button"></div>
-              </div>
+                Donate
+              </a>
             </div>
           </div>
           <div 
