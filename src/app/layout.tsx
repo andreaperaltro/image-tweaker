@@ -3,6 +3,7 @@ import './globals.css';
 import type { Metadata, Viewport } from 'next';
 import { ThemeProvider } from '@/context/ThemeContext';
 import Head from 'next/head';
+import Script from 'next/script';
 
 export const metadata: Metadata = {
   title: 'ImageTweaker',
@@ -48,6 +49,28 @@ export default function RootLayout({
         <ThemeProvider>
           {children}
         </ThemeProvider>
+        
+        {/* PayPal Donation Button Script */}
+        <Script
+          id="paypal-donate"
+          strategy="lazyOnload"
+          src="https://www.paypalobjects.com/donate/sdk/donate-sdk.js"
+          onLoad={() => {
+            // @ts-ignore - PayPal is loaded globally
+            if (typeof window !== 'undefined' && window.PayPal && window.PayPal.Donation) {
+              // @ts-ignore - PayPal is loaded globally
+              window.PayPal.Donation.Button({
+                env: 'production',
+                hosted_button_id: 'BNU8J2MRNS4D4',
+                image: {
+                  src: 'https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif',
+                  alt: 'Donate with PayPal button',
+                  title: 'PayPal - The safer, easier way to pay online!',
+                }
+              }).render('#donate-button');
+            }
+          }}
+        />
       </body>
     </html>
   );

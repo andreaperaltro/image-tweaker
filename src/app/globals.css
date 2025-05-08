@@ -121,4 +121,27 @@ input[type="range"]::-moz-range-thumb:hover {
 
 ::-webkit-scrollbar-thumb:hover {
   @apply bg-gray-500 dark:bg-gray-500;
+}
+
+/* PayPal Donate Button Styling */
+#donate-button-container {
+  display: flex;
+  align-items: center;
+}
+
+#donate-button {
+  transform: scale(0.8); /* Make the button slightly smaller */
+  transform-origin: center;
+  opacity: 0.9;
+  transition: opacity 0.2s ease;
+}
+
+#donate-button:hover {
+  opacity: 1;
+}
+
+/* Add a small animation on hover */
+#donate-button img:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 } 

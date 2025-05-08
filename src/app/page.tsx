@@ -72,6 +72,13 @@ export default function Home() {
               >
                 ?
               </button>
+              <div 
+                id="donate-button-container" 
+                className="ml-1"
+                title="Support the project"
+              >
+                <div id="donate-button"></div>
+              </div>
             </div>
           </div>
           <div 
