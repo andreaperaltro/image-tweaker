@@ -463,10 +463,19 @@ export default function AdvancedEditor({
             return;
           }
           
+          // Define maximum number of effects to process at once to prevent memory issues
+          // Increase this number if performance allows
+          const MAX_EFFECTS = 10;
+          const effectsToProcess = enabledEffects.slice(0, MAX_EFFECTS);
+          
+          if (enabledEffects.length > MAX_EFFECTS) {
+            console.warn(`Too many effects active (${enabledEffects.length}). Limiting to ${MAX_EFFECTS} effects.`);
+          }
+          
           // Process each effect, fast path for the simple case
-          if (enabledEffects.length === 1) {
+          if (effectsToProcess.length === 1) {
             // Just one effect, simplify processing
-            const instance = enabledEffects[0];
+            const instance = effectsToProcess[0];
             const settings = getInstanceSettings(instance);
             
             // Apply the effect directly
@@ -476,44 +485,88 @@ export default function AdvancedEditor({
             ctx.drawImage(sourceCanvas, 0, 0);
           } else {
             // Multiple effects - process in sequence
-            let currentSrc = sourceCanvas;
-            let currentDst = ctx;
+            // Create two temporary canvases to swap between for effect processing
+            const tempCanvas1 = document.createElement('canvas');
+            tempCanvas1.width = canvasWidth;
+            tempCanvas1.height = canvasHeight;
+            const tempCtx1 = tempCanvas1.getContext('2d', { willReadFrequently: true });
             
-            // Use temporary canvas for intermediate steps
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = canvasWidth;
-            tempCanvas.height = canvasHeight;
-            const tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
+            const tempCanvas2 = document.createElement('canvas');
+            tempCanvas2.width = canvasWidth;
+            tempCanvas2.height = canvasHeight;
+            const tempCtx2 = tempCanvas2.getContext('2d', { willReadFrequently: true });
             
-            if (!tempCtx) {
-              // Fallback if we can't get temp context
+            if (!tempCtx1 || !tempCtx2) {
+              // Fallback if we can't get temp contexts
               ctx.drawImage(sourceCanvas, 0, 0);
             } else {
+              // First, copy the source canvas to the first temp canvas
+              tempCtx1.clearRect(0, 0, canvasWidth, canvasHeight);
+              tempCtx1.drawImage(sourceCanvas, 0, 0);
+              
               // Process each effect sequentially
-              enabledEffects.forEach((instance, index) => {
+              effectsToProcess.forEach((instance, index) => {
                 const settings = getInstanceSettings(instance);
-                const isLast = index === enabledEffects.length - 1;
+                const isLast = index === effectsToProcess.length - 1;
                 
-                // For intermediate steps, use the temp canvas
+                // Determine source and destination contexts for this iteration
+                const srcCanvas = index % 2 === 0 ? tempCanvas1 : tempCanvas2;
+                const destCanvas = index % 2 === 0 ? tempCanvas2 : tempCanvas1;
+                const destCtx = index % 2 === 0 ? tempCtx2 : tempCtx1;
+                
+                // Set a reasonable timeout for effect processing to prevent UI freezing
+                const effectStartTime = performance.now();
+                const MAX_EFFECT_TIME = 2000; // 2 seconds max per effect
+                
                 if (!isLast) {
-                  // First, copy current state to temp canvas
-                  tempCtx.clearRect(0, 0, canvasWidth, canvasHeight);
-                  tempCtx.drawImage(currentSrc, 0, 0);
+                  // Clear the destination canvas
+                  destCtx.clearRect(0, 0, canvasWidth, canvasHeight);
                   
-                  // Apply effect to temp canvas
-                  applyEffectDirectly(instance.type, tempCtx, tempCanvas, settings);
+                  // Copy the current state to destination canvas
+                  destCtx.drawImage(srcCanvas, 0, 0);
                   
-                  // Update source for next iteration
-                  currentSrc = tempCanvas;
+                  // Apply effect to destination canvas
+                  try {
+                    applyEffectDirectly(instance.type, destCtx, destCanvas, settings);
+                    
+                    // Check if effect took too long
+                    const effectTime = performance.now() - effectStartTime;
+                    if (effectTime > MAX_EFFECT_TIME) {
+                      console.warn(`Effect ${instance.type} took too long: ${effectTime.toFixed(0)}ms`);
+                    }
+                  } catch (err) {
+                    console.error(`Error processing effect ${instance.type}:`, err);
+                    // Copy source to destination to maintain the chain
+                    destCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+                    destCtx.drawImage(srcCanvas, 0, 0);
+                  }
                 } else {
                   // For the last effect, draw directly to main canvas
                   ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-                  ctx.drawImage(currentSrc, 0, 0);
+                  ctx.drawImage(srcCanvas, 0, 0);
                   
                   // Apply final effect directly to main canvas
-                  applyEffectDirectly(instance.type, ctx, canvas, settings);
+                  try {
+                    applyEffectDirectly(instance.type, ctx, canvas, settings);
+                    
+                    // Check if effect took too long
+                    const effectTime = performance.now() - effectStartTime;
+                    if (effectTime > MAX_EFFECT_TIME) {
+                      console.warn(`Effect ${instance.type} took too long: ${effectTime.toFixed(0)}ms`);
+                    }
+                  } catch (err) {
+                    console.error(`Error processing final effect ${instance.type}:`, err);
+                    // Use the last good state
+                    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+                    ctx.drawImage(srcCanvas, 0, 0);
+                  }
                 }
               });
+              
+              // Cleanup canvas resources
+              // This helps ensure we don't leak memory over time
+              URL.revokeObjectURL(tempCanvas1.toDataURL());
+              URL.revokeObjectURL(tempCanvas2.toDataURL());
             }
           }
           
@@ -566,65 +619,71 @@ export default function AdvancedEditor({
     canvas: HTMLCanvasElement, 
     settings: any
   ) => {
-    switch (effectType) {
-      case 'color':
-        if (settings.enabled) {
-          const colorSettings: ColorSettings = {
-            enabled: true,
-            hueShift: Number(settings.hueShift) || 0,
-            saturation: Number(settings.saturation) || 100,
-            brightness: Number(settings.brightness) || 100,
-            contrast: Number(settings.contrast) || 100,
-            posterize: Number(settings.posterize) || 0,
-            invert: Boolean(settings.invert),
-            glitchIntensity: Number(settings.glitchIntensity) || 0,
-            glitchSeed: settings.glitchSeed || Math.random(),
-            blendMode: settings.blendMode || 'normal'
-          };
-          applyColorAdjustments(ctx, canvas.width, canvas.height, colorSettings);
-        }
-        break;
-      case 'gradient':
-        applyGradientMap(ctx, canvas, canvas.width, canvas.height, { ...settings, enabled: true });
-        break;
-      case 'threshold':
-        applyThreshold(ctx, canvas.width, canvas.height, { ...settings, enabled: true });
-        break;
-      case 'halftone':
-        applyHalftone(ctx, canvas, canvas.width, canvas.height, { ...settings, enabled: true });
-        break;
-      case 'grid':
-        const gridSettings = { ...settings, enabled: true };
-        const grid = createGrid(canvas.width, canvas.height, gridSettings);
-        grid.forEach(cell => renderGridCell(ctx, cell, canvas, gridSettings));
-        break;
-      case 'dither':
-        applyDithering(ctx, canvas, canvas.width, canvas.height, { ...settings, enabled: true });
-        break;
-      case 'textDither':
-        applyTextDither(ctx, canvas.width, canvas.height, { ...settings, enabled: true });
-        break;
-      case 'glitch':
-        applyGlitch(ctx, canvas, canvas.width, canvas.height, { ...settings, masterEnabled: true });
-        break;
-      case 'blur':
-        applyBlur(ctx, canvas.width, canvas.height, { ...settings, enabled: true });
-        break;
-      case 'mosaicShift':
-        applyMosaicShift(ctx, canvas, canvas.width, canvas.height, { ...settings, enabled: true });
-        break;
-      case 'sliceShift':
-        applySliceShift(ctx, canvas, canvas.width, canvas.height, { ...settings, enabled: true });
-        break;
-      case 'posterize':
-        applyPosterize(ctx, canvas, canvas.width, canvas.height, settings);
-        break;
-      case 'findEdges':
-        applyFindEdges(ctx, canvas, canvas.width, canvas.height, settings);
-        break;
-      case 'blob':
-        applyBlob(ctx, canvas, canvas.width, canvas.height, settings);
-        break;
+    try {
+      switch (effectType) {
+        case 'color':
+          if (settings.enabled) {
+            const colorSettings: ColorSettings = {
+              enabled: true,
+              hueShift: Number(settings.hueShift) || 0,
+              saturation: Number(settings.saturation) || 100,
+              brightness: Number(settings.brightness) || 100,
+              contrast: Number(settings.contrast) || 100,
+              posterize: Number(settings.posterize) || 0,
+              invert: Boolean(settings.invert),
+              glitchIntensity: Number(settings.glitchIntensity) || 0,
+              glitchSeed: settings.glitchSeed || Math.random(),
+              blendMode: settings.blendMode || 'normal'
+            };
+            applyColorAdjustments(ctx, canvas.width, canvas.height, colorSettings);
+          }
+          break;
+        case 'gradient':
+          applyGradientMap(ctx, canvas, canvas.width, canvas.height, { ...settings, enabled: true });
+          break;
+        case 'threshold':
+          applyThreshold(ctx, canvas.width, canvas.height, { ...settings, enabled: true });
+          break;
+        case 'halftone':
+          applyHalftone(ctx, canvas, canvas.width, canvas.height, { ...settings, enabled: true });
+          break;
+        case 'grid':
+          const gridSettings = { ...settings, enabled: true };
+          const grid = createGrid(canvas.width, canvas.height, gridSettings);
+          grid.forEach(cell => renderGridCell(ctx, cell, canvas, gridSettings));
+          break;
+        case 'dither':
+          applyDithering(ctx, canvas, canvas.width, canvas.height, { ...settings, enabled: true });
+          break;
+        case 'textDither':
+          applyTextDither(ctx, canvas.width, canvas.height, { ...settings, enabled: true });
+          break;
+        case 'glitch':
+          applyGlitch(ctx, canvas, canvas.width, canvas.height, { ...settings, masterEnabled: true });
+          break;
+        case 'blur':
+          applyBlur(ctx, canvas.width, canvas.height, { ...settings, enabled: true });
+          break;
+        case 'mosaicShift':
+          applyMosaicShift(ctx, canvas, canvas.width, canvas.height, { ...settings, enabled: true });
+          break;
+        case 'sliceShift':
+          applySliceShift(ctx, canvas, canvas.width, canvas.height, { ...settings, enabled: true });
+          break;
+        case 'posterize':
+          applyPosterize(ctx, canvas, canvas.width, canvas.height, settings);
+          break;
+        case 'findEdges':
+          applyFindEdges(ctx, canvas, canvas.width, canvas.height, settings);
+          break;
+        case 'blob':
+          applyBlob(ctx, canvas, canvas.width, canvas.height, settings);
+          break;
+      }
+    } catch (error) {
+      console.error(`Error applying effect ${effectType}:`, error);
+      // If an effect fails, we can at least keep the current state of the canvas
+      // rather than showing nothing at all
     }
   };
   
