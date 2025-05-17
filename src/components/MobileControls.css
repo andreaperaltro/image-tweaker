@@ -1,0 +1,780 @@
+.mobile-controls {
+  display: block;
+  position: relative;
+  z-index: 9999;
+  font-family: 'PP Mondwest', sans-serif;
+  padding: 12px;
+  background: var(--accent-bg);
+  color: var(--text-primary);
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--border-color);
+  height: 100%;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+}
+
+/* Controls panel - consistent for all screen sizes */
+.mobile-controls-panel {
+  position: static;
+  background: var(--accent-bg);
+  color: var(--text-primary);
+  border-radius: 8px;
+  padding: 12px;
+  overflow-y: auto;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+  font-size: 14px;
+  height: 100%;
+  max-height: calc(100vh - 40px);
+  border: 1px solid var(--border-color);
+  font-family: 'PP Mondwest', sans-serif;
+}
+
+/* Hide mobile toggles since we're not using a drawer */
+.mobile-controls-button {
+  display: none;
+}
+
+.mobile-controls-close {
+  display: none;
+}
+
+.mobile-controls-header {
+  display: none !important;
+}
+
+.mobile-controls-title {
+  display: none !important;
+}
+
+.mobile-effect-section {
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 12px;
+}
+
+/* Style for mobile-effect-header to make it more responsive */
+.mobile-effect-header {
+  padding: 10px;
+  border-radius: 6px;
+  background-color: rgba(0, 0, 0, 0.05);
+  margin-bottom: 2px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.mobile-effect-header:hover {
+  background-color: rgba(0, 0, 0, 0.08);
+}
+
+.mobile-effect-header.section-open {
+  background-color: rgba(0, 0, 0, 0.1);
+  margin-bottom: 0;
+  border-radius: 6px 6px 0 0;
+}
+
+/* Improving effect title and toggle layout for small screens */
+.mobile-effect-header .effect-title-container {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.mobile-effect-header .effect-controls-container {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  width: 100%;
+}
+
+.mobile-effect-header .effect-title-toggle-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.mobile-effect-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0;
+  cursor: pointer;
+  font-family: 'PP Mondwest', sans-serif;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Add expand indicator icon */
+.mobile-effect-title::after {
+  content: "≡";
+  display: inline-block;
+  margin-left: 8px;
+  transition: transform 0.3s ease;
+  font-size: 16px;
+}
+
+/* Rotate indicator when section is open */
+.section-open .mobile-effect-title::after {
+  transform: rotate(90deg);
+}
+
+/* Responsive adjustments for mobile */
+@media (max-width: 767px) {
+  .mobile-effect-header {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 8px 10px;
+  }
+  
+  .mobile-effect-header .mobile-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 8px;
+  }
+  
+  .mobile-effect-header .mobile-header-row:last-child {
+    margin-bottom: 0;
+  }
+  
+  .mobile-effect-title {
+    max-width: calc(100% - 50px);
+  }
+}
+
+@media (max-width: 374px) {
+  /* Extra small devices (iPhone SE, etc) */
+  .mobile-effect-title {
+    font-size: 0.95rem;
+  }
+  
+  .mobile-effect-header {
+    padding: 6px 8px;
+  }
+  
+  .effect-order-number {
+    min-width: 18px;
+    height: 18px;
+    font-size: 10px;
+  }
+}
+
+.mobile-effect-toggle {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 20px;
+}
+
+.mobile-effect-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.mobile-effect-toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--border-color);
+  transition: .4s;
+  border-radius: 20px;
+}
+
+.mobile-effect-toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+.mobile-effect-toggle input:checked + .mobile-effect-toggle-slider {
+  background-color: #10b981;
+}
+
+.mobile-effect-toggle input:checked + .mobile-effect-toggle-slider:before {
+  transform: translateX(20px);
+}
+
+.mobile-effect-toggle input:focus + .mobile-effect-toggle-slider {
+  box-shadow: 0 0 1px #10b981;
+}
+
+.mobile-effect-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  padding: 0;
+  opacity: 0;
+  visibility: hidden;
+}
+
+.mobile-effect-content.open {
+  max-height: 2000px; /* Use a large enough value to accommodate all content */
+  opacity: 1;
+  padding: 10px 0;
+  transition: all 0.3s ease;
+  visibility: visible;
+  background-color: rgba(0, 0, 0, 0.03);
+  border-radius: 0 0 6px 6px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-top: none;
+}
+
+/* Sub-section styling for grouped controls within effects */
+.mobile-sub-section {
+  margin: 10px 0 15px 0;
+  padding: 10px;
+  background-color: rgba(0, 0, 0, 0.03);
+  border-radius: 6px;
+  border-left: 3px solid var(--border-color);
+}
+
+.mobile-sub-section-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+  color: var(--text-primary);
+}
+
+.mobile-sub-section .mobile-control-group:first-of-type {
+  margin-top: 5px;
+}
+
+.mobile-sub-section .mobile-control-group:last-of-type {
+  margin-bottom: 0;
+}
+
+.mobile-control-group {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.mobile-control-label {
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  margin-right: 8px;
+  font-family: 'PP Mondwest', sans-serif;
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mobile-select {
+  flex: 1;
+  height: 36px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background: var(--secondary-bg);
+  color: var(--text-primary);
+  padding: 0 32px 0 12px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M2.5 4.5L6 8L9.5 4.5' stroke='%23999' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  font-family: 'PP Mondwest', sans-serif;
+}
+
+.mobile-select:hover {
+  background-color: var(--accent-bg);
+  border-color: var(--text-muted);
+}
+
+.mobile-select:focus {
+  outline: none;
+  border-color: #10b981;
+  box-shadow: 0 0 0 1px #10b981;
+}
+
+.mobile-select option {
+  background: var(--secondary-bg);
+  color: var(--text-primary);
+  padding: 8px;
+  font-size: 14px;
+}
+
+/* Mobile-specific slider styles */
+.mobile-effect-section .slider-container {
+  margin-bottom: 12px;
+}
+
+.mobile-effect-section .slider-label-container {
+  margin-bottom: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.mobile-effect-section .slider-label {
+  color: var(--text-secondary);
+  font-size: 14px;
+  min-width: 120px;
+  font-family: 'PP Mondwest', sans-serif;
+}
+
+.mobile-effect-section .slider-value {
+  color: var(--text-secondary);
+  font-size: 14px;
+  min-width: 50px;
+  text-align: right;
+}
+
+.mobile-effect-section .slider-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mobile-effect-section input[type="range"] {
+  flex: 1;
+  height: 2px;
+  background-color: var(--border-color);
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.mobile-effect-section input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-color: #10b981;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mobile-effect-section input[type="range"]::-webkit-slider-thumb:hover {
+  background-color: #059669;
+  transform: scale(1.1);
+}
+
+.mobile-effect-section input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border: none;
+  border-radius: 50%;
+  background-color: #10b981;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mobile-effect-section input[type="range"]::-moz-range-thumb:hover {
+  background-color: #059669;
+  transform: scale(1.1);
+}
+
+.mobile-effect-section .slider-button {
+  width: 28px;
+  height: 28px;
+  background-color: var(--accent-bg);
+  color: var(--text-secondary);
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mobile-effect-section .slider-button:hover {
+  background-color: var(--secondary-bg);
+}
+
+.mobile-effect-section .slider-button:active {
+  background-color: var(--border-color);
+  transform: scale(0.95);
+}
+
+.mobile-effect-section .slider-button:disabled {
+  background-color: var(--primary-bg);
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+.mobile-color-picker {
+  width: 100%;
+  height: 32px;
+  border-radius: 3px;
+}
+
+.mobile-controls-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.mobile-action-button {
+  padding: 8px 16px;
+  background-color: var(--accent-color);
+  color: var(--accent-text);
+  border: 1px solid var(--accent-color);
+  border-radius: 6px;
+  font-family: 'PP Mondwest', sans-serif;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.mobile-action-button:hover {
+  background-color: var(--accent-color);
+  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.mobile-action-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.mobile-action-button.secondary {
+  background-color: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  box-shadow: none;
+}
+
+.mobile-action-button.secondary:hover {
+  color: var(--text-primary);
+  background-color: var(--border-color);
+  opacity: 0.1;
+  transform: none;
+  box-shadow: none;
+}
+
+.mobile-controls-footer {
+  padding-top: 12px;
+  margin-top: 12px;
+  border-top: 1px solid var(--border-color);
+  font-size: 12px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.mobile-controls-footer a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.mobile-controls-footer a:hover {
+  text-decoration: underline;
+  color: var(--text-primary);
+}
+
+.settings-controls {
+  display: flex;
+  gap: 8px;
+  margin-left: 12px;
+}
+
+.settings-button {
+  background: var(--accent-bg);
+  color: var(--text-primary);
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: background-color 0.2s;
+}
+
+.settings-button:hover {
+  background: var(--secondary-bg);
+}
+
+.settings-button input[type="file"] {
+  display: none;
+}
+
+/* Add dark mode styles - these overrides should no longer be needed since we're using CSS variables */
+@media (prefers-color-scheme: dark) {
+  /* Remove the dark mode specific overrides since our variables take care of it */
+}
+
+.effect-action-buttons {
+  display: flex;
+  gap: 4px;
+}
+
+.effect-action-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 5px;
+  transition: all 0.2s ease;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.effect-action-btn:hover {
+  color: var(--text-primary);
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.effect-action-btn:active {
+  background: rgba(0, 0, 0, 0.1);
+  transform: scale(0.95);
+}
+
+.effect-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.effect-buttons-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 15px 0 10px 0;
+  padding: 0 10px;
+  font-family: 'PP Mondwest', sans-serif;
+  color: var(--text-primary);
+}
+
+.effect-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  background-color: var(--accent-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--text-primary);
+  gap: 4px;
+  margin: 0 4px 8px 8px;
+  width: calc(33.333% - 16px);
+  max-width: 100px;
+}
+
+.effect-btn:hover {
+  background-color: #e5e5e5;
+  transform: translateY(-1px);
+}
+
+@media (prefers-color-scheme: dark) {
+  .effect-btn:hover {
+    background-color: #333336;
+  }
+}
+
+.effect-btn:active {
+  transform: translateY(0px);
+}
+
+/* Hide old styles */
+.effect-buttons-container,
+.effect-buttons-header,
+.add-effect-section,
+.add-effect-title,
+.add-effect-buttons,
+.add-effect-btn,
+.add-effects-section,
+.effect-buttons-grid,
+.effect-buttons-row,
+.effects-separator {
+  display: none;
+}
+
+.add-effects-section {
+  position: relative;
+  margin-top: 10px;
+}
+
+.effects-separator {
+  height: 1px;
+  background-color: var(--border-color);
+  margin: 15px 5px 5px 5px;
+}
+
+/* New clean effect buttons styles */
+.add-effect-label {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 20px 0 8px 10px;
+  font-family: 'PP Mondwest', sans-serif;
+  color: var(--text-primary);
+  border-top: 1px solid var(--border-color);
+  padding-top: 15px;
+}
+
+.add-first-effect-label {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 8px 10px; 
+  font-family: 'PP Mondwest', sans-serif;
+  color: var(--text-primary);
+}
+
+.effect-buttons-container {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 0 4px;
+  margin-bottom: 10px;
+}
+
+.plain-effect-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background-color: var(--accent-bg);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin: 0 4px 8px 4px;
+  flex: 0 0 calc(33.333% - 8px);
+  max-width: 100px;
+}
+
+.plain-effect-btn:hover {
+  background-color: var(--header-bg);
+  color: white;
+  transform: translateY(-1px);
+}
+
+@media (prefers-color-scheme: dark) {
+  .plain-effect-btn:hover {
+    background-color: var(--header-bg);
+    color: white;
+  }
+}
+
+.plain-effect-btn:active {
+  transform: translateY(0px);
+}
+
+/* DON'T hide the effect buttons container */
+.effect-buttons-title,
+.effect-btn,
+.effect-buttons-header,
+.add-effect-section,
+.add-effect-title,
+.add-effect-buttons,
+.add-effect-btn,
+.add-effects-section,
+.effect-buttons-grid,
+.effect-buttons-row,
+.effects-separator {
+  display: none !important; /* Force hide with !important */
+}
+
+/* Style for the effect order number */
+.effect-order-number {
+  background: var(--accent-bg);
+  color: var(--text-primary);
+  border-radius: 50%;
+  min-width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 8px;
+  font-weight: bold;
+  font-size: 11px;
+  border: 1px solid var(--border-color);
+}
+
+/* Style for reorder buttons */
+.reorder-buttons {
+  display: flex;
+  flex-direction: row;
+  margin-right: 6px;
+  gap: 2px;
+}
+
+.reorder-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 5px;
+  transition: all 0.2s ease;
+  border-radius: 4px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.reorder-btn:hover {
+  color: var(--text-primary);
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.reorder-btn:active {
+  background: rgba(0, 0, 0, 0.1);
+  transform: scale(0.95);
+}
+
+.reorder-btn:disabled {
+  color: var(--text-muted);
+  cursor: not-allowed;
+  background: none;
+  transform: none;
+}
+
+@media (max-width: 480px) {
+  .mobile-control-group {
+    padding: 6px 0;
+  }
+  
+  .mobile-control-label {
+    font-size: 0.85rem;
+    max-width: calc(100% - 50px);
+  }
+}
+
+.mobile-toggle-container {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  min-width: 40px;
+  flex-shrink: 0;
+} 
