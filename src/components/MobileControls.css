@@ -276,6 +276,7 @@
   color: var(--text-primary);
   margin-right: 8px;
   font-family: 'PP Mondwest', sans-serif;
+  font-weight: 500;
   flex: 1;
   min-width: 0;
   white-space: nowrap;
@@ -333,17 +334,20 @@
 }
 
 .mobile-effect-section .slider-label {
-  color: var(--text-secondary);
+  color: var(--text-primary);
   font-size: 14px;
   min-width: 120px;
   font-family: 'PP Mondwest', sans-serif;
+  font-weight: 500;
 }
 
 .mobile-effect-section .slider-value {
-  color: var(--text-secondary);
+  color: var(--text-primary);
   font-size: 14px;
   min-width: 50px;
   text-align: right;
+  font-family: 'PP Mondwest', sans-serif;
+  font-weight: 500;
 }
 
 .mobile-effect-section .slider-controls {

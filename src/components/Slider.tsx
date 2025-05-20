@@ -8,6 +8,8 @@ interface SliderProps {
   max?: number;
   step?: number;
   unit?: string;
+  showValue?: boolean;
+  hideLabelContainer?: boolean;
 }
 
 const Slider: React.FC<SliderProps> = ({
@@ -17,7 +19,9 @@ const Slider: React.FC<SliderProps> = ({
   min = 0,
   max = 100,
   step = 1,
-  unit = ''
+  unit = '',
+  showValue = true,
+  hideLabelContainer = false
 }) => {
   // Use a safe value for calculations
   const safeValue = value === undefined || value === null ? min : value;
@@ -44,10 +48,14 @@ const Slider: React.FC<SliderProps> = ({
 
   return (
     <div className="slider-container">
-      <div className="slider-label-container">
-        <label className="slider-label">{label}</label>
-        <span className="slider-value">{formatValue(value)}{unit}</span>
-      </div>
+      {!hideLabelContainer && (
+        <div className="slider-label-container">
+          <label className="slider-label text-[var(--text-primary)] pp-mondwest-font font-medium">{label}</label>
+          {showValue && (
+            <span className="slider-value text-[var(--text-primary)] pp-mondwest-font font-medium">{formatValue(value)}{unit}</span>
+          )}
+        </div>
+      )}
       <div className="slider-controls">
         <button
           type="button"

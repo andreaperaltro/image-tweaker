@@ -344,6 +344,25 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ params, onChange }) => {
           </>
         )}
       </div>
+
+      {/* Export Controls */}
+      <div className="p-4 bg-gray-50 rounded-lg">
+        <h3 className="text-lg font-semibold mb-4">Export</h3>
+        <div className="space-y-4">
+          <Slider
+            label="Export Scale"
+            value={params.exportScale}
+            onChange={(value) => onChange({ exportScale: value })}
+            min={100}
+            max={500}
+            step={50}
+            unit="%"
+          />
+          <div className="text-sm text-gray-600">
+            <p>Export Resolution: {Math.round(params.canvasWidth * params.exportScale / 100)} × {Math.round(params.canvasHeight * params.exportScale / 100)} pixels</p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

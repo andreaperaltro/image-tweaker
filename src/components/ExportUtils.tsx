@@ -66,7 +66,7 @@ export function isVectorExportAvailable(): boolean {
  * Exports a canvas as an SVG file with the timestamp in the filename
  * If the last effect was halftone or dithering, creates a true vector SVG
  */
-export function exportCanvasAsSvg(canvas: HTMLCanvasElement): void {
+export function exportCanvasAsSvg(canvas: HTMLCanvasElement, scale: number = 1): void {
   if (!canvas) return;
   
   // Create timestamp for filename
@@ -78,8 +78,8 @@ export function exportCanvasAsSvg(canvas: HTMLCanvasElement): void {
   if (isVectorExportAvailable()) {
     try {
       // Create a true vector SVG
-      const width = canvas.width;
-      const height = canvas.height;
+      const width = canvas.width * scale;
+      const height = canvas.height * scale;
       const imageInfo = {
         'Software': 'ImageTweaker v0.2.0',
         'Author': 'ImageTweaker realized by andreaperato.com',
@@ -98,8 +98,8 @@ export function exportCanvasAsSvg(canvas: HTMLCanvasElement): void {
   }
 
   // Create simple SVG with the canvas content as an image (fallback)
-  const width = canvas.width;
-  const height = canvas.height;
+  const width = canvas.width * scale;
+  const height = canvas.height * scale;
   
   // Create simple SVG with the canvas content as an image
   const dataURL = canvas.toDataURL('image/png');

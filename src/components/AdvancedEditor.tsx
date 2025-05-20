@@ -32,6 +32,7 @@ import { exportVideo, downloadVideo } from '../utils/videoExport'
 import AnimationTimeline from './AnimationTimeline'
 import { nanoid } from 'nanoid'
 import { drawCoverImage } from '../utils/imageUtils'
+import Slider from './Slider'
 
 // Define types
 type AspectRatioPreset = '1:1' | '4:3' | '16:9' | '3:2' | '5:4' | '2:1' | '3:4' | '9:16' | '2:3' | '4:5' | '1:2' | 'custom';
@@ -1997,6 +1998,79 @@ export default function AdvancedEditor({
     }
   };
 
+  const [exportScale, setExportScale] = useState(100);
+  const [exporting, setExporting] = useState(false);
+
+  // Helper to get max texture size
+  function getMaxTextureSize() {
+    const gl = document.createElement('canvas').getContext('webgl');
+    return gl ? gl.getParameter(gl.MAX_TEXTURE_SIZE) : 8192;
+  }
+
+  // Compute the robust clamped export scale and resolution
+  const maxTextureSize = getMaxTextureSize();
+  const maxSafeScale = Math.min(5, Math.floor(maxTextureSize / Math.max(canvasWidth, canvasHeight)));
+  const requestedScale = exportScale / 100;
+  const finalScale = Math.min(requestedScale, maxSafeScale);
+  const finalWidth = Math.round(canvasWidth * finalScale);
+  const finalHeight = Math.round(canvasHeight * finalScale);
+  const isClamped = finalScale < requestedScale;
+
+  // Export PNG with scale
+  const handleExportPng = async () => {
+    if (!canvasRef.current) return;
+    setExporting(true);
+    const scale = finalScale;
+    const now = new Date();
+    const timestamp = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}-${String(now.getMinutes()).padStart(2, '0')}-${String(now.getSeconds()).padStart(2, '0')}`;
+    const filename = `imagetweaker-${timestamp}.png`;
+
+    let outputCanvas = canvasRef.current;
+
+    if (scale !== 1) {
+      const targetWidth = Math.round(canvasWidth * scale);
+      const targetHeight = Math.round(canvasHeight * scale);
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = targetWidth;
+      tempCanvas.height = targetHeight;
+      const ctx = tempCanvas.getContext('2d');
+      if (ctx) {
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(canvasRef.current, 0, 0, tempCanvas.width, tempCanvas.height);
+      }
+      outputCanvas = tempCanvas;
+    } else {
+      // 1x, just use the original canvas
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = canvasWidth;
+      tempCanvas.height = canvasHeight;
+      const ctx = tempCanvas.getContext('2d');
+      if (ctx) {
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(canvasRef.current, 0, 0, tempCanvas.width, tempCanvas.height);
+      }
+      outputCanvas = tempCanvas;
+    }
+
+    outputCanvas.toBlob((blob) => {
+      if (blob) {
+        saveAs(blob, filename);
+      }
+      setExporting(false);
+    }, 'image/png');
+    
+    if (isClamped) {
+      alert(`Export size too large for your browser/GPU. Max allowed: ${maxTextureSize}x${maxTextureSize}px. Exported at maximum possible size: ${finalWidth}x${finalHeight}px.`);
+    }
+  };
+  // Export SVG with scale
+  const handleExportSvg = () => {
+    if (!canvasRef.current) return;
+    exportCanvasAsSvg(canvasRef.current, exportScale / 100);
+  };
+
   return (
     <div className="flex flex-col lg:flex-row gap-6">
       {/* Canvas Container */}
@@ -2087,33 +2161,7 @@ export default function AdvancedEditor({
                   <FiCrop size={16} />
                   <span className="hidden sm:inline">Crop</span>
                 </button>
-                
-                <div className="h-4 mx-1 border-r border-[var(--border-color)]"></div>
-                
-                <button
-                  className="px-2 py-1 bg-[var(--topbar-bg)] text-[var(--text-primary)] text-xs rounded hover:bg-[var(--secondary-bg)] transition-colors pp-mondwest-font flex items-center gap-1 min-w-fit"
-                  onClick={() => canvasRef.current && exportCanvasAsPng(canvasRef.current)}
-                  disabled={!image}
-                  title="Export as PNG"
-                >
-                  <FiImage size={16} />
-                  <span className="hidden sm:inline">PNG</span>
-                </button>
-                <button
-                  className={`px-2 py-1 rounded-md flex items-center space-x-1 text-xs transition-colors pp-mondwest-font ${
-                    isVectorSvgAvailable() 
-                      ? 'bg-[var(--topbar-bg)] text-[var(--text-primary)] hover:bg-[var(--secondary-bg)]'
-                      : 'bg-gray-800 border-gray-900 text-gray-500 cursor-not-allowed'
-                  }`}
-                  onClick={() => canvasRef.current && isVectorSvgAvailable() && exportCanvasAsSvg(canvasRef.current)}
-                  disabled={!image || !isVectorSvgAvailable()}
-                  title={isVectorSvgAvailable() 
-                    ? "Export as true vector SVG (halftone/dither)" 
-                    : "Vector SVG export only available when halftone or dither is the last effect"}
-                >
-                  <FiFileText size={16} />
-                  <span className="hidden sm:inline">SVG</span>
-                </button>
+                {/* Divider after Crop button removed */}
               </div>
             </div>
           </div>
@@ -2201,7 +2249,7 @@ export default function AdvancedEditor({
             findEdgesSettings={findEdgesSettings}
             updateFindEdgesSettings={(settings) => setFindEdgesSettings(prev => ({ ...prev, ...settings }))}
           />
-          
+          {/* Animation Section */}
           <div className="mt-6 border-t border-[var(--border-color)] pt-4">
             <div className="flex justify-between items-center mb-3">
               <h3 className="text-[var(--text-primary)] text-lg pp-mondwest-font">Animation</h3>
@@ -2216,7 +2264,6 @@ export default function AdvancedEditor({
                 </label>
               </div>
             </div>
-            
             {animationEnabled && (
               <>
                 <AnimationTimeline
@@ -2230,7 +2277,6 @@ export default function AdvancedEditor({
                   selectedKeyframeId={selectedKeyframeId}
                   onDurationChange={setAnimationDuration}
                 />
-                
                 <div className="mt-4 flex justify-end">
                   <button
                     onClick={handleExportVideo}
@@ -2250,6 +2296,49 @@ export default function AdvancedEditor({
                 </div>
               </>
             )}
+          </div>
+          {/* Export Section - always at the bottom, with divider above */}
+          <div className="mt-6 border-t border-[var(--border-color)] pt-4">
+            <div>
+              <h3 className="text-[var(--text-primary)] text-lg pp-mondwest-font mb-2">Export</h3>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-[var(--text-primary)]">Export Scale</span>
+                <span className="flex items-center gap-2">
+                  <span className="text-xs text-[var(--text-secondary)]">{Math.round(finalScale * 100)}%</span>
+                  <span className="text-xs text-[var(--text-secondary)]">{finalWidth}x{finalHeight}px</span>
+                </span>
+              </div>
+              <div className="mt-1">
+                <Slider
+                  label=""
+                  value={exportScale}
+                  onChange={setExportScale}
+                  min={100}
+                  max={500}
+                  step={50}
+                  unit="%"
+                  showValue={false}
+                  hideLabelContainer={true}
+                />
+              </div>
+              <div className="flex gap-2 justify-end mt-2">
+                <button
+                  className="px-3 py-1 bg-emerald-600 text-white rounded hover:bg-emerald-700 transition text-xs"
+                  onClick={handleExportPng}
+                  disabled={!image}
+                >
+                  Export PNG
+                </button>
+                <button
+                  className={`px-3 py-1 rounded text-xs transition ${isVectorSvgAvailable() ? 'bg-purple-600 text-white hover:bg-purple-700' : 'bg-gray-800 text-gray-400 cursor-not-allowed'}`}
+                  onClick={handleExportSvg}
+                  disabled={!image || !isVectorSvgAvailable()}
+                  title={isVectorSvgAvailable() ? 'Export as true vector SVG (halftone/dither)' : 'Vector SVG export only available when halftone or dither is the last effect'}
+                >
+                  Export SVG
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>

@@ -6,6 +6,7 @@ import { saveAs } from 'file-saver';
 import ControlPanel from './ControlPanel';
 import ImageCanvas from './ImageCanvas';
 import { HalftoneArrangement, HalftoneShape } from '@/utils/imageUtils';
+import { exportCanvasAsSvg } from './ExportUtils';
 
 // Default parameters for image manipulation, derived from the original code
 const defaultParams = {
@@ -16,6 +17,7 @@ const defaultParams = {
   selectedRatio: '1:1',
   orientation: 'landscape',
   autoCanvasSize: true,
+  exportScale: 100,
   
   // Displacement / Split / Effects
   noiseScale: 0,
@@ -142,9 +144,10 @@ export default function ImageEditor() {
     }
   };
 
-  // Export as SVG (placeholder for now)
-  const exportSVG = () => {
-    alert('SVG export will be implemented in a future update');
+  // Export as SVG if the last effect was halftone or dithering
+  const exportAsSvg = () => {
+    if (!canvasRef.current) return;
+    exportCanvasAsSvg(canvasRef.current, params.exportScale / 100);
   };
 
   // Update parameters
@@ -241,9 +244,22 @@ export default function ImageEditor() {
   const downloadImage = () => {
     if (!canvasRef.current) return;
     
+    // Create a temporary canvas for the scaled export
+    const tempCanvas = document.createElement('canvas');
+    const scale = params.exportScale / 100;
+    tempCanvas.width = canvasRef.current.width * scale;
+    tempCanvas.height = canvasRef.current.height * scale;
+    
+    const tempCtx = tempCanvas.getContext('2d');
+    if (!tempCtx) return;
+    
+    // Draw the original canvas scaled up
+    tempCtx.drawImage(canvasRef.current, 0, 0, tempCanvas.width, tempCanvas.height);
+    
+    // Create download link
     const link = document.createElement('a');
     link.download = 'edited-image.png';
-    link.href = canvasRef.current.toDataURL('image/png');
+    link.href = tempCanvas.toDataURL('image/png');
     link.click();
   };
 
@@ -315,7 +331,7 @@ export default function ImageEditor() {
           </button>
           <button 
             className="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 transition"
-            onClick={exportSVG}
+            onClick={exportAsSvg}
             disabled={!image}
           >
             Export SVG

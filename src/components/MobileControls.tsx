@@ -907,26 +907,6 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 <option value="burkes">Burkes</option>
               </select>
             </div>
-            
-            <Slider
-              label="Resolution"
-              value={settings.resolution || 30}
-              onChange={(value) => updateInstanceSettings(instance.id, { resolution: value })}
-              min={1}
-              max={100}
-              step={1}
-              unit="%"
-            />
-            
-            <Slider
-              label="Threshold"
-              value={settings.threshold || 128}
-              onChange={(value) => updateInstanceSettings(instance.id, { threshold: value })}
-              min={0}
-              max={255}
-              step={1}
-            />
-            
             <div className="mobile-control-group">
               <label className="mobile-control-label">Color Mode</label>
               <select 
@@ -939,7 +919,23 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 <option value="2-color">2-Color</option>
               </select>
             </div>
-            
+            <Slider
+              label="Resolution"
+              value={settings.resolution || 30}
+              onChange={(value) => updateInstanceSettings(instance.id, { resolution: value })}
+              min={1}
+              max={100}
+              step={1}
+              unit="%"
+            />
+            <Slider
+              label="Threshold"
+              value={settings.threshold || 128}
+              onChange={(value) => updateInstanceSettings(instance.id, { threshold: value })}
+              min={0}
+              max={255}
+              step={1}
+            />
             {/* Color Depth - Only show if not in 2-color mode */}
             {settings.colorMode !== '2-color' && (
               <Slider
@@ -952,7 +948,6 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 unit=" colors"
               />
             )}
-            
             {/* Color controls for 2-color mode */}
             {settings.colorMode === '2-color' && (
               <>

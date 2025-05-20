@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.6] - 2025-05-10
+
+### Added
+- Added export scale control for high-resolution exports up to 500%
+- Added dynamic resolution display showing final export dimensions
+- Added automatic scale clamping based on GPU capabilities
+- Added warning message when export size exceeds GPU limits
+
+### Changed
+- Improved export UI with cleaner layout and better feedback
+- Enhanced PNG export quality with high-quality image scaling
+- Updated export controls to show real-time dimension calculations
+
+### Fixed
+- Fixed potential memory issues with large image exports
+- Improved error handling for oversized export attempts
+- Enhanced export reliability with proper GPU limit detection
+
 ## [0.5.5] - 2025-05-09
 
 ### Added
