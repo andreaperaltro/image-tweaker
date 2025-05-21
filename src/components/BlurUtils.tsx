@@ -253,8 +253,6 @@ function applyTiltShiftBlur(
   const tempData = new Uint8ClampedArray(data);
 
   // Convert percentage coordinates to pixel coordinates
-  const focusPointXPixels = (focusPosition / 100) * width;
-  const focusPointYPixels = 50 / 100 * height; // Fixed at center (50%)
   const focusWidthPixels = (focusWidth / 100) * Math.max(width, height);
   const gradientPixels = Math.max(1, (gradient / 100) * Math.max(width, height));
 
@@ -263,6 +261,21 @@ function applyTiltShiftBlur(
   const cos = Math.cos(angleRad);
   const sin = Math.sin(angleRad);
 
+  // Calculate the focus line position perpendicular to the blur angle
+  // Map focus position from 0-100 to -50 to 50 to center it
+  const normalizedPosition = (focusPosition - 50) / 50;
+  const maxDistance = Math.min(width, height) / 2;
+  const focusDistance = normalizedPosition * maxDistance;
+  
+  // Calculate the center point of the focus line
+  const centerX = width / 2;
+  const centerY = height / 2;
+  
+  // Calculate the focus line's center point by moving perpendicular to the blur angle
+  // Use sin and -cos to move perpendicular to the blur direction
+  const focusPointXPixels = centerX + focusDistance * sin;
+  const focusPointYPixels = centerY + focusDistance * -cos;
+
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       // Calculate distance from focus line
@@ -270,7 +283,7 @@ function applyTiltShiftBlur(
       const dy = y - focusPointYPixels;
       
       // Project point onto the line perpendicular to the blur direction
-      const distanceFromFocus = Math.abs(dx * cos + dy * sin);
+      const distanceFromFocus = Math.abs(dx * -sin + dy * cos);
       
       let blurAmount = 0;
       if (distanceFromFocus > focusWidthPixels/2) {
@@ -297,8 +310,8 @@ function applyTiltShiftBlur(
       for (let i = 0; i < samples; i++) {
         const t = i / (samples - 1);
         const offset = (t - 0.5) * currentRadius;
-        const sampleX = x + offset * sin; // Use sin for perpendicular direction
-        const sampleY = y - offset * cos; // Use cos for perpendicular direction
+        const sampleX = x + offset * cos; // Use cos for blur direction
+        const sampleY = y + offset * sin; // Use sin for blur direction
         
         if (sampleX < 0 || sampleX >= width || sampleY < 0 || sampleY >= height) continue;
         
