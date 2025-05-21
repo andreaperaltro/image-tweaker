@@ -37,7 +37,8 @@ export default function Home() {
     { id: 'halftone-1', type: 'halftone', enabled: false },
     { id: 'textDither-1', type: 'textDither', enabled: false },
     { id: 'glitch-1', type: 'glitch', enabled: false },
-    { id: 'grid-1', type: 'grid', enabled: false }
+    { id: 'grid-1', type: 'grid', enabled: false },
+    { id: 'glow-1', type: 'glow', enabled: false }
   ]);
 
   const toggleSection = (section: string) => {

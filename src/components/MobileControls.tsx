@@ -2037,6 +2037,63 @@ const MobileControls: React.FC<MobileControlsProps> = ({
           </div>
         );
 
+      case 'glow':
+        return (
+          <div className={`mobile-effect-content ${openSection === instance.id ? 'open' : ''}`}>
+            {/* Glow controls */}
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Glow Color</label>
+              <input 
+                type="color" 
+                className="mobile-color-picker"
+                value={settings.color || '#ffffff'}
+                onChange={(e) => updateInstanceSettings(instance.id, { color: e.target.value })}
+              />
+            </div>
+
+            <Slider
+              label="Intensity"
+              value={settings.intensity || 50}
+              onChange={(value) => updateInstanceSettings(instance.id, { intensity: value })}
+              min={0}
+              max={100}
+              step={1}
+              unit="%"
+            />
+
+            <Slider
+              label="Threshold"
+              value={settings.threshold || 128}
+              onChange={(value) => updateInstanceSettings(instance.id, { threshold: value })}
+              min={0}
+              max={255}
+              step={1}
+            />
+
+            <Slider
+              label="Softness"
+              value={settings.softness || 5}
+              onChange={(value) => updateInstanceSettings(instance.id, { softness: value })}
+              min={0}
+              max={20}
+              step={1}
+              unit="px"
+            />
+
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Blend Mode</label>
+              <select 
+                className="mobile-select"
+                value={settings.blendMode || 'normal'}
+                onChange={(e) => updateInstanceSettings(instance.id, { blendMode: e.target.value as 'add' | 'normal' })}
+              >
+                <option value="normal">Normal</option>
+                <option value="add">Add</option>
+              </select>
+            </div>
+          </div>
+        );
+
       default:
         return null;
     }
@@ -2064,7 +2121,8 @@ const MobileControls: React.FC<MobileControlsProps> = ({
       instance.type === 'sliceShift' ? 'Slice' :
       instance.type === 'posterize' ? 'Posterize' :
       instance.type === 'findEdges' ? 'Find Edges' :
-      instance.type === 'blob' ? 'Blob' : 'Effect';
+      instance.type === 'blob' ? 'Blob' :
+      instance.type === 'glow' ? 'Glow' : 'Effect';
     
     // Add numbering only if there are multiple effects of the same type
     const title = sameTypeCount > 1 ? `${baseTitle} ${instanceIndex + 1}` : baseTitle;
@@ -2169,6 +2227,12 @@ const MobileControls: React.FC<MobileControlsProps> = ({
             onClick={() => addEffect('blob')}
           >
             <FiPlus size={12} /> Blob
+          </button>
+          <button 
+            className="plain-effect-btn" 
+            onClick={() => addEffect('glow')}
+          >
+            <FiPlus size={12} /> Glow
           </button>
         </div>
       </div>

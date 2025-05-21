@@ -33,6 +33,7 @@ import AnimationTimeline from './AnimationTimeline'
 import { nanoid } from 'nanoid'
 import { drawCoverImage } from '../utils/imageUtils'
 import Slider from './Slider'
+import { applyGlow } from './GlowUtils'
 
 // Define types
 type AspectRatioPreset = '1:1' | '4:3' | '16:9' | '3:2' | '5:4' | '2:1' | '3:4' | '9:16' | '2:3' | '4:5' | '1:2' | 'custom';
@@ -680,6 +681,9 @@ export default function AdvancedEditor({
         case 'blob':
           applyBlob(ctx, canvas, canvas.width, canvas.height, settings);
           break;
+        case 'glow':
+          applyGlow(ctx, canvas.width, canvas.height, settings);
+          break;
       }
     } catch (error) {
       console.error(`Error applying effect ${effectType}:`, error);
@@ -1043,6 +1047,16 @@ export default function AdvancedEditor({
         defaultSettings = { 
           ...blobSettings, 
           enabled: true 
+        };
+        break;
+      case 'glow':
+        defaultSettings = {
+          enabled: true,
+          color: '#ffffff',
+          intensity: 50,
+          threshold: 128,
+          softness: 5,
+          blendMode: 'normal'
         };
         break;
       default:

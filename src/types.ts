@@ -90,4 +90,25 @@ export interface EffectSettings {
   findEdgesSettings: FindEdgesSettings;
   blobSettings: BlobSettings;
   instanceSettings?: {[id: string]: any};
-} 
+}
+
+export interface GlowSettings {
+  enabled: boolean;
+  color: string;
+  intensity: number;
+  threshold: number;
+  softness: number;
+  blendMode: 'add' | 'normal';
+}
+
+export type EffectType = 
+  | 'color' 
+  | 'blur' 
+  | 'gradient' 
+  | 'threshold' 
+  | 'dither' 
+  | 'halftone' 
+  | 'textDither' 
+  | 'glitch' 
+  | 'grid' 
+  | 'glow'; 
