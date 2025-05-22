@@ -22,6 +22,7 @@ import { PosterizeSettings } from './Posterize'
 import { FindEdgesSettings, EdgeDetectionAlgorithm } from './FindEdges'
 import { PolarPixelSettings } from './PolarPixel'
 import { PixelEffectSettings, PixelMode } from './PixelEffect'
+import Toggle from './Toggle'
 
 // Add interface for gradient stop
 interface GradientStopType {
@@ -2371,6 +2372,81 @@ const MobileControls: React.FC<MobileControlsProps> = ({
         );
       }
 
+      case 'linocut': {
+        const settings = instanceSettings[instance.id];
+        if (!settings) return null;
+        return (
+          <div className={`mobile-effect-content ${openSection === instance.id ? 'open' : ''}`}>
+            <Slider
+              label="Line Spacing"
+              value={settings.lineSpacing || 10}
+              onChange={value => updateInstanceSettings(instance.id, { lineSpacing: value })}
+              min={2}
+              max={64}
+              step={1}
+            />
+            <Slider
+              label="Stroke Width"
+              value={settings.strokeWidth || 8}
+              onChange={value => updateInstanceSettings(instance.id, { strokeWidth: value })}
+              min={1}
+              max={32}
+              step={1}
+            />
+            <Slider
+              label="Min Line"
+              value={settings.minLine || 1}
+              onChange={value => updateInstanceSettings(instance.id, { minLine: value })}
+              min={0.1}
+              max={16}
+              step={0.1}
+            />
+            <Slider
+              label="Noise Scale"
+              value={settings.noiseScale || 0.015}
+              onChange={value => updateInstanceSettings(instance.id, { noiseScale: value })}
+              min={0.001}
+              max={0.1}
+              step={0.001}
+            />
+            <Slider
+              label="Center X"
+              value={settings.centerX || 0.5}
+              onChange={value => updateInstanceSettings(instance.id, { centerX: value })}
+              min={0}
+              max={1}
+              step={0.01}
+            />
+            <Slider
+              label="Center Y"
+              value={settings.centerY || 0.5}
+              onChange={value => updateInstanceSettings(instance.id, { centerY: value })}
+              min={0}
+              max={1}
+              step={0.01}
+            />
+            <Slider
+              label="Threshold"
+              value={settings.threshold || 0.5}
+              onChange={value => updateInstanceSettings(instance.id, { threshold: value })}
+              min={0}
+              max={1}
+              step={0.01}
+            />
+            <Toggle
+              label="Invert"
+              value={settings.invert || false}
+              onChange={value => updateInstanceSettings(instance.id, { invert: value })}
+            />
+            <Toggle
+              label="Vertical"
+              value={settings.orientation === 'vertical'}
+              onChange={value => updateInstanceSettings(instance.id, { orientation: value ? 'vertical' : 'horizontal' })}
+            />
+          </div>
+        );
+      }
+
       default:
         return null;
     }
@@ -2402,6 +2478,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
       instance.type === 'glow' ? 'Glow' :
       instance.type === 'pixel' ? 'Pixel' :
       instance.type === 'noise' ? 'Noise' :
+      instance.type === 'linocut' ? 'Linocut' :
       'Effect';
     
     // Add numbering only if there are multiple effects of the same type
@@ -2442,6 +2519,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
             { label: 'Slice', type: 'sliceShift' },
             { label: 'Text', type: 'textDither' },
             { label: 'Threshold', type: 'threshold' },
+            { label: 'Linocut', type: 'linocut' },
           ]
             .sort((a, b) => a.label.localeCompare(b.label))
             .map(effect => (

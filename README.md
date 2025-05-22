@@ -10,6 +10,7 @@ A powerful web-based image manipulation tool that allows you to apply various ef
   - Find Edges
   - Dithering
   - Halftone
+  - Linocut (variable-width line patterns with noise modulation)
   - Glitch
   - Threshold
   - Gradient Map

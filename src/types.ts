@@ -92,6 +92,7 @@ export interface EffectSettings {
   findEdgesSettings: FindEdgesSettings;
   blobSettings: BlobSettings;
   pixelSettings: PixelEffectSettings;
+  linocutSettings?: LinocutEffectSettings;
   instanceSettings?: {[id: string]: any};
 }
 
@@ -102,6 +103,19 @@ export interface GlowSettings {
   threshold: number;
   softness: number;
   blendMode: 'add' | 'normal';
+}
+
+export interface LinocutEffectSettings {
+  enabled: boolean;
+  lineSpacing: number; // Distance between lines
+  strokeWidth: number; // Maximum line thickness
+  noiseScale: number; // organic distortion
+  centerX: number; // 0-1, relative
+  centerY: number; // 0-1, relative
+  invert?: boolean; // optional, for white-on-black
+  orientation?: 'horizontal' | 'vertical'; // optional
+  threshold?: number; // 0-1, for line visibility
+  minLine?: number; // minimum line thickness
 }
 
 export type EffectType = 
@@ -121,7 +135,8 @@ export type EffectType =
   | 'findEdges'
   | 'blob'
   | 'pixel'
-  | 'noise';
+  | 'noise'
+  | 'linocut';
 
 export interface NoiseEffectSettings {
   enabled: boolean;

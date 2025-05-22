@@ -37,6 +37,7 @@ import { applyGlow } from './GlowUtils'
 import { PolarPixelSettings, applyPolarPixelEffect } from './PolarPixel'
 import { PixelEffectSettings, applyPixelEffect } from './PixelEffect'
 import { applyNoiseEffect } from './NoiseEffect'
+import { applyLinocutEffect } from './LinocutEffect'
 
 // Define types
 type AspectRatioPreset = '1:1' | '4:3' | '16:9' | '3:2' | '5:4' | '2:1' | '3:4' | '9:16' | '2:3' | '4:5' | '1:2' | 'custom';
@@ -696,6 +697,9 @@ export default function AdvancedEditor({
         case 'noise':
           applyNoiseEffect(ctx, canvas, canvas.width, canvas.height, settings);
           break;
+        case 'linocut':
+          applyLinocutEffect(ctx, canvas, canvas.width, canvas.height, settings);
+          break;
       }
     } catch (error) {
       console.error(`Error applying effect ${effectType}:`, error);
@@ -1099,6 +1103,18 @@ export default function AdvancedEditor({
           scale: 0.1,
           seed: 0,
           blendMode: 'normal',
+        };
+        break;
+      case 'linocut':
+        defaultSettings = {
+          enabled: true,
+          scale: 12,
+          noiseScale: 0.06,
+          centerX: 0.5,
+          centerY: 0.5,
+          invert: false,
+          orientation: 'horizontal',
+          threshold: 0.5
         };
         break;
       default:
@@ -2049,6 +2065,8 @@ export default function AdvancedEditor({
         return sliceShiftSettings;
       case 'blob':
         return blobSettings;
+      case 'linocut':
+        return instanceSettings[instance.id];
       default:
         return {};
     }

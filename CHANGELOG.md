@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased] - 2024-06-XX
 
 ### Added
+- New Linocut effect that creates variable-width line patterns based on image brightness
+  - Separate controls for line spacing and stroke width
+  - Smooth noise modulation using Perlin noise
+  - Center point controls for shifting the pattern
+  - Threshold control for fine-tuning the effect
+  - Invert and orientation toggles
+- New reusable Toggle component for consistent checkbox-style switches across the app
 - Overhauled the Noise effect: now uses true Perlin noise (via noisejs) for smooth, organic patterns at any scale.
 - Added advanced blend modes to the Noise effect: multiply, screen, overlay, darken, lighten, color-dodge, color-burn, hard-light, soft-light, difference, exclusion.
 - Added Monochrome toggle to Noise effect for grayscale noise.
@@ -15,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Improved Noise effect UI with new controls and more descriptive section title ("Noise").
+- Enhanced Linocut effect with smoother noise modulation and better brightness-based line thickness control
 
 ### Fixed
 - Fixed effect section title for Noise effect (was previously showing as generic "Effect").
