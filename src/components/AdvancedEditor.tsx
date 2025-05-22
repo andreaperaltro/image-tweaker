@@ -36,6 +36,7 @@ import Slider from './Slider'
 import { applyGlow } from './GlowUtils'
 import { PolarPixelSettings, applyPolarPixelEffect } from './PolarPixel'
 import { PixelEffectSettings, applyPixelEffect } from './PixelEffect'
+import { applyNoiseEffect } from './NoiseEffect'
 
 // Define types
 type AspectRatioPreset = '1:1' | '4:3' | '16:9' | '3:2' | '5:4' | '2:1' | '3:4' | '9:16' | '2:3' | '4:5' | '1:2' | 'custom';
@@ -692,6 +693,9 @@ export default function AdvancedEditor({
         case 'pixel':
           applyPixelEffect(ctx, canvas, canvas.width, canvas.height, settings);
           break;
+        case 'noise':
+          applyNoiseEffect(ctx, canvas, canvas.width, canvas.height, settings);
+          break;
       }
     } catch (error) {
       console.error(`Error applying effect ${effectType}:`, error);
@@ -1085,6 +1089,16 @@ export default function AdvancedEditor({
           segments: 48,
           centerX: 0.5,
           centerY: 0.5
+        };
+        break;
+      case 'noise':
+        defaultSettings = {
+          enabled: true,
+          type: 'perlin',
+          intensity: 0.5,
+          scale: 0.1,
+          seed: 0,
+          blendMode: 'normal',
         };
         break;
       default:

@@ -2170,14 +2170,27 @@ const MobileControls: React.FC<MobileControlsProps> = ({
             )}
 
             {settings.mode === 'offgrid' && (
-              <Slider
-                label="Size"
-                value={settings.offGridSize || 16}
-                onChange={value => updateInstanceSettings(instance.id, { offGridSize: value })}
-                min={4}
-                max={64}
-                step={1}
-              />
+              <>
+                <div className="mobile-control-group">
+                  <label className="mobile-control-label">Orientation</label>
+                  <select
+                    className="mobile-select"
+                    value={settings.offGridOrientation || 'horizontal'}
+                    onChange={e => updateInstanceSettings(instance.id, { offGridOrientation: e.target.value })}
+                  >
+                    <option value="horizontal">Horizontal</option>
+                    <option value="vertical">Vertical</option>
+                  </select>
+                </div>
+                <Slider
+                  label="Size"
+                  value={settings.offGridSize || 16}
+                  onChange={value => updateInstanceSettings(instance.id, { offGridSize: value })}
+                  min={4}
+                  max={64}
+                  step={1}
+                />
+              </>
             )}
 
             {settings.mode === 'voronoi' && (
@@ -2230,6 +2243,130 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 />
               </>
             )}
+            {settings.mode === 'radial' && (
+              <>
+                <Slider
+                  label="Rings"
+                  value={settings.rings || 24}
+                  onChange={value => updateInstanceSettings(instance.id, { rings: value })}
+                  min={2}
+                  max={64}
+                  step={1}
+                />
+                <Slider
+                  label="Segments"
+                  value={settings.segments || 48}
+                  onChange={value => updateInstanceSettings(instance.id, { segments: value })}
+                  min={4}
+                  max={128}
+                  step={1}
+                />
+                <Slider
+                  label="Center X"
+                  value={settings.centerX !== undefined ? settings.centerX : 0.5}
+                  onChange={value => updateInstanceSettings(instance.id, { centerX: value })}
+                  min={0}
+                  max={1}
+                  step={0.01}
+                />
+                <Slider
+                  label="Center Y"
+                  value={settings.centerY !== undefined ? settings.centerY : 0.5}
+                  onChange={value => updateInstanceSettings(instance.id, { centerY: value })}
+                  min={0}
+                  max={1}
+                  step={0.01}
+                />
+              </>
+            )}
+          </div>
+        );
+      }
+
+      case 'noise': {
+        const settings = instanceSettings[instance.id];
+        if (!settings) return null;
+        return (
+          <div className={`mobile-effect-content ${openSection === instance.id ? 'open' : ''}`}>
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Type</label>
+              <select
+                className="mobile-select"
+                value={settings.type}
+                onChange={e => updateInstanceSettings(instance.id, { type: e.target.value })}
+              >
+                <option value="perlin">Perlin</option>
+              </select>
+            </div>
+            <Slider
+              label="Intensity"
+              value={settings.intensity || 0.5}
+              onChange={value => updateInstanceSettings(instance.id, { intensity: value })}
+              min={0}
+              max={1}
+              step={0.01}
+            />
+            <Slider
+              label="Scale"
+              value={settings.scale || 0.1}
+              onChange={value => updateInstanceSettings(instance.id, { scale: value })}
+              min={0.01}
+              max={500}
+              step={0.01}
+            />
+            <Slider
+              label="Seed"
+              value={settings.seed || 0}
+              onChange={value => updateInstanceSettings(instance.id, { seed: value })}
+              min={0}
+              max={1000}
+              step={1}
+            />
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Blend Mode</label>
+              <select
+                className="mobile-select"
+                value={settings.blendMode || 'normal'}
+                onChange={e => updateInstanceSettings(instance.id, { blendMode: e.target.value })}
+              >
+                <option value="normal">Normal</option>
+                <option value="multiply">Multiply</option>
+                <option value="screen">Screen</option>
+                <option value="overlay">Overlay</option>
+                <option value="darken">Darken</option>
+                <option value="lighten">Lighten</option>
+                <option value="color-dodge">Color Dodge</option>
+                <option value="color-burn">Color Burn</option>
+                <option value="hard-light">Hard Light</option>
+                <option value="soft-light">Soft Light</option>
+                <option value="difference">Difference</option>
+                <option value="exclusion">Exclusion</option>
+              </select>
+            </div>
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Monochrome</label>
+              <label className="mobile-effect-toggle">
+                <input
+                  type="checkbox"
+                  checked={!!settings.monochrome}
+                  onChange={e => updateInstanceSettings(instance.id, { monochrome: e.target.checked })}
+                />
+                <span className="mobile-effect-toggle-slider"></span>
+              </label>
+            </div>
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Channel</label>
+              <select
+                className="mobile-select"
+                value={settings.channel || 'all'}
+                onChange={e => updateInstanceSettings(instance.id, { channel: e.target.value })}
+              >
+                <option value="all">All</option>
+                <option value="r">Red</option>
+                <option value="g">Green</option>
+                <option value="b">Blue</option>
+              </select>
+            </div>
           </div>
         );
       }
@@ -2263,7 +2400,9 @@ const MobileControls: React.FC<MobileControlsProps> = ({
       instance.type === 'findEdges' ? 'Find Edges' :
       instance.type === 'blob' ? 'Blob' :
       instance.type === 'glow' ? 'Glow' :
-      instance.type === 'pixel' ? 'Pixel' : 'Effect';
+      instance.type === 'pixel' ? 'Pixel' :
+      instance.type === 'noise' ? 'Noise' :
+      'Effect';
     
     // Add numbering only if there are multiple effects of the same type
     const title = sameTypeCount > 1 ? `${baseTitle} ${instanceIndex + 1}` : baseTitle;
@@ -2285,102 +2424,35 @@ const MobileControls: React.FC<MobileControlsProps> = ({
       <div>
         <h3 className="text-[var(--text-color)] text-lg pp-mondwest-font mb-3">Add Effect</h3>
         <div className="effect-buttons-container">
-          <button 
-            className="plain-effect-btn" 
-            onClick={() => addEffect('color')}
-          >
-            <FiPlus size={12} /> Color
-          </button>
-          <button 
-            className="plain-effect-btn" 
-            onClick={() => addEffect('blur')}
-          >
-            <FiPlus size={12} /> Blur
-          </button>
-          <button 
-            className="plain-effect-btn" 
-            onClick={() => addEffect('gradient')}
-          >
-            <FiPlus size={12} /> Gradient
-          </button>
-          <button 
-            className="plain-effect-btn" 
-            onClick={() => addEffect('threshold')}
-          >
-            <FiPlus size={12} /> Threshold
-          </button>
-          <button 
-            className="plain-effect-btn" 
-            onClick={() => addEffect('dither')}
-          >
-            <FiPlus size={12} /> Dither
-          </button>
-          <button 
-            className="plain-effect-btn" 
-            onClick={() => addEffect('halftone')}
-          >
-            <FiPlus size={12} /> Halftone
-          </button>
-          <button 
-            className="plain-effect-btn" 
-            onClick={() => addEffect('textDither')}
-          >
-            <FiPlus size={12} /> Text
-          </button>
-          <button 
-            className="plain-effect-btn" 
-            onClick={() => addEffect('glitch')}
-          >
-            <FiPlus size={12} /> Glitch
-          </button>
-          <button 
-            className="plain-effect-btn" 
-            onClick={() => addEffect('grid')}
-          >
-            <FiPlus size={12} /> Grid
-          </button>
-          <button 
-            className="plain-effect-btn" 
-            onClick={() => addEffect('mosaicShift')}
-          >
-            <FiPlus size={12} /> Mosaic
-          </button>
-          <button 
-            className="plain-effect-btn" 
-            onClick={() => addEffect('sliceShift')}
-          >
-            <FiPlus size={12} /> Slice
-          </button>
-          <button 
-            className="plain-effect-btn" 
-            onClick={() => addEffect('posterize')}
-          >
-            <FiPlus size={12} /> Posterize
-          </button>
-          <button 
-            className="plain-effect-btn" 
-            onClick={() => addEffect('findEdges')}
-          >
-            <FiPlus size={12} /> Find Edges
-          </button>
-          <button 
-            className="plain-effect-btn" 
-            onClick={() => addEffect('blob')}
-          >
-            <FiPlus size={12} /> Blob
-          </button>
-          <button 
-            className="plain-effect-btn" 
-            onClick={() => addEffect('glow')}
-          >
-            <FiPlus size={12} /> Glow
-          </button>
-          <button 
-            className="plain-effect-btn" 
-            onClick={() => addEffect('pixel')}
-          >
-            <FiPlus size={12} /> Pixel
-          </button>
+          {[
+            { label: 'Blob', type: 'blob' },
+            { label: 'Blur', type: 'blur' },
+            { label: 'Color', type: 'color' },
+            { label: 'Dither', type: 'dither' },
+            { label: 'Find Edges', type: 'findEdges' },
+            { label: 'Glitch', type: 'glitch' },
+            { label: 'Glow', type: 'glow' },
+            { label: 'Gradient', type: 'gradient' },
+            { label: 'Grid', type: 'grid' },
+            { label: 'Halftone', type: 'halftone' },
+            { label: 'Mosaic', type: 'mosaicShift' },
+            { label: 'Noise', type: 'noise' },
+            { label: 'Pixel', type: 'pixel' },
+            { label: 'Posterize', type: 'posterize' },
+            { label: 'Slice', type: 'sliceShift' },
+            { label: 'Text', type: 'textDither' },
+            { label: 'Threshold', type: 'threshold' },
+          ]
+            .sort((a, b) => a.label.localeCompare(b.label))
+            .map(effect => (
+              <button
+                key={effect.type}
+                className="plain-effect-btn"
+                onClick={() => addEffect(effect.type)}
+              >
+                <FiPlus size={12} /> {effect.label}
+              </button>
+            ))}
         </div>
       </div>
     </>

@@ -7,12 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased] - 2024-06-XX
 
+### Added
+- Overhauled the Noise effect: now uses true Perlin noise (via noisejs) for smooth, organic patterns at any scale.
+- Added advanced blend modes to the Noise effect: multiply, screen, overlay, darken, lighten, color-dodge, color-burn, hard-light, soft-light, difference, exclusion.
+- Added Monochrome toggle to Noise effect for grayscale noise.
+- Added Channel selector to Noise effect (apply noise to all, red, green, or blue channels).
+
 ### Changed
-- Enhanced the "Random Block" pixelation effect: block widths now vary more prominently, and gaps are filled with the average background color for a more cohesive look.
-- Improved block placement logic to reduce visible gaps and create a more visually interesting, staggered effect.
+- Improved Noise effect UI with new controls and more descriptive section title ("Noise").
 
 ### Fixed
-- Attempted to resolve app-breaking issues related to pixelation effect changes and cache corruption.
+- Fixed effect section title for Noise effect (was previously showing as generic "Effect").
+- Enhanced the "Random Block" pixelation effect: block widths now vary more prominently, and gaps are filled with the average background color for a more cohesive look.
+- Improved block placement logic to reduce visible gaps and create a more visually interesting, staggered effect.
 
 ## [0.5.6] - 2025-05-20
 

@@ -17,6 +17,7 @@ export interface PixelEffectSettings {
   centerX?: number;
   centerY?: number;
   offGridSize?: number;
+  offGridOrientation?: 'horizontal' | 'vertical';
   voronoiSeeds?: number;
   voronoiJitter?: number;
   ringCount?: number;
@@ -40,7 +41,7 @@ export function applyPixelEffect(
       applyRadialPixelation(ctx, sourceCanvas, width, height, settings.rings || 24, settings.segments || 48, settings.centerX ?? 0.5, settings.centerY ?? 0.5);
       break;
     case 'offgrid':
-      applyOffGridPixelation(ctx, sourceCanvas, width, height, settings.offGridSize || 16);
+      applyOffGridPixelation(ctx, sourceCanvas, width, height, settings.offGridSize || 16, settings.offGridOrientation || 'horizontal');
       break;
     case 'voronoi':
       applyVoronoiPixelation(ctx, sourceCanvas, width, height, settings.voronoiSeeds || 32, settings.voronoiJitter || 0.2);
@@ -189,7 +190,8 @@ function applyOffGridPixelation(
   sourceCanvas: HTMLCanvasElement,
   width: number,
   height: number,
-  size: number
+  size: number,
+  orientation: 'horizontal' | 'vertical' = 'horizontal'
 ) {
   const srcData = ctx.getImageData(0, 0, width, height);
   const dstData = ctx.createImageData(width, height);
@@ -198,10 +200,6 @@ function applyOffGridPixelation(
   const hexWidth = size * 2;
   const hexHeight = size * Math.sqrt(3);
   const vertSpacing = hexHeight * 0.75; // Overlap for better coverage
-  
-  // Calculate number of hexes needed
-  const cols = Math.ceil(width / (hexWidth * 0.75)) + 1;
-  const rows = Math.ceil(height / vertSpacing) + 1;
   
   // Helper function to check if a point is inside a hexagon
   function isPointInHex(px: number, py: number, centerX: number, centerY: number, size: number): boolean {
@@ -217,63 +215,91 @@ function applyOffGridPixelation(
            dy <= size * Math.sqrt(3) - dx * Math.sqrt(3) / 2;
   }
   
-  // For each hex cell
-  for (let row = 0; row < rows; row++) {
-    const y = row * vertSpacing;
-    const offsetX = row % 2 ? hexWidth * 0.375 : 0; // Offset every other row
-    
-    for (let col = 0; col < cols; col++) {
-      const x = col * hexWidth * 0.75 + offsetX;
-      
-      // Accumulate colors for this hex
-      let rSum = 0, gSum = 0, bSum = 0, aSum = 0, count = 0;
-      
-      // Sample points within the hex
-      for (let dy = -size; dy <= size; dy++) {
-        for (let dx = -size; dx <= size; dx++) {
-          const px = x + dx;
-          const py = y + dy;
-          
-          // Check if point is inside hex using proper hex boundary
-          if (!isPointInHex(px, py, x, y, size)) continue;
-          
-          // Check if point is in image bounds
-          if (px < 0 || px >= width || py < 0 || py >= height) continue;
-          
-          const idx = (Math.floor(py) * width + Math.floor(px)) * 4;
-          rSum += srcData.data[idx];
-          gSum += srcData.data[idx + 1];
-          bSum += srcData.data[idx + 2];
-          aSum += srcData.data[idx + 3];
-          count++;
+  if (orientation === 'horizontal') {
+    // Horizontal hex grid (default)
+    const cols = Math.ceil(width / (hexWidth * 0.75)) + 1;
+    const rows = Math.ceil(height / vertSpacing) + 1;
+    for (let row = 0; row < rows; row++) {
+      const y = row * vertSpacing;
+      const offsetX = row % 2 ? hexWidth * 0.375 : 0;
+      for (let col = 0; col < cols; col++) {
+        const x = col * hexWidth * 0.75 + offsetX;
+        let rSum = 0, gSum = 0, bSum = 0, aSum = 0, count = 0;
+        for (let dy = -size; dy <= size; dy++) {
+          for (let dx = -size; dx <= size; dx++) {
+            const px = x + dx;
+            const py = y + dy;
+            if (!isPointInHex(px, py, x, y, size)) continue;
+            if (px < 0 || px >= width || py < 0 || py >= height) continue;
+            const idx = (Math.floor(py) * width + Math.floor(px)) * 4;
+            rSum += srcData.data[idx];
+            gSum += srcData.data[idx + 1];
+            bSum += srcData.data[idx + 2];
+            aSum += srcData.data[idx + 3];
+            count++;
+          }
+        }
+        if (count === 0) continue;
+        const avgR = Math.round(rSum / count);
+        const avgG = Math.round(gSum / count);
+        const avgB = Math.round(bSum / count);
+        const avgA = Math.round(aSum / count);
+        for (let dy = -size; dy <= size; dy++) {
+          for (let dx = -size; dx <= size; dx++) {
+            const px = x + dx;
+            const py = y + dy;
+            if (!isPointInHex(px, py, x, y, size)) continue;
+            if (px < 0 || px >= width || py < 0 || py >= height) continue;
+            const idx = (Math.floor(py) * width + Math.floor(px)) * 4;
+            dstData.data[idx] = avgR;
+            dstData.data[idx + 1] = avgG;
+            dstData.data[idx + 2] = avgB;
+            dstData.data[idx + 3] = avgA;
+          }
         }
       }
-      
-      if (count === 0) continue;
-      
-      // Calculate average color
-      const avgR = Math.round(rSum / count);
-      const avgG = Math.round(gSum / count);
-      const avgB = Math.round(bSum / count);
-      const avgA = Math.round(aSum / count);
-      
-      // Fill hex with average color
-      for (let dy = -size; dy <= size; dy++) {
-        for (let dx = -size; dx <= size; dx++) {
-          const px = x + dx;
-          const py = y + dy;
-          
-          // Check if point is inside hex using proper hex boundary
-          if (!isPointInHex(px, py, x, y, size)) continue;
-          
-          // Check if point is in image bounds
-          if (px < 0 || px >= width || py < 0 || py >= height) continue;
-          
-          const idx = (Math.floor(py) * width + Math.floor(px)) * 4;
-          dstData.data[idx] = avgR;
-          dstData.data[idx + 1] = avgG;
-          dstData.data[idx + 2] = avgB;
-          dstData.data[idx + 3] = avgA;
+    }
+  } else {
+    // Vertical hex grid: columns are straight, offset is on y
+    const rows = Math.ceil(height / (hexWidth * 0.75)) + 1;
+    const cols = Math.ceil(width / vertSpacing) + 1;
+    for (let col = 0; col < cols; col++) {
+      const x = col * vertSpacing;
+      const offsetY = col % 2 ? hexWidth * 0.375 : 0;
+      for (let row = 0; row < rows; row++) {
+        const y = row * hexWidth * 0.75 + offsetY;
+        let rSum = 0, gSum = 0, bSum = 0, aSum = 0, count = 0;
+        for (let dy = -size; dy <= size; dy++) {
+          for (let dx = -size; dx <= size; dx++) {
+            const px = x + dx;
+            const py = y + dy;
+            if (!isPointInHex(px, py, x, y, size)) continue;
+            if (px < 0 || px >= width || py < 0 || py >= height) continue;
+            const idx = (Math.floor(py) * width + Math.floor(px)) * 4;
+            rSum += srcData.data[idx];
+            gSum += srcData.data[idx + 1];
+            bSum += srcData.data[idx + 2];
+            aSum += srcData.data[idx + 3];
+            count++;
+          }
+        }
+        if (count === 0) continue;
+        const avgR = Math.round(rSum / count);
+        const avgG = Math.round(gSum / count);
+        const avgB = Math.round(bSum / count);
+        const avgA = Math.round(aSum / count);
+        for (let dy = -size; dy <= size; dy++) {
+          for (let dx = -size; dx <= size; dx++) {
+            const px = x + dx;
+            const py = y + dy;
+            if (!isPointInHex(px, py, x, y, size)) continue;
+            if (px < 0 || px >= width || py < 0 || py >= height) continue;
+            const idx = (Math.floor(py) * width + Math.floor(px)) * 4;
+            dstData.data[idx] = avgR;
+            dstData.data[idx + 1] = avgG;
+            dstData.data[idx + 2] = avgB;
+            dstData.data[idx + 3] = avgA;
+          }
         }
       }
     }
@@ -428,6 +454,12 @@ function applyRandomBlockPixelation(
   const filled = new Uint8Array(width * height);
   const blocks: {x: number, y: number, w: number, h: number}[] = [];
 
+  // Build and shuffle a list of all pixel indices
+  const pixelIndices: number[] = [];
+  for (let i = 0; i < width * height; i++) pixelIndices.push(i);
+  shuffleArray(pixelIndices);
+  let pixelPointer = 0;
+
   // Helper function to check if a block can be placed
   function canPlaceBlock(x: number, y: number, w: number, h: number): boolean {
     if (x < 0 || y < 0 || x + w > width || y + h > height) return false;
@@ -448,50 +480,45 @@ function applyRandomBlockPixelation(
     }
   }
 
-  // Generate blocks with more prominent width variation
-  while (true) {
-    // Find the first unfilled pixel
-    let startX = -1, startY = -1;
-    for (let y = 0; y < height; y++) {
-      for (let x = 0; x < width; x++) {
-        if (!filled[y * width + x]) {
-          startX = x;
-          startY = y;
-          break;
-        }
+  // Generate blocks efficiently
+  while (pixelPointer < pixelIndices.length) {
+    // Find the next unfilled pixel from the shuffled list
+    let found = false;
+    let startIdx = -1;
+    while (pixelPointer < pixelIndices.length && !found) {
+      const idx = pixelIndices[pixelPointer++];
+      if (!filled[idx]) {
+        startIdx = idx;
+        found = true;
       }
-      if (startX !== -1) break;
     }
-    
-    // If no unfilled pixels found, we're done
-    if (startX === -1) break;
+    if (!found) break;
+    const startX = startIdx % width;
+    const startY = Math.floor(startIdx / width);
 
     let blockPlaced = false;
     const maxAttempts = 10;
-    
     for (let attempt = 0; attempt < maxAttempts && !blockPlaced; attempt++) {
-      // Generate random dimensions with more prominent width variation
       const w = Math.floor(Math.random() * (maxBlock - minBlock + 1)) + minBlock;
-      // Make height more consistent to emphasize width variation
       const h = Math.floor(Math.random() * (maxBlock/2 - minBlock + 1)) + minBlock;
-      
-      // Add some random offset to starting position
       const offsetX = Math.floor(Math.random() * 3) - 1;
       const offsetY = Math.floor(Math.random() * 3) - 1;
-      
       const x = startX + offsetX;
       const y = startY + offsetY;
-      
       if (canPlaceBlock(x, y, w, h)) {
         blocks.push({ x, y, w, h });
         markBlockFilled(x, y, w, h);
         blockPlaced = true;
       }
     }
-    
-    // If we couldn't place a block, mark the pixel as filled to avoid infinite loops
     if (!blockPlaced) {
       filled[startY * width + startX] = 1;
+      // Copy the original pixel color to the output
+      const idx = (startY * width + startX) * 4;
+      dstData.data[idx] = srcData.data[idx];
+      dstData.data[idx + 1] = srcData.data[idx + 1];
+      dstData.data[idx + 2] = srcData.data[idx + 2];
+      dstData.data[idx + 3] = srcData.data[idx + 3];
     }
   }
 

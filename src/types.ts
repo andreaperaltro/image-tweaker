@@ -120,4 +120,16 @@ export type EffectType =
   | 'posterize'
   | 'findEdges'
   | 'blob'
-  | 'pixel'; 
+  | 'pixel'
+  | 'noise';
+
+export interface NoiseEffectSettings {
+  enabled: boolean;
+  type: 'perlin';
+  intensity: number; // 0-1
+  scale: number; // 0.01-500
+  seed: number;
+  blendMode: 'normal' | 'multiply' | 'screen' | 'overlay' | 'darken' | 'lighten' | 'color-dodge' | 'color-burn' | 'hard-light' | 'soft-light' | 'difference' | 'exclusion';
+  monochrome?: boolean; // If true, use grayscale noise for all channels
+  channel?: 'all' | 'r' | 'g' | 'b'; // Which channel(s) to apply noise to
+} 
