@@ -20,6 +20,8 @@ import { MosaicShiftSettings, ShiftPattern } from './MosaicShift'
 import { SliceShiftSettings } from './SliceShift'
 import { PosterizeSettings } from './Posterize'
 import { FindEdgesSettings, EdgeDetectionAlgorithm } from './FindEdges'
+import { PolarPixelSettings } from './PolarPixel'
+import { PixelEffectSettings, PixelMode } from './PixelEffect'
 
 // Add interface for gradient stop
 interface GradientStopType {
@@ -2094,6 +2096,144 @@ const MobileControls: React.FC<MobileControlsProps> = ({
           </div>
         );
 
+      case 'polarPixel': {
+        const settings = instanceSettings[instance.id] as PolarPixelSettings;
+        if (!settings) return null;
+        return (
+          <div className={`mobile-effect-content ${openSection === instance.id ? 'open' : ''}`}>
+            <Slider
+              label="Rings"
+              value={settings.rings}
+              onChange={(value) => updateInstanceSettings(instance.id, { rings: value })}
+              min={4}
+              max={64}
+              step={1}
+            />
+            <Slider
+              label="Segments"
+              value={settings.segments}
+              onChange={(value) => updateInstanceSettings(instance.id, { segments: value })}
+              min={8}
+              max={128}
+              step={1}
+            />
+            <Slider
+              label="Center X"
+              value={settings.centerX}
+              onChange={(value) => updateInstanceSettings(instance.id, { centerX: value })}
+              min={0}
+              max={1}
+              step={0.01}
+            />
+            <Slider
+              label="Center Y"
+              value={settings.centerY}
+              onChange={(value) => updateInstanceSettings(instance.id, { centerY: value })}
+              min={0}
+              max={1}
+              step={0.01}
+            />
+          </div>
+        );
+      }
+
+      case 'pixel': {
+        const settings = instanceSettings[instance.id] as PixelEffectSettings;
+        if (!settings) return null;
+        return (
+          <div className={`mobile-effect-content ${openSection === instance.id ? 'open' : ''}`}>
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Mode</label>
+              <select
+                className="mobile-select"
+                value={settings.mode}
+                onChange={e => updateInstanceSettings(instance.id, { mode: e.target.value as PixelMode })}
+              >
+                <option value="grid">Grid</option>
+                <option value="radial">Radial</option>
+                <option value="offgrid">Off Grid</option>
+                <option value="voronoi">Voronoi</option>
+                <option value="rings">Rings</option>
+                <option value="random">Random</option>
+              </select>
+            </div>
+
+            {settings.mode === 'grid' && (
+              <Slider
+                label="Cell Size"
+                value={settings.cellSize || 16}
+                onChange={value => updateInstanceSettings(instance.id, { cellSize: value })}
+                min={4}
+                max={64}
+                step={1}
+              />
+            )}
+
+            {settings.mode === 'offgrid' && (
+              <Slider
+                label="Size"
+                value={settings.offGridSize || 16}
+                onChange={value => updateInstanceSettings(instance.id, { offGridSize: value })}
+                min={4}
+                max={64}
+                step={1}
+              />
+            )}
+
+            {settings.mode === 'voronoi' && (
+              <>
+                <Slider
+                  label="Seeds"
+                  value={settings.voronoiSeeds || 32}
+                  onChange={value => updateInstanceSettings(instance.id, { voronoiSeeds: value })}
+                  min={1}
+                  max={4096}
+                  step={1}
+                />
+                <Slider
+                  label="Jitter"
+                  value={settings.voronoiJitter || 0.2}
+                  onChange={value => updateInstanceSettings(instance.id, { voronoiJitter: value })}
+                  min={0}
+                  max={1}
+                  step={0.01}
+                />
+              </>
+            )}
+            {settings.mode === 'rings' && (
+              <Slider
+                label="Ring Count"
+                value={settings.ringCount || 24}
+                onChange={value => updateInstanceSettings(instance.id, { ringCount: value })}
+                min={2}
+                max={64}
+                step={1}
+              />
+            )}
+            {settings.mode === 'random' && (
+              <>
+                <Slider
+                  label="Min Block Size"
+                  value={settings.minBlockSize || 8}
+                  onChange={value => updateInstanceSettings(instance.id, { minBlockSize: value })}
+                  min={2}
+                  max={64}
+                  step={1}
+                />
+                <Slider
+                  label="Max Block Size"
+                  value={settings.maxBlockSize || 32}
+                  onChange={value => updateInstanceSettings(instance.id, { maxBlockSize: value })}
+                  min={4}
+                  max={128}
+                  step={1}
+                />
+              </>
+            )}
+          </div>
+        );
+      }
+
       default:
         return null;
     }
@@ -2122,7 +2262,8 @@ const MobileControls: React.FC<MobileControlsProps> = ({
       instance.type === 'posterize' ? 'Posterize' :
       instance.type === 'findEdges' ? 'Find Edges' :
       instance.type === 'blob' ? 'Blob' :
-      instance.type === 'glow' ? 'Glow' : 'Effect';
+      instance.type === 'glow' ? 'Glow' :
+      instance.type === 'pixel' ? 'Pixel' : 'Effect';
     
     // Add numbering only if there are multiple effects of the same type
     const title = sameTypeCount > 1 ? `${baseTitle} ${instanceIndex + 1}` : baseTitle;
@@ -2233,6 +2374,12 @@ const MobileControls: React.FC<MobileControlsProps> = ({
             onClick={() => addEffect('glow')}
           >
             <FiPlus size={12} /> Glow
+          </button>
+          <button 
+            className="plain-effect-btn" 
+            onClick={() => addEffect('pixel')}
+          >
+            <FiPlus size={12} /> Pixel
           </button>
         </div>
       </div>

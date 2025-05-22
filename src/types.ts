@@ -12,6 +12,7 @@ import type { SliceShiftSettings } from './components/SliceShift';
 import type { PosterizeSettings } from './components/Posterize';
 import type { FindEdgesSettings } from './components/FindEdges';
 import type { BlobSettings } from './components/Blob';
+import type { PixelEffectSettings } from './components/PixelEffect';
 
 // Re-export all imported types
 export type {
@@ -27,7 +28,8 @@ export type {
   SliceShiftSettings,
   PosterizeSettings,
   FindEdgesSettings,
-  BlobSettings
+  BlobSettings,
+  PixelEffectSettings
 };
 
 // Effect settings types
@@ -89,6 +91,7 @@ export interface EffectSettings {
   posterizeSettings: PosterizeSettings;
   findEdgesSettings: FindEdgesSettings;
   blobSettings: BlobSettings;
+  pixelSettings: PixelEffectSettings;
   instanceSettings?: {[id: string]: any};
 }
 
@@ -111,4 +114,10 @@ export type EffectType =
   | 'textDither' 
   | 'glitch' 
   | 'grid' 
-  | 'glow'; 
+  | 'glow'
+  | 'mosaicShift'
+  | 'sliceShift'
+  | 'posterize'
+  | 'findEdges'
+  | 'blob'
+  | 'pixel'; 

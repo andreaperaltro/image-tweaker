@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] - 2024-06-XX
+
+### Changed
+- Enhanced the "Random Block" pixelation effect: block widths now vary more prominently, and gaps are filled with the average background color for a more cohesive look.
+- Improved block placement logic to reduce visible gaps and create a more visually interesting, staggered effect.
+
+### Fixed
+- Attempted to resolve app-breaking issues related to pixelation effect changes and cache corruption.
+
 ## [0.5.6] - 2025-05-20
 
 ### Added

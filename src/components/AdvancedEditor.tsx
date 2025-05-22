@@ -34,6 +34,8 @@ import { nanoid } from 'nanoid'
 import { drawCoverImage } from '../utils/imageUtils'
 import Slider from './Slider'
 import { applyGlow } from './GlowUtils'
+import { PolarPixelSettings, applyPolarPixelEffect } from './PolarPixel'
+import { PixelEffectSettings, applyPixelEffect } from './PixelEffect'
 
 // Define types
 type AspectRatioPreset = '1:1' | '4:3' | '16:9' | '3:2' | '5:4' | '2:1' | '3:4' | '9:16' | '2:3' | '4:5' | '1:2' | 'custom';
@@ -684,6 +686,12 @@ export default function AdvancedEditor({
         case 'glow':
           applyGlow(ctx, canvas.width, canvas.height, settings);
           break;
+        case 'polarPixel':
+          applyPolarPixelEffect(ctx, canvas, canvas.width, canvas.height, settings);
+          break;
+        case 'pixel':
+          applyPixelEffect(ctx, canvas, canvas.width, canvas.height, settings);
+          break;
       }
     } catch (error) {
       console.error(`Error applying effect ${effectType}:`, error);
@@ -1057,6 +1065,26 @@ export default function AdvancedEditor({
           threshold: 128,
           softness: 5,
           blendMode: 'normal'
+        };
+        break;
+      case 'polarPixel':
+        defaultSettings = {
+          enabled: true,
+          rings: 24,
+          segments: 48,
+          centerX: 0.5,
+          centerY: 0.5
+        };
+        break;
+      case 'pixel':
+        defaultSettings = {
+          enabled: true,
+          mode: 'grid',
+          cellSize: 16,
+          rings: 24,
+          segments: 48,
+          centerX: 0.5,
+          centerY: 0.5
         };
         break;
       default:
@@ -2084,6 +2112,26 @@ export default function AdvancedEditor({
     if (!canvasRef.current) return;
     exportCanvasAsSvg(canvasRef.current, exportScale / 100);
   };
+
+  // Add PolarPixel settings
+  const [polarPixelSettings, setPolarPixelSettings] = useState<PolarPixelSettings>({
+    enabled: false,
+    rings: 24,
+    segments: 48,
+    centerX: 0.5,
+    centerY: 0.5
+  });
+
+  // Add Pixel settings
+  const [pixelSettings, setPixelSettings] = useState<PixelEffectSettings>({
+    enabled: false,
+    mode: 'grid',
+    cellSize: 16,
+    rings: 24,
+    segments: 48,
+    centerX: 0.5,
+    centerY: 0.5
+  });
 
   return (
     <div className="flex flex-col lg:flex-row gap-6">
