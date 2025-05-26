@@ -216,81 +216,93 @@ function applyOffGridPixelation(
   const dstData = ctx.createImageData(width, height);
   if (orientation === 'horizontal') {
     for (let y = 0; y < height; y += size) {
-      let rSum = 0, gSum = 0, bSum = 0, aSum = 0, count = 0;
-      for (let j = y; j < Math.min(y + size, height); j++) {
-        for (let i = 0; i < width; i++) {
-          const idx = (j * width + i) * 4;
-          rSum += srcData.data[idx];
-          gSum += srcData.data[idx + 1];
-          bSum += srcData.data[idx + 2];
-          aSum += srcData.data[idx + 3];
-          count++;
+      const offset = (Math.floor(y / size) % 2) * (size / 2);
+      for (let x = 0; x < width; x += size) {
+        let rSum = 0, gSum = 0, bSum = 0, aSum = 0, count = 0;
+        for (let j = y; j < Math.min(y + size, height); j++) {
+          for (let i = x + offset; i < Math.min(x + size + offset, width); i++) {
+            if (i < 0 || i >= width) continue;
+            const idx = (j * width + i) * 4;
+            rSum += srcData.data[idx];
+            gSum += srcData.data[idx + 1];
+            bSum += srcData.data[idx + 2];
+            aSum += srcData.data[idx + 3];
+            count++;
+          }
         }
-      }
-      let r = Math.round(rSum / count);
-      let g = Math.round(gSum / count);
-      let b = Math.round(bSum / count);
-      let a = Math.round(aSum / count);
-      if (variant === 'posterized') {
-        const levels = Math.max(2, Math.min(8, posterizeLevels));
-        const step = 255 / (levels - 1);
-        r = Math.round(Math.round(r / step) * step);
-        g = Math.round(Math.round(g / step) * step);
-        b = Math.round(Math.round(b / step) * step);
-      } else if (variant === 'grayscale') {
-        const levels = Math.max(2, Math.min(256, grayscaleLevels));
-        const grayStep = 255 / (levels - 1);
-        const brightness = Math.round(r * 0.299 + g * 0.587 + b * 0.114);
-        const gray = Math.round(Math.round(brightness / grayStep) * grayStep);
-        r = g = b = gray;
-      }
-      for (let j = y; j < Math.min(y + size, height); j++) {
-        for (let i = 0; i < width; i++) {
-          const idx = (j * width + i) * 4;
-          dstData.data[idx] = r;
-          dstData.data[idx + 1] = g;
-          dstData.data[idx + 2] = b;
-          dstData.data[idx + 3] = a;
+        if (count === 0) continue;
+        let r = Math.round(rSum / count);
+        let g = Math.round(gSum / count);
+        let b = Math.round(bSum / count);
+        let a = Math.round(aSum / count);
+        if (variant === 'posterized') {
+          const levels = Math.max(2, Math.min(8, posterizeLevels));
+          const step = 255 / (levels - 1);
+          r = Math.round(Math.round(r / step) * step);
+          g = Math.round(Math.round(g / step) * step);
+          b = Math.round(Math.round(b / step) * step);
+        } else if (variant === 'grayscale') {
+          const levels = Math.max(2, Math.min(256, grayscaleLevels));
+          const grayStep = 255 / (levels - 1);
+          const brightness = Math.round(r * 0.299 + g * 0.587 + b * 0.114);
+          const gray = Math.round(Math.round(brightness / grayStep) * grayStep);
+          r = g = b = gray;
+        }
+        for (let j = y; j < Math.min(y + size, height); j++) {
+          for (let i = x + offset; i < Math.min(x + size + offset, width); i++) {
+            if (i < 0 || i >= width) continue;
+            const idx = (j * width + i) * 4;
+            dstData.data[idx] = r;
+            dstData.data[idx + 1] = g;
+            dstData.data[idx + 2] = b;
+            dstData.data[idx + 3] = a;
+          }
         }
       }
     }
   } else {
     for (let x = 0; x < width; x += size) {
-      let rSum = 0, gSum = 0, bSum = 0, aSum = 0, count = 0;
-      for (let i = x; i < Math.min(x + size, width); i++) {
-        for (let j = 0; j < height; j++) {
-          const idx = (j * width + i) * 4;
-          rSum += srcData.data[idx];
-          gSum += srcData.data[idx + 1];
-          bSum += srcData.data[idx + 2];
-          aSum += srcData.data[idx + 3];
-          count++;
+      const offset = (Math.floor(x / size) % 2) * (size / 2);
+      for (let y = 0; y < height; y += size) {
+        let rSum = 0, gSum = 0, bSum = 0, aSum = 0, count = 0;
+        for (let i = x; i < Math.min(x + size, width); i++) {
+          for (let j = y + offset; j < Math.min(y + size + offset, height); j++) {
+            if (j < 0 || j >= height) continue;
+            const idx = (j * width + i) * 4;
+            rSum += srcData.data[idx];
+            gSum += srcData.data[idx + 1];
+            bSum += srcData.data[idx + 2];
+            aSum += srcData.data[idx + 3];
+            count++;
+          }
         }
-      }
-      let r = Math.round(rSum / count);
-      let g = Math.round(gSum / count);
-      let b = Math.round(bSum / count);
-      let a = Math.round(aSum / count);
-      if (variant === 'posterized') {
-        const levels = Math.max(2, Math.min(8, posterizeLevels));
-        const step = 255 / (levels - 1);
-        r = Math.round(Math.round(r / step) * step);
-        g = Math.round(Math.round(g / step) * step);
-        b = Math.round(Math.round(b / step) * step);
-      } else if (variant === 'grayscale') {
-        const levels = Math.max(2, Math.min(256, grayscaleLevels));
-        const grayStep = 255 / (levels - 1);
-        const brightness = Math.round(r * 0.299 + g * 0.587 + b * 0.114);
-        const gray = Math.round(Math.round(brightness / grayStep) * grayStep);
-        r = g = b = gray;
-      }
-      for (let i = x; i < Math.min(x + size, width); i++) {
-        for (let j = 0; j < height; j++) {
-          const idx = (j * width + i) * 4;
-          dstData.data[idx] = r;
-          dstData.data[idx + 1] = g;
-          dstData.data[idx + 2] = b;
-          dstData.data[idx + 3] = a;
+        if (count === 0) continue;
+        let r = Math.round(rSum / count);
+        let g = Math.round(gSum / count);
+        let b = Math.round(bSum / count);
+        let a = Math.round(aSum / count);
+        if (variant === 'posterized') {
+          const levels = Math.max(2, Math.min(8, posterizeLevels));
+          const step = 255 / (levels - 1);
+          r = Math.round(Math.round(r / step) * step);
+          g = Math.round(Math.round(g / step) * step);
+          b = Math.round(Math.round(b / step) * step);
+        } else if (variant === 'grayscale') {
+          const levels = Math.max(2, Math.min(256, grayscaleLevels));
+          const grayStep = 255 / (levels - 1);
+          const brightness = Math.round(r * 0.299 + g * 0.587 + b * 0.114);
+          const gray = Math.round(Math.round(brightness / grayStep) * grayStep);
+          r = g = b = gray;
+        }
+        for (let i = x; i < Math.min(x + size, width); i++) {
+          for (let j = y + offset; j < Math.min(y + size + offset, height); j++) {
+            if (j < 0 || j >= height) continue;
+            const idx = (j * width + i) * 4;
+            dstData.data[idx] = r;
+            dstData.data[idx + 1] = g;
+            dstData.data[idx + 2] = b;
+            dstData.data[idx + 3] = a;
+          }
         }
       }
     }
