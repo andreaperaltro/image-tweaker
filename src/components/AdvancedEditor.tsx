@@ -2174,7 +2174,10 @@ export default function AdvancedEditor({
     rings: 24,
     segments: 48,
     centerX: 0.5,
-    centerY: 0.5
+    centerY: 0.5,
+    variant: 'classic',
+    posterizeLevels: 4,
+    grayscaleLevels: 2
   });
 
   return (
