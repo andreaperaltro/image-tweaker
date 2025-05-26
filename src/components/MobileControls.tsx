@@ -23,7 +23,7 @@ import { FindEdgesSettings, EdgeDetectionAlgorithm } from './FindEdges'
 import { PolarPixelSettings } from './PolarPixel'
 import { PixelEffectSettings, PixelMode, PixelVariant } from './PixelEffect'
 import Toggle from './Toggle'
-import { Switch } from './Switch'
+import Switch from './Switch'
 
 // Add interface for gradient stop
 interface GradientStopType {
