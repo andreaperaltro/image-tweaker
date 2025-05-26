@@ -38,6 +38,92 @@ export interface LevelsEffectSettings {
   white: number; // 0-255
 }
 
+// Helper functions for different pixelation modes
+function applyGridPixelation(
+  ctx: CanvasRenderingContext2D,
+  sourceCanvas: HTMLCanvasElement,
+  width: number,
+  height: number,
+  cellSize: number,
+  variant: PixelVariant,
+  posterizeLevels: number,
+  grayscaleLevels: number
+) {
+  // ... existing code ...
+}
+
+function applyRadialPixelation(
+  ctx: CanvasRenderingContext2D,
+  sourceCanvas: HTMLCanvasElement,
+  width: number,
+  height: number,
+  rings: number,
+  segments: number,
+  centerX: number,
+  centerY: number,
+  variant: PixelVariant,
+  posterizeLevels: number,
+  grayscaleLevels: number
+) {
+  // ... existing code ...
+}
+
+function applyOffGridPixelation(
+  ctx: CanvasRenderingContext2D,
+  sourceCanvas: HTMLCanvasElement,
+  width: number,
+  height: number,
+  size: number,
+  orientation: 'horizontal' | 'vertical',
+  variant: PixelVariant,
+  posterizeLevels: number,
+  grayscaleLevels: number
+) {
+  // ... existing code ...
+}
+
+function applyVoronoiPixelation(
+  ctx: CanvasRenderingContext2D,
+  sourceCanvas: HTMLCanvasElement,
+  width: number,
+  height: number,
+  seeds: number,
+  jitter: number,
+  variant: PixelVariant,
+  posterizeLevels: number,
+  grayscaleLevels: number
+) {
+  // ... existing code ...
+}
+
+function applyRingsPixelation(
+  ctx: CanvasRenderingContext2D,
+  sourceCanvas: HTMLCanvasElement,
+  width: number,
+  height: number,
+  ringCount: number,
+  variant: PixelVariant,
+  posterizeLevels: number,
+  grayscaleLevels: number
+) {
+  // ... existing code ...
+}
+
+function applyRandomPixelation(
+  ctx: CanvasRenderingContext2D,
+  sourceCanvas: HTMLCanvasElement,
+  width: number,
+  height: number,
+  minBlockSize: number,
+  maxBlockSize: number,
+  variant: PixelVariant,
+  posterizeLevels: number,
+  grayscaleLevels: number
+) {
+  // ... existing code ...
+}
+
+// Main effect function
 export function applyPixelEffect(
   ctx: CanvasRenderingContext2D,
   sourceCanvas: HTMLCanvasElement,
@@ -67,8 +153,8 @@ export function applyPixelEffect(
         height, 
         settings.rings || 24, 
         settings.segments || 48, 
-        settings.centerX ?? 0.5, 
-        settings.centerY ?? 0.5,
+        settings.centerX || 0.5, 
+        settings.centerY || 0.5,
         settings.variant || 'classic',
         settings.posterizeLevels || 4,
         settings.grayscaleLevels || 2
@@ -80,7 +166,7 @@ export function applyPixelEffect(
         sourceCanvas, 
         width, 
         height, 
-        settings.offGridSize || 16, 
+        settings.offGridSize || 16,
         settings.offGridOrientation || 'horizontal',
         settings.variant || 'classic',
         settings.posterizeLevels || 4,
@@ -93,7 +179,7 @@ export function applyPixelEffect(
         sourceCanvas, 
         width, 
         height, 
-        settings.voronoiSeeds || 32, 
+        settings.voronoiSeeds || 32,
         settings.voronoiJitter || 0.2,
         settings.variant || 'classic',
         settings.posterizeLevels || 4,
@@ -106,21 +192,19 @@ export function applyPixelEffect(
         sourceCanvas, 
         width, 
         height, 
-        settings.ringCount || 24, 
-        settings.centerX ?? 0.5, 
-        settings.centerY ?? 0.5,
+        settings.ringCount || 24,
         settings.variant || 'classic',
         settings.posterizeLevels || 4,
         settings.grayscaleLevels || 2
       );
       break;
     case 'random':
-      applyRandomBlockPixelation(
+      applyRandomPixelation(
         ctx, 
         sourceCanvas, 
         width, 
         height, 
-        settings.minBlockSize || 8, 
+        settings.minBlockSize || 8,
         settings.maxBlockSize || 32,
         settings.variant || 'classic',
         settings.posterizeLevels || 4,
