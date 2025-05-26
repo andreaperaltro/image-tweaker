@@ -19,10 +19,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added advanced blend modes to the Noise effect: multiply, screen, overlay, darken, lighten, color-dodge, color-burn, hard-light, soft-light, difference, exclusion.
 - Added Monochrome toggle to Noise effect for grayscale noise.
 - Added Channel selector to Noise effect (apply noise to all, red, green, or blue channels).
+- New Levels effect: adjust black, gamma (mid), and white points for overall image contrast and brightness, similar to Photoshop's Levels adjustment. Available as a standalone effect with interactive sliders.
+- Pixel effect: Color variant controls (Classic, Posterized, Grayscale) are now available for all pixel modes (Grid, Radial, Off Grid, Voronoi, Rings, Random), not just Grid.
 
 ### Changed
 - Improved Noise effect UI with new controls and more descriptive section title ("Noise").
 - Enhanced Linocut effect with smoother noise modulation and better brightness-based line thickness control
+- Pixel effect: Color variant controls are now shown below the size controls for each mode in the control panel.
+- Improved effect section title for Levels effect (now displays "Levels").
 
 ### Fixed
 - Fixed effect section title for Noise effect (was previously showing as generic "Effect").

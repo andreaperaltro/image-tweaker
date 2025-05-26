@@ -38,6 +38,7 @@ import { PolarPixelSettings, applyPolarPixelEffect } from './PolarPixel'
 import { PixelEffectSettings, applyPixelEffect } from './PixelEffect'
 import { applyNoiseEffect } from './NoiseEffect'
 import { applyLinocutEffect } from './LinocutEffect'
+import { applyLevelsEffect } from './LevelsEffect'
 
 // Define types
 type AspectRatioPreset = '1:1' | '4:3' | '16:9' | '3:2' | '5:4' | '2:1' | '3:4' | '9:16' | '2:3' | '4:5' | '1:2' | 'custom';
@@ -700,6 +701,9 @@ export default function AdvancedEditor({
         case 'linocut':
           applyLinocutEffect(ctx, canvas, canvas.width, canvas.height, settings);
           break;
+        case 'levels':
+          applyLevelsEffect(ctx, canvas.width, canvas.height, settings);
+          break;
       }
     } catch (error) {
       console.error(`Error applying effect ${effectType}:`, error);
@@ -1115,6 +1119,14 @@ export default function AdvancedEditor({
           invert: false,
           orientation: 'horizontal',
           threshold: 0.5
+        };
+        break;
+      case 'levels':
+        defaultSettings = {
+          enabled: true,
+          black: 0,
+          gamma: 1.0,
+          white: 255
         };
         break;
       default:

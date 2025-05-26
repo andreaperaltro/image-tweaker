@@ -21,8 +21,9 @@ import { SliceShiftSettings } from './SliceShift'
 import { PosterizeSettings } from './Posterize'
 import { FindEdgesSettings, EdgeDetectionAlgorithm } from './FindEdges'
 import { PolarPixelSettings } from './PolarPixel'
-import { PixelEffectSettings, PixelMode } from './PixelEffect'
+import { PixelEffectSettings, PixelMode, PixelVariant } from './PixelEffect'
 import Toggle from './Toggle'
+import { Switch } from './Switch'
 
 // Add interface for gradient stop
 interface GradientStopType {
@@ -2159,6 +2160,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               </select>
             </div>
 
+            {/* Mode-specific size/shape controls */}
             {settings.mode === 'grid' && (
               <Slider
                 label="Cell Size"
@@ -2169,7 +2171,6 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 step={1}
               />
             )}
-
             {settings.mode === 'offgrid' && (
               <>
                 <div className="mobile-control-group">
@@ -2193,7 +2194,6 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 />
               </>
             )}
-
             {settings.mode === 'voronoi' && (
               <>
                 <Slider
@@ -2279,6 +2279,40 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                   step={0.01}
                 />
               </>
+            )}
+
+            {/* Color Variant Controls (shown for all modes) */}
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Variant</label>
+              <select
+                className="mobile-select"
+                value={settings.variant || 'classic'}
+                onChange={e => updateInstanceSettings(instance.id, { variant: e.target.value as PixelVariant })}
+              >
+                <option value="classic">Classic</option>
+                <option value="posterized">Posterized</option>
+                <option value="grayscale">Grayscale</option>
+              </select>
+            </div>
+            {settings.variant === 'posterized' && (
+              <Slider
+                label="Color Levels"
+                value={settings.posterizeLevels || 4}
+                onChange={value => updateInstanceSettings(instance.id, { posterizeLevels: value })}
+                min={2}
+                max={8}
+                step={1}
+              />
+            )}
+            {settings.variant === 'grayscale' && (
+              <Slider
+                label="Grayscale Levels"
+                value={settings.grayscaleLevels || 2}
+                onChange={value => updateInstanceSettings(instance.id, { grayscaleLevels: value })}
+                min={2}
+                max={256}
+                step={1}
+              />
             )}
           </div>
         );
@@ -2447,6 +2481,39 @@ const MobileControls: React.FC<MobileControlsProps> = ({
         );
       }
 
+      case 'levels': {
+        const settings = instanceSettings[instance.id];
+        if (!settings) return null;
+        return (
+          <div className={`mobile-effect-content ${openSection === instance.id ? 'open' : ''}`}>
+            <Slider
+              label="Black Point"
+              value={settings.black}
+              onChange={value => updateInstanceSettings(instance.id, { black: value })}
+              min={0}
+              max={255}
+              step={1}
+            />
+            <Slider
+              label="Gamma"
+              value={settings.gamma}
+              onChange={value => updateInstanceSettings(instance.id, { gamma: value })}
+              min={0.1}
+              max={5}
+              step={0.01}
+            />
+            <Slider
+              label="White Point"
+              value={settings.white}
+              onChange={value => updateInstanceSettings(instance.id, { white: value })}
+              min={0}
+              max={255}
+              step={1}
+            />
+          </div>
+        );
+      }
+
       default:
         return null;
     }
@@ -2479,6 +2546,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
       instance.type === 'pixel' ? 'Pixel' :
       instance.type === 'noise' ? 'Noise' :
       instance.type === 'linocut' ? 'Linocut' :
+      instance.type === 'levels' ? 'Levels' :
       'Effect';
     
     // Add numbering only if there are multiple effects of the same type
@@ -2520,6 +2588,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
             { label: 'Text', type: 'textDither' },
             { label: 'Threshold', type: 'threshold' },
             { label: 'Linocut', type: 'linocut' },
+            { label: 'Levels', type: 'levels' },
           ]
             .sort((a, b) => a.label.localeCompare(b.label))
             .map(effect => (
