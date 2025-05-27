@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] - 2024-06-XX
+## [Unreleased] - 2025-05-27
 
 ### Added
 - New Linocut effect that creates variable-width line patterns based on image brightness
@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enhanced Linocut effect with smoother noise modulation and better brightness-based line thickness control
 - Pixel effect: Color variant controls are now shown below the size controls for each mode in the control panel.
 - Improved effect section title for Levels effect (now displays "Levels").
+- Removed rotationMode and rotationMax controls from the pixel effect case in MobileControls.tsx to fix linter errors.
 
 ### Fixed
 - Fixed effect section title for Noise effect (was previously showing as generic "Effect").

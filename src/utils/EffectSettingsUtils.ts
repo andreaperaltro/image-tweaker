@@ -7,7 +7,7 @@ import { GlitchSettings } from '../components/GlitchUtils';
 import { TextDitherSettings } from '../components/TextDitherUtils';
 import { GradientMapSettings } from '../components/GradientMapUtils';
 import { GridSettings } from '../components/Grid';
-import { BlurSettings, EffectInstance, MosaicShiftSettings } from '../types';
+import { BlurSettings, EffectInstance, MosaicShiftSettings, AsciiEffectSettings } from '../types';
 import { SliceShiftSettings } from '../components/SliceShift';
 import { PosterizeSettings } from '../components/Posterize';
 import { FindEdgesSettings } from '../components/FindEdges';
@@ -30,6 +30,7 @@ export interface EffectSettings {
   posterizeSettings?: PosterizeSettings;
   findEdgesSettings?: FindEdgesSettings;
   blobSettings?: BlobSettings;
+  asciiSettings?: AsciiEffectSettings;
 }
 
 export const saveEffectSettings = (settings: EffectSettings) => {

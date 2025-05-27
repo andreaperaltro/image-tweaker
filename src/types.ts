@@ -118,6 +118,20 @@ export interface LinocutEffectSettings {
   minLine?: number; // minimum line thickness
 }
 
+export interface AsciiEffectSettings {
+  enabled: boolean;
+  cellSize: number;
+  fontSize: number;
+  charset: string;
+  backgroundColor?: string;
+  monochrome?: boolean;
+  jitter?: number;
+  preset?: string;
+  textColor?: string;
+  rotationMax?: number;
+  rotationMode?: 'none' | 'random' | 'flow';
+}
+
 export type EffectType = 
   | 'color' 
   | 'blur' 
@@ -136,7 +150,8 @@ export type EffectType =
   | 'blob'
   | 'pixel'
   | 'noise'
-  | 'linocut';
+  | 'linocut'
+  | 'ascii';
 
 export interface NoiseEffectSettings {
   enabled: boolean;

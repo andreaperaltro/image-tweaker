@@ -2144,6 +2144,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
         if (!settings) return null;
         return (
           <div className={`mobile-effect-content ${openSection === instance.id ? 'open' : ''}`}>
+            {/* Pixel controls only. Do NOT include rotationMode or rotationMax controls here. */}
             <div className="mobile-control-group">
               <label className="mobile-control-label">Mode</label>
               <select
@@ -2314,6 +2315,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 step={1}
               />
             )}
+            {/* Removed rotationMode and rotationMax controls from pixel effect */}
           </div>
         );
       }
@@ -2402,6 +2404,17 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 <option value="b">Blue</option>
               </select>
             </div>
+            {settings.monochrome !== false && (
+              <div className="mobile-control-group">
+                <label className="mobile-control-label">Text Color</label>
+                <input
+                  type="color"
+                  className="mobile-color-picker"
+                  value={settings.textColor || '#ffffff'}
+                  onChange={e => updateInstanceSettings(instance.id, { textColor: e.target.value })}
+                />
+              </div>
+            )}
           </div>
         );
       }
@@ -2514,6 +2527,136 @@ const MobileControls: React.FC<MobileControlsProps> = ({
         );
       }
 
+      case 'ascii': {
+        // Charset presets
+        const asciiPresets = [
+          { label: 'Dense', value: '@%#*+=-:. ' },
+          { label: 'Blocks', value: '█▓▒░ ' },
+          { label: 'Sparse', value: '@#S%?*+;:,. ' },
+          { label: 'Classic', value: '$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/|()1{}[]?-_+~<>i!lI;:,"^`\0 ' },
+          { label: 'Custom', value: settings.charset }
+        ];
+        return (
+          <div className={`mobile-effect-content ${openSection === instance.id ? 'open' : ''}`}>
+            <Slider
+              label="Cell Size"
+              value={settings.cellSize}
+              onChange={(value) => updateInstanceSettings(instance.id, { cellSize: value })}
+              min={4}
+              max={32}
+              step={1}
+              unit="px"
+            />
+            <Slider
+              label="Font Size"
+              value={settings.fontSize}
+              onChange={(value) => updateInstanceSettings(instance.id, { fontSize: value })}
+              min={4}
+              max={64}
+              step={1}
+              unit="px"
+            />
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Charset Preset</label>
+              <select
+                className="mobile-select"
+                value={asciiPresets.find(p => p.value === settings.charset) ? settings.charset : 'custom'}
+                onChange={e => {
+                  const preset = asciiPresets.find(p => p.value === e.target.value);
+                  if (preset && preset.label !== 'Custom') {
+                    updateInstanceSettings(instance.id, { charset: preset.value, preset: preset.label });
+                  }
+                }}
+              >
+                {asciiPresets.map(p => (
+                  <option key={p.label} value={p.value}>{p.label}</option>
+                ))}
+              </select>
+            </div>
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Charset</label>
+              <input
+                type="text"
+                className="mobile-select"
+                value={settings.charset}
+                onChange={(e) => updateInstanceSettings(instance.id, { charset: e.target.value, preset: 'Custom' })}
+              />
+            </div>
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Monochrome</label>
+              <label className="mobile-effect-toggle">
+                <input
+                  type="checkbox"
+                  checked={settings.monochrome !== false}
+                  onChange={e => updateInstanceSettings(instance.id, { monochrome: e.target.checked })}
+                />
+                <span className="mobile-effect-toggle-slider"></span>
+              </label>
+            </div>
+            {settings.monochrome !== false && (
+              <div className="mobile-control-group">
+                <label className="mobile-control-label">Text Color</label>
+                <input
+                  type="color"
+                  className="mobile-color-picker"
+                  value={settings.textColor || '#ffffff'}
+                  onChange={e => updateInstanceSettings(instance.id, { textColor: e.target.value })}
+                />
+              </div>
+            )}
+            <Slider
+              label="Random Jitter"
+              value={settings.jitter || 0}
+              onChange={value => updateInstanceSettings(instance.id, { jitter: value })}
+              min={0}
+              max={settings.cellSize}
+              step={1}
+              unit="px"
+            />
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Background Color</label>
+              <input
+                type="color"
+                className="mobile-color-picker"
+                value={settings.backgroundColor || '#000000'}
+                onChange={(e) => updateInstanceSettings(instance.id, { backgroundColor: e.target.value })}
+              />
+            </div>
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Rotation Mode</label>
+              <select
+                className="mobile-select"
+                value={settings.rotationMode || 'none'}
+                onChange={e => updateInstanceSettings(instance.id, { rotationMode: e.target.value })}
+              >
+                <option value="none">None</option>
+                <option value="random">Random</option>
+                <option value="flow">Flow Field (future)</option>
+              </select>
+            </div>
+            {settings.rotationMode !== 'none' && (
+              <Slider
+                label="Max Rotation"
+                value={settings.rotationMax || 0}
+                onChange={value => updateInstanceSettings(instance.id, { rotationMax: value })}
+                min={0}
+                max={90}
+                step={1}
+                unit="°"
+              />
+            )}
+            <div className="mobile-control-group">
+              <button
+                className="mobile-action-button w-full"
+                onClick={() => window.dispatchEvent(new CustomEvent('export-ascii-text'))}
+              >
+                Export as Text
+              </button>
+            </div>
+          </div>
+        );
+      }
+
       default:
         return null;
     }
@@ -2547,6 +2690,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
       instance.type === 'noise' ? 'Noise' :
       instance.type === 'linocut' ? 'Linocut' :
       instance.type === 'levels' ? 'Levels' :
+      instance.type === 'ascii' ? 'Ascii Effect' :
       'Effect';
     
     // Add numbering only if there are multiple effects of the same type
@@ -2589,6 +2733,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
             { label: 'Threshold', type: 'threshold' },
             { label: 'Linocut', type: 'linocut' },
             { label: 'Levels', type: 'levels' },
+            { label: 'Ascii', type: 'ascii' },
           ]
             .sort((a, b) => a.label.localeCompare(b.label))
             .map(effect => (

@@ -39,6 +39,8 @@ import { PixelEffectSettings, applyPixelEffect } from './PixelEffect'
 import { applyNoiseEffect } from './NoiseEffect'
 import { applyLinocutEffect } from './LinocutEffect'
 import { applyLevelsEffect } from './LevelsEffect'
+import { applyAsciiEffect } from './AsciiEffect'
+import { AsciiEffectSettings } from '../types'
 
 // Define types
 type AspectRatioPreset = '1:1' | '4:3' | '16:9' | '3:2' | '5:4' | '2:1' | '3:4' | '9:16' | '2:3' | '4:5' | '1:2' | 'custom';
@@ -704,6 +706,11 @@ export default function AdvancedEditor({
         case 'levels':
           applyLevelsEffect(ctx, canvas.width, canvas.height, settings);
           break;
+        case 'ascii':
+          if (typeof applyAsciiEffect === 'function') {
+            applyAsciiEffect(ctx, canvas, canvas.width, canvas.height, settings);
+          }
+          break;
       }
     } catch (error) {
       console.error(`Error applying effect ${effectType}:`, error);
@@ -1127,6 +1134,21 @@ export default function AdvancedEditor({
           black: 0,
           gamma: 1.0,
           white: 255
+        };
+        break;
+      case 'ascii':
+        defaultSettings = {
+          enabled: true,
+          cellSize: 8,
+          fontSize: 12,
+          charset: '@%#*+=-:. ',
+          backgroundColor: '#000000',
+          monochrome: true,
+          jitter: 0,
+          preset: 'Dense',
+          textColor: '#ffffff',
+          rotationMax: 0,
+          rotationMode: 'none'
         };
         break;
       default:
@@ -2179,6 +2201,64 @@ export default function AdvancedEditor({
     posterizeLevels: 4,
     grayscaleLevels: 2
   });
+
+  // Add this after the main component definition
+  function asciiArtFromImage(sourceCanvas: HTMLCanvasElement, width: number, height: number, settings: AsciiEffectSettings): string {
+    const { cellSize, charset } = settings;
+    const chars = charset.split("");
+    const charLen = chars.length;
+    const sourceCtx = sourceCanvas.getContext('2d');
+    if (!sourceCtx) return '';
+    const imageData = sourceCtx.getImageData(0, 0, width, height);
+    const data = imageData.data;
+    let lines: string[] = [];
+    for (let y = 0; y < height; y += cellSize) {
+      let line = '';
+      for (let x = 0; x < width; x += cellSize) {
+        let total = 0, count = 0;
+        for (let dy = 0; dy < cellSize; dy++) {
+          for (let dx = 0; dx < cellSize; dx++) {
+            const px = (x + dx) + (y + dy) * width;
+            if (px * 4 + 2 < data.length) {
+              const r = data[px * 4];
+              const g = data[px * 4 + 1];
+              const b = data[px * 4 + 2];
+              total += (r + g + b) / 3;
+              count++;
+            }
+          }
+        }
+        const avg = count > 0 ? total / count : 0;
+        const charIdx = Math.floor((avg / 255) * (charLen - 1));
+        const char = chars[charLen - 1 - charIdx] || ' ';
+        line += char;
+      }
+      lines.push(line);
+    }
+    return lines.join('\n');
+  }
+
+  useEffect(() => {
+    function handleExportAsciiText() {
+      // Find the first enabled ascii effect instance
+      const asciiInstance = effectInstances.find(inst => inst.enabled && inst.type === 'ascii');
+      if (!asciiInstance) return;
+      const settings = instanceSettings[asciiInstance.id] as AsciiEffectSettings;
+      if (!canvasRef.current || !sourceCanvasRef.current) return;
+      const asciiText = asciiArtFromImage(sourceCanvasRef.current, canvasWidth, canvasHeight, settings);
+      const blob = new Blob([asciiText], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'ascii-art.txt';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+    window.addEventListener('export-ascii-text', handleExportAsciiText);
+    return () => window.removeEventListener('export-ascii-text', handleExportAsciiText);
+  }, [effectInstances, instanceSettings, canvasWidth, canvasHeight]);
 
   return (
     <div className="flex flex-col lg:flex-row gap-6">
