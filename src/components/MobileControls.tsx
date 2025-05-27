@@ -2631,7 +2631,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               >
                 <option value="none">None</option>
                 <option value="random">Random</option>
-                <option value="flow">Flow Field (future)</option>
+                <option value="flow">Flow Field</option>
               </select>
             </div>
             {settings.rotationMode !== 'none' && (

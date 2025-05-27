@@ -488,7 +488,7 @@ export default function AdvancedEditor({
             const settings = getInstanceSettings(instance);
             
             // Apply the effect directly
-            applyEffectDirectly(instance.type, sourceCtx, sourceCanvas, settings);
+            applyEffectDirectly(instance.type, sourceCtx, sourceCanvas, sourceCanvas, settings);
             
             // Copy result to main canvas
             ctx.drawImage(sourceCanvas, 0, 0);
@@ -536,7 +536,7 @@ export default function AdvancedEditor({
                   
                   // Apply effect to destination canvas
                   try {
-                    applyEffectDirectly(instance.type, destCtx, destCanvas, settings);
+                    applyEffectDirectly(instance.type, destCtx, destCanvas, srcCanvas, settings);
                     
                     // Check if effect took too long
                     const effectTime = performance.now() - effectStartTime;
@@ -556,7 +556,7 @@ export default function AdvancedEditor({
                   
                   // Apply final effect directly to main canvas
                   try {
-                    applyEffectDirectly(instance.type, ctx, canvas, settings);
+                    applyEffectDirectly(instance.type, ctx, canvas, srcCanvas, settings);
                     
                     // Check if effect took too long
                     const effectTime = performance.now() - effectStartTime;
@@ -623,9 +623,10 @@ export default function AdvancedEditor({
   
   // Helper function to apply effects directly
   const applyEffectDirectly = (
-    effectType: string, 
-    ctx: CanvasRenderingContext2D, 
-    canvas: HTMLCanvasElement, 
+    effectType: string,
+    ctx: CanvasRenderingContext2D,
+    targetCanvas: HTMLCanvasElement,
+    sourceCanvas: HTMLCanvasElement,
     settings: any
   ) => {
     try {
@@ -644,71 +645,71 @@ export default function AdvancedEditor({
               glitchSeed: settings.glitchSeed || Math.random(),
               blendMode: settings.blendMode || 'normal'
             };
-            applyColorAdjustments(ctx, canvas.width, canvas.height, colorSettings);
+            applyColorAdjustments(ctx, targetCanvas.width, targetCanvas.height, colorSettings);
           }
           break;
         case 'gradient':
-          applyGradientMap(ctx, canvas, canvas.width, canvas.height, { ...settings, enabled: true });
+          applyGradientMap(ctx, targetCanvas, targetCanvas.width, targetCanvas.height, { ...settings, enabled: true });
           break;
         case 'threshold':
-          applyThreshold(ctx, canvas.width, canvas.height, { ...settings, enabled: true });
+          applyThreshold(ctx, targetCanvas.width, targetCanvas.height, { ...settings, enabled: true });
           break;
         case 'halftone':
-          applyHalftone(ctx, canvas, canvas.width, canvas.height, { ...settings, enabled: true });
+          applyHalftone(ctx, targetCanvas, targetCanvas.width, targetCanvas.height, { ...settings, enabled: true });
           break;
         case 'grid':
           const gridSettings = { ...settings, enabled: true };
-          const grid = createGrid(canvas.width, canvas.height, gridSettings);
-          grid.forEach(cell => renderGridCell(ctx, cell, canvas, gridSettings));
+          const grid = createGrid(targetCanvas.width, targetCanvas.height, gridSettings);
+          grid.forEach(cell => renderGridCell(ctx, cell, targetCanvas, gridSettings));
           break;
         case 'dither':
-          applyDithering(ctx, canvas, canvas.width, canvas.height, { ...settings, enabled: true });
+          applyDithering(ctx, targetCanvas, targetCanvas.width, targetCanvas.height, { ...settings, enabled: true });
           break;
         case 'textDither':
-          applyTextDither(ctx, canvas.width, canvas.height, { ...settings, enabled: true });
+          applyTextDither(ctx, targetCanvas.width, targetCanvas.height, { ...settings, enabled: true });
           break;
         case 'glitch':
-          applyGlitch(ctx, canvas, canvas.width, canvas.height, { ...settings, masterEnabled: true });
+          applyGlitch(ctx, targetCanvas, targetCanvas.width, targetCanvas.height, { ...settings, masterEnabled: true });
           break;
         case 'blur':
-          applyBlur(ctx, canvas.width, canvas.height, { ...settings, enabled: true });
+          applyBlur(ctx, targetCanvas.width, targetCanvas.height, { ...settings, enabled: true });
           break;
         case 'mosaicShift':
-          applyMosaicShift(ctx, canvas, canvas.width, canvas.height, { ...settings, enabled: true });
+          applyMosaicShift(ctx, targetCanvas, targetCanvas.width, targetCanvas.height, { ...settings, enabled: true });
           break;
         case 'sliceShift':
-          applySliceShift(ctx, canvas, canvas.width, canvas.height, { ...settings, enabled: true });
+          applySliceShift(ctx, targetCanvas, targetCanvas.width, targetCanvas.height, { ...settings, enabled: true });
           break;
         case 'posterize':
-          applyPosterize(ctx, canvas, canvas.width, canvas.height, settings);
+          applyPosterize(ctx, targetCanvas, targetCanvas.width, targetCanvas.height, settings);
           break;
         case 'findEdges':
-          applyFindEdges(ctx, canvas, canvas.width, canvas.height, settings);
+          applyFindEdges(ctx, targetCanvas, targetCanvas.width, targetCanvas.height, settings);
           break;
         case 'blob':
-          applyBlob(ctx, canvas, canvas.width, canvas.height, settings);
+          applyBlob(ctx, targetCanvas, targetCanvas.width, targetCanvas.height, settings);
           break;
         case 'glow':
-          applyGlow(ctx, canvas.width, canvas.height, settings);
+          applyGlow(ctx, targetCanvas.width, targetCanvas.height, settings);
           break;
         case 'polarPixel':
-          applyPolarPixelEffect(ctx, canvas, canvas.width, canvas.height, settings);
+          applyPolarPixelEffect(ctx, targetCanvas, targetCanvas.width, targetCanvas.height, settings);
           break;
         case 'pixel':
-          applyPixelEffect(ctx, canvas, canvas.width, canvas.height, settings);
+          applyPixelEffect(ctx, targetCanvas, targetCanvas.width, targetCanvas.height, settings);
           break;
         case 'noise':
-          applyNoiseEffect(ctx, canvas, canvas.width, canvas.height, settings);
+          applyNoiseEffect(ctx, targetCanvas, targetCanvas.width, targetCanvas.height, settings);
           break;
         case 'linocut':
-          applyLinocutEffect(ctx, canvas, canvas.width, canvas.height, settings);
+          applyLinocutEffect(ctx, targetCanvas, targetCanvas.width, targetCanvas.height, settings);
           break;
         case 'levels':
-          applyLevelsEffect(ctx, canvas.width, canvas.height, settings);
+          applyLevelsEffect(ctx, targetCanvas.width, targetCanvas.height, settings);
           break;
         case 'ascii':
           if (typeof applyAsciiEffect === 'function') {
-            applyAsciiEffect(ctx, canvas, canvas.width, canvas.height, settings);
+            applyAsciiEffect(sourceCanvas, targetCanvas, settings);
           }
           break;
       }
@@ -757,7 +758,7 @@ export default function AdvancedEditor({
               const effectSettings = settings.instanceSettings?.[instance.id] || {};
               
               // Apply effect directly
-              applyEffectDirectly(instance.type, sourceCtx, sourceCanvasRef.current!, effectSettings);
+              applyEffectDirectly(instance.type, sourceCtx, sourceCanvasRef.current!, sourceCanvasRef.current!, effectSettings);
             });
           }
           
@@ -1968,7 +1969,7 @@ export default function AdvancedEditor({
                     activeEffects.forEach(effect => {
                       const effectSettings = settings.instanceSettings?.[effect.id] || {};
                       // Fix the parameter order to match the function definition
-                      applyEffectDirectly(effect.type, sourceCtx, sourceCanvasRef.current!, effectSettings);
+                      applyEffectDirectly(effect.type, sourceCtx, sourceCanvasRef.current!, sourceCanvasRef.current!, effectSettings);
                     });
                     
                     // Copy result to main canvas
