@@ -1045,12 +1045,13 @@ const MobileControls: React.FC<MobileControlsProps> = ({
           <div className={`mobile-effect-content ${openSection === instance.id ? 'open' : ''}`}>
             <div className="mobile-control-group">
               <label className="mobile-control-label">Text</label>
-              <input
-                type="text"
+              <textarea
                 className="mobile-select text-[var(--text-primary)]"
+                style={{ minHeight: 64, resize: 'vertical' }}
                 value={settings.text}
                 onChange={(e) => updateInstanceSettings(instance.id, { text: e.target.value })}
                 placeholder="Enter text"
+                rows={3}
               />
             </div>
             <Slider
@@ -1058,7 +1059,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               value={settings.fontSize}
               onChange={(value) => updateInstanceSettings(instance.id, { fontSize: value })}
               min={1}
-              max={200}
+              max={400}
               step={1}
               unit="px"
             />
@@ -1101,6 +1102,15 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               max={4}
               step={0.05}
             />
+            <Slider
+              label="Rotation"
+              value={settings.rotation || 0}
+              onChange={(value) => updateInstanceSettings(instance.id, { rotation: value })}
+              min={0}
+              max={360}
+              step={1}
+              unit="°"
+            />
             <div className="mobile-control-group">
               <label className="mobile-control-label">Text Color</label>
               <input
@@ -1138,6 +1148,78 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 <option value="right">Right</option>
               </select>
             </div>
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Blend Mode</label>
+              <select
+                className="mobile-select"
+                value={settings.blendMode || 'source-over'}
+                onChange={e => updateInstanceSettings(instance.id, { blendMode: e.target.value })}
+              >
+                <option value="source-over">Normal</option>
+                <option value="multiply">Multiply</option>
+                <option value="screen">Screen</option>
+                <option value="overlay">Overlay</option>
+                <option value="darken">Darken</option>
+                <option value="lighten">Lighten</option>
+                <option value="color-dodge">Color Dodge</option>
+                <option value="color-burn">Color Burn</option>
+                <option value="hard-light">Hard Light</option>
+                <option value="soft-light">Soft Light</option>
+                <option value="difference">Difference</option>
+                <option value="exclusion">Exclusion</option>
+                <option value="hue">Hue</option>
+                <option value="saturation">Saturation</option>
+                <option value="color">Color</option>
+                <option value="luminosity">Luminosity</option>
+              </select>
+            </div>
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Font Family</label>
+              <select
+                className="mobile-select"
+                value={settings.fontFamily || 'Arial'}
+                onChange={e => updateInstanceSettings(instance.id, { fontFamily: e.target.value })}
+              >
+                <option value="Arial">Arial</option>
+                <option value="Helvetica">Helvetica</option>
+                <option value="Times New Roman">Times New Roman</option>
+                <option value="Courier New">Courier New</option>
+                <option value="Georgia">Georgia</option>
+                <option value="Verdana">Verdana</option>
+                <option value="Trebuchet MS">Trebuchet MS</option>
+                <option value="Impact">Impact</option>
+                <option value="Comic Sans MS">Comic Sans MS</option>
+                <option value="Custom">Custom Uploaded</option>
+              </select>
+            </div>
+            {(settings.fontFamily === 'Custom' || settings.fontFamily?.startsWith('custom-')) && (
+              <div className="mobile-control-group">
+                <label className="mobile-control-label">Upload Font</label>
+                <input
+                  type="file"
+                  accept=".ttf,.otf,.woff,.woff2"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const fontName = `custom-${file.name.replace(/\W/g, '')}`;
+                      const reader = new FileReader();
+                      reader.onload = async (event) => {
+                        if (event.target && event.target.result) {
+                          const dataUrl = event.target.result;
+                          if (typeof dataUrl === 'string') {
+                            const font = new FontFace(fontName, `url(${dataUrl})`);
+                            await font.load();
+                            document.fonts.add(font);
+                            updateInstanceSettings(instance.id, { fontFamily: fontName });
+                          }
+                        }
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                />
+              </div>
+            )}
           </div>
         );
 

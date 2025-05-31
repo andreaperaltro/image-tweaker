@@ -141,6 +141,8 @@ export interface TextEffectSettings {
   y: number; // 0-1, relative position
   align: 'left' | 'center' | 'right';
   fontFamily?: string;
+  rotation?: number; // degrees
+  blendMode?: GlobalCompositeOperation; // e.g. 'normal', 'multiply', etc.
 }
 
 export type EffectType =
