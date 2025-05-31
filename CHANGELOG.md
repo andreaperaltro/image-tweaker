@@ -543,3 +543,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Text effect now updates live when controls are changed (text, color, size, etc.).
 - Fixed text color input in controls so the text is visible.
 - Refactored text effect controls to use instance-specific settings for consistency.
+
+## [0.6.0] - 2024-06-08
+
+### Added
+- New LCD effect with selectable subpixel patterns: TV CRT, PC CRT, XO-1 LCD, and LCD.
+- Pattern selector in the LCD effect controls for choosing between different subpixel layouts.
+- Padding slider to control the gap between LCD/CRT cells, works for both stripes and dots.
+- Intensity slider max increased to 10 for more dramatic effects.
+
+### Changed
+- Improved LCD effect rendering logic for accurate simulation of real subpixel patterns, including proper gaps, rounded rectangles, and staggered dot grids.
+- LCD effect section title now displays as "LCD" (or "LCD 2", etc. for multiple instances).
+- UI/UX improvements for effect controls: consistent padding, labeling, and section titles.
+
+### Fixed
+- Padding logic now robust: never causes overlap or disappearance of subpixels, clamps to safe values.
+- All four LCD/CRT patterns now render as expected and match reference images.
