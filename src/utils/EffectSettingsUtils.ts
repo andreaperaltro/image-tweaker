@@ -6,7 +6,7 @@ import { ThresholdSettings } from '../components/ThresholdUtils';
 import { GlitchSettings } from '../components/GlitchUtils';
 import { GradientMapSettings } from '../components/GradientMapUtils';
 import { GridSettings } from '../components/Grid';
-import { BlurSettings, EffectInstance, MosaicShiftSettings, AsciiEffectSettings } from '../types';
+import { BlurSettings, EffectInstance, MosaicShiftSettings, AsciiEffectSettings, TextEffectSettings } from '../types';
 import { SliceShiftSettings } from '../components/SliceShift';
 import { PosterizeSettings } from '../components/Posterize';
 import { FindEdgesSettings } from '../components/FindEdges';
@@ -32,6 +32,7 @@ export interface EffectSettings {
   pixelSettings?: PixelEffectSettings;
   linocutSettings?: LinocutEffectSettings;
   instanceSettings?: {[id: string]: any};
+  textEffectSettings?: TextEffectSettings;
 }
 
 export const saveEffectSettings = (settings: EffectSettings) => {

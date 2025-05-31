@@ -1790,7 +1790,8 @@ export default function AdvancedEditor({
       sliceShiftSettings,
       posterizeSettings,
       findEdgesSettings,
-      blobSettings
+      blobSettings,
+      textEffectSettings
     };
   };
 
