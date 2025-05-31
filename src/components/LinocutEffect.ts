@@ -1,4 +1,5 @@
 import { LinocutEffectSettings } from '../types';
+export type { LinocutEffectSettings } from '../types';
 import { Noise } from 'noisejs';
 
 function getBrightness(r: number, g: number, b: number): number {
