@@ -1044,6 +1044,59 @@ const MobileControls: React.FC<MobileControlsProps> = ({
       case 'text':
         return (
           <div className={`mobile-effect-content ${openSection === instance.id ? 'open' : ''}`}>
+            {/* Font Family */}
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Font Family</label>
+              <select
+                className="mobile-select"
+                value={settings.fontFamily || 'Arial'}
+                onChange={e => updateInstanceSettings(instance.id, { fontFamily: e.target.value })}
+              >
+                <option value="Arial">Arial</option>
+                <option value="Helvetica">Helvetica</option>
+                <option value="Times New Roman">Times New Roman</option>
+                <option value="Courier New">Courier New</option>
+                <option value="Georgia">Georgia</option>
+                <option value="Verdana">Verdana</option>
+                <option value="Trebuchet MS">Trebuchet MS</option>
+                <option value="Impact">Impact</option>
+                <option value="Comic Sans MS">Comic Sans MS</option>
+                <option value="Custom">Custom Uploaded</option>
+              </select>
+            </div>
+            {(settings.fontFamily === 'Custom' || settings.fontFamily?.startsWith('custom-')) && (
+              <div className="mobile-control-group">
+                <label className="mobile-control-label">Upload Font</label>
+                <label className="mobile-action-button" style={{ display: 'inline-block', cursor: 'pointer', padding: '6px 12px', borderRadius: '6px', background: 'var(--accent-bg)', color: 'var(--text-primary)', border: '1px solid var(--border-color)', fontWeight: 500 }}>
+                  <input
+                    type="file"
+                    accept=".ttf,.otf,.woff,.woff2"
+                    style={{ display: 'none' }}
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const fontName = `custom-${file.name.replace(/\W/g, '')}`;
+                        const reader = new FileReader();
+                        reader.onload = async (event) => {
+                          if (event.target && event.target.result) {
+                            const dataUrl = event.target.result;
+                            if (typeof dataUrl === 'string') {
+                              const font = new FontFace(fontName, `url(${dataUrl})`);
+                              await font.load();
+                              document.fonts.add(font);
+                              updateInstanceSettings(instance.id, { fontFamily: fontName });
+                            }
+                          }
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                  />
+                  Upload Custom Font
+                </label>
+              </div>
+            )}
+            {/* Text */}
             <div className="mobile-control-group">
               <label className="mobile-control-label">Text</label>
               <textarea
@@ -1055,6 +1108,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 rows={3}
               />
             </div>
+            {/* Font Size */}
             <Slider
               label="Font Size"
               value={settings.fontSize}
@@ -1064,6 +1118,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               step={1}
               unit="px"
             />
+            {/* Font Weight */}
             <div className="mobile-control-group">
               <label className="mobile-control-label">Font Weight</label>
               <select
@@ -1086,6 +1141,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 <option value="900">900</option>
               </select>
             </div>
+            {/* Letter Spacing */}
             <Slider
               label="Letter Spacing"
               value={settings.letterSpacing}
@@ -1095,6 +1151,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               step={1}
               unit="px"
             />
+            {/* Line Height */}
             <Slider
               label="Line Height"
               value={settings.lineHeight}
@@ -1103,74 +1160,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               max={4}
               step={0.05}
             />
-            <Slider
-              label="Rotation"
-              value={settings.rotation || 0}
-              onChange={(value) => updateInstanceSettings(instance.id, { rotation: value })}
-              min={0}
-              max={360}
-              step={1}
-              unit="°"
-            />
-            <div className="mobile-control-group">
-              <label className="mobile-control-label">Text Style</label>
-              <select
-                className="mobile-select"
-                value={settings.textStyle || 'fill'}
-                onChange={(e) => updateInstanceSettings(instance.id, { textStyle: e.target.value as 'fill' | 'stroke' })}
-              >
-                <option value="fill">Fill</option>
-                <option value="stroke">Stroke</option>
-              </select>
-            </div>
-            {settings.textStyle === 'stroke' && (
-              <Slider
-                label="Stroke Weight"
-                value={settings.strokeWeight || 1}
-                onChange={(value) => updateInstanceSettings(instance.id, { strokeWeight: value })}
-                min={0.1}
-                max={10}
-                step={0.1}
-                unit="px"
-              />
-            )}
-            <div className="mobile-control-group">
-              <label className="mobile-control-label">Text Color</label>
-              <input
-                type="color"
-                className="mobile-color-picker"
-                value={settings.color}
-                onChange={(e) => updateInstanceSettings(instance.id, { color: e.target.value })}
-              />
-            </div>
-            <Slider
-              label="X Position"
-              value={settings.x}
-              onChange={(value) => updateInstanceSettings(instance.id, { x: value })}
-              min={0}
-              max={1}
-              step={0.01}
-            />
-            <Slider
-              label="Y Position"
-              value={settings.y}
-              onChange={(value) => updateInstanceSettings(instance.id, { y: value })}
-              min={0}
-              max={1}
-              step={0.01}
-            />
-            <div className="mobile-control-group">
-              <label className="mobile-control-label">Alignment</label>
-              <select
-                className="mobile-select"
-                value={settings.align}
-                onChange={(e) => updateInstanceSettings(instance.id, { align: e.target.value as 'left' | 'center' | 'right' })}
-              >
-                <option value="left">Left</option>
-                <option value="center">Center</option>
-                <option value="right">Right</option>
-              </select>
-            </div>
+            {/* Blend Mode */}
             <div className="mobile-control-group">
               <label className="mobile-control-label">Blend Mode</label>
               <select
@@ -1196,53 +1186,80 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 <option value="luminosity">Luminosity</option>
               </select>
             </div>
+            {/* Text Style */}
             <div className="mobile-control-group">
-              <label className="mobile-control-label">Font Family</label>
+              <label className="mobile-control-label">Text Style</label>
               <select
                 className="mobile-select"
-                value={settings.fontFamily || 'Arial'}
-                onChange={e => updateInstanceSettings(instance.id, { fontFamily: e.target.value })}
+                value={settings.textStyle || 'fill'}
+                onChange={(e) => updateInstanceSettings(instance.id, { textStyle: e.target.value as 'fill' | 'stroke' })}
               >
-                <option value="Arial">Arial</option>
-                <option value="Helvetica">Helvetica</option>
-                <option value="Times New Roman">Times New Roman</option>
-                <option value="Courier New">Courier New</option>
-                <option value="Georgia">Georgia</option>
-                <option value="Verdana">Verdana</option>
-                <option value="Trebuchet MS">Trebuchet MS</option>
-                <option value="Impact">Impact</option>
-                <option value="Comic Sans MS">Comic Sans MS</option>
-                <option value="Custom">Custom Uploaded</option>
+                <option value="fill">Fill</option>
+                <option value="stroke">Stroke</option>
               </select>
             </div>
-            {(settings.fontFamily === 'Custom' || settings.fontFamily?.startsWith('custom-')) && (
-              <div className="mobile-control-group">
-                <label className="mobile-control-label">Upload Font</label>
-                <input
-                  type="file"
-                  accept=".ttf,.otf,.woff,.woff2"
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      const fontName = `custom-${file.name.replace(/\W/g, '')}`;
-                      const reader = new FileReader();
-                      reader.onload = async (event) => {
-                        if (event.target && event.target.result) {
-                          const dataUrl = event.target.result;
-                          if (typeof dataUrl === 'string') {
-                            const font = new FontFace(fontName, `url(${dataUrl})`);
-                            await font.load();
-                            document.fonts.add(font);
-                            updateInstanceSettings(instance.id, { fontFamily: fontName });
-                          }
-                        }
-                      };
-                      reader.readAsDataURL(file);
-                    }
-                  }}
-                />
-              </div>
+            {settings.textStyle === 'stroke' && (
+              <Slider
+                label="Stroke Weight"
+                value={settings.strokeWeight || 1}
+                onChange={(value) => updateInstanceSettings(instance.id, { strokeWeight: value })}
+                min={0.1}
+                max={10}
+                step={0.1}
+                unit="px"
+              />
             )}
+            {/* Text Color */}
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Text Color</label>
+              <input
+                type="color"
+                className="mobile-color-picker"
+                value={settings.color}
+                onChange={(e) => updateInstanceSettings(instance.id, { color: e.target.value })}
+              />
+            </div>
+            {/* X Position */}
+            <Slider
+              label="X Position"
+              value={settings.x}
+              onChange={(value) => updateInstanceSettings(instance.id, { x: value })}
+              min={0}
+              max={1}
+              step={0.01}
+            />
+            {/* Y Position */}
+            <Slider
+              label="Y Position"
+              value={settings.y}
+              onChange={(value) => updateInstanceSettings(instance.id, { y: value })}
+              min={0}
+              max={1}
+              step={0.01}
+            />
+            {/* Rotation */}
+            <Slider
+              label="Rotation"
+              value={settings.rotation || 0}
+              onChange={(value) => updateInstanceSettings(instance.id, { rotation: value })}
+              min={0}
+              max={360}
+              step={1}
+              unit="°"
+            />
+            {/* Alignment (kept at the end for now) */}
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Alignment</label>
+              <select
+                className="mobile-select"
+                value={settings.align}
+                onChange={(e) => updateInstanceSettings(instance.id, { align: e.target.value as 'left' | 'center' | 'right' })}
+              >
+                <option value="left">Left</option>
+                <option value="center">Center</option>
+                <option value="right">Right</option>
+              </select>
+            </div>
           </div>
         );
 
