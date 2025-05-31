@@ -4,7 +4,6 @@ import { HalftoneSettings } from '../components/Halftone';
 import { ColorSettings } from '../components/ColorUtils';
 import { ThresholdSettings } from '../components/ThresholdUtils';
 import { GlitchSettings } from '../components/GlitchUtils';
-import { TextDitherSettings } from '../components/TextDitherUtils';
 import { GradientMapSettings } from '../components/GradientMapUtils';
 import { GridSettings } from '../components/Grid';
 import { BlurSettings, EffectInstance, MosaicShiftSettings, AsciiEffectSettings } from '../types';
@@ -12,25 +11,27 @@ import { SliceShiftSettings } from '../components/SliceShift';
 import { PosterizeSettings } from '../components/Posterize';
 import { FindEdgesSettings } from '../components/FindEdges';
 import { BlobSettings } from '../components/Blob';
+import { PixelEffectSettings } from '../components/PixelEffect';
+import { LinocutEffectSettings } from '../components/LinocutEffect';
 
 export interface EffectSettings {
-  effectInstances?: EffectInstance[];
-  instanceSettings?: {[id: string]: any};
   ditherSettings?: DitherSettings;
   halftoneSettings?: HalftoneSettings;
   colorSettings?: ColorSettings;
   thresholdSettings?: ThresholdSettings;
   glitchSettings?: GlitchSettings;
-  textDitherSettings?: TextDitherSettings;
   gradientMapSettings?: GradientMapSettings;
   gridSettings?: GridSettings;
+  effectInstances?: EffectInstance[];
   blur?: BlurSettings;
   mosaicShiftSettings?: MosaicShiftSettings;
   sliceShiftSettings?: SliceShiftSettings;
   posterizeSettings?: PosterizeSettings;
   findEdgesSettings?: FindEdgesSettings;
   blobSettings?: BlobSettings;
-  asciiSettings?: AsciiEffectSettings;
+  pixelSettings?: PixelEffectSettings;
+  linocutSettings?: LinocutEffectSettings;
+  instanceSettings?: {[id: string]: any};
 }
 
 export const saveEffectSettings = (settings: EffectSettings) => {

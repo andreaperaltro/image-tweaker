@@ -35,10 +35,12 @@ export default function Home() {
     { id: 'threshold-1', type: 'threshold', enabled: false },
     { id: 'dither-1', type: 'dither', enabled: false },
     { id: 'halftone-1', type: 'halftone', enabled: false },
-    { id: 'textDither-1', type: 'textDither', enabled: false },
     { id: 'glitch-1', type: 'glitch', enabled: false },
     { id: 'grid-1', type: 'grid', enabled: false },
-    { id: 'glow-1', type: 'glow', enabled: false }
+    { id: 'mosaicShift-1', type: 'mosaicShift', enabled: false },
+    { id: 'sliceShift-1', type: 'sliceShift', enabled: false },
+    { id: 'blob-1', type: 'blob', enabled: false },
+    { id: 'text-1', type: 'text', enabled: false },
   ]);
 
   const toggleSection = (section: string) => {

@@ -5,7 +5,6 @@ import {
   HalftoneSettings,
   GridSettings,
   DitherSettings,
-  TextDitherSettings,
   BlurSettings
 } from '../types';
 import { applyBlur } from './BlurUtils';
@@ -21,7 +20,6 @@ const processImage = (
     halftone: HalftoneSettings;
     grid: GridSettings;
     dither: DitherSettings;
-    textDither: TextDitherSettings;
     blur: BlurSettings;
   }
 ) => {

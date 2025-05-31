@@ -9,7 +9,6 @@ import { exportAsPng, exportAsSvg } from './SvgExport'
 import { exportCanvasAsPng, exportCanvasAsSvg, isVectorExportAvailable } from './ExportUtils'
 import { GlitchSettings, applyGlitch } from './GlitchUtils'
 import { applyDithering, DitherSettings, DitherType, DitherColorMode } from '../components/DitherUtils'
-import { TextDitherSettings, applyTextDither } from './TextDitherUtils'
 import { ThresholdSettings, ThresholdMode, applyThreshold } from './ThresholdUtils'
 import CropEditor from './CropEditor'
 import { GradientMapSettings, applyGradientMap, GradientMapBlendMode, GradientStop } from './GradientMapUtils'
@@ -41,6 +40,8 @@ import { applyLinocutEffect } from './LinocutEffect'
 import { applyLevelsEffect } from './LevelsEffect'
 import { applyAsciiEffect } from './AsciiEffect'
 import { AsciiEffectSettings } from '../types'
+import { applyTextEffect } from './TextEffect'
+import { TextEffectSettings } from '../types'
 
 // Define types
 type AspectRatioPreset = '1:1' | '4:3' | '16:9' | '3:2' | '5:4' | '2:1' | '3:4' | '9:16' | '2:3' | '4:5' | '1:2' | 'custom';
@@ -57,7 +58,6 @@ interface MobileControlsProps {
   colorSettings: ColorSettings;
   thresholdSettings: ThresholdSettings;
   glitchSettings: GlitchSettings;
-  textDitherSettings: TextDitherSettings;
   gradientMapSettings: GradientMapSettings;
   gridSettings: GridSettings;
   effectInstances: EffectInstance[];
@@ -67,7 +67,6 @@ interface MobileControlsProps {
   updateColorSettings: (setting: keyof ColorSettings, value: any) => void;
   updateThresholdSettings: (settings: Partial<ThresholdSettings>) => void;
   updateGlitchSettings: (settings: Partial<GlitchSettings>) => void;
-  updateTextDitherSettings: (settings: Partial<TextDitherSettings>) => void;
   updateGradientMapSettings: (settings: Partial<GradientMapSettings>) => void;
   updateGridSettings: (setting: keyof GridSettings, value: any) => void;
   updateInstanceSettings: (id: string, settings: any) => void;
@@ -90,6 +89,14 @@ interface MobileControlsProps {
   updatePosterizeSettings: (settings: Partial<PosterizeSettings>) => void;
   findEdgesSettings: FindEdgesSettings;
   updateFindEdgesSettings: (settings: Partial<FindEdgesSettings>) => void;
+  textEffectSettings: TextEffectSettings;
+  updateTextEffectSettings: (settings: Partial<TextEffectSettings>) => void;
+  onExportVideo: () => void;
+  onSaveSettings: () => void;
+  onLoadSettings: () => void;
+  onRandomImage: () => void;
+  onUploadImage: () => void;
+  onClearImage: () => void;
 }
 
 export default function AdvancedEditor({
@@ -186,18 +193,6 @@ export default function AdvancedEditor({
     colorDepth: 2,
     darkColor: '#000000',
     lightColor: '#FFFFFF'
-  });
-
-  const [textDitherSettings, setTextDitherSettings] = useState<TextDitherSettings>({
-    enabled: false,
-    text: 'MATRIX',
-    fontSize: 12,
-    fontFamily: 'monospace',
-    colorMode: 'monochrome' as 'monochrome',
-    contrast: 1,
-    brightness: 0.5,
-    invert: false,
-    resolution: 2
   });
 
   // Threshold settings
@@ -665,9 +660,6 @@ export default function AdvancedEditor({
         case 'dither':
           applyDithering(ctx, targetCanvas, targetCanvas.width, targetCanvas.height, { ...settings, enabled: true });
           break;
-        case 'textDither':
-          applyTextDither(ctx, targetCanvas.width, targetCanvas.height, { ...settings, enabled: true });
-          break;
         case 'glitch':
           applyGlitch(ctx, targetCanvas, targetCanvas.width, targetCanvas.height, { ...settings, masterEnabled: true });
           break;
@@ -710,6 +702,17 @@ export default function AdvancedEditor({
         case 'ascii':
           if (typeof applyAsciiEffect === 'function') {
             applyAsciiEffect(sourceCanvas, targetCanvas, settings);
+          }
+          break;
+        case 'text':
+          if (settings.enabled) {
+            // Draw the source image
+            ctx.drawImage(sourceCanvas, 0, 0);
+            // Apply text effect
+            applyTextEffect(ctx, targetCanvas, settings);
+          } else {
+            // If text effect is disabled, just copy the source image
+            ctx.drawImage(sourceCanvas, 0, 0);
           }
           break;
       }
@@ -797,9 +800,6 @@ export default function AdvancedEditor({
       if (settings.glitchSettings) {
         setGlitchSettings(settings.glitchSettings);
       }
-      if (settings.textDitherSettings) {
-        setTextDitherSettings(settings.textDitherSettings);
-      }
       if (settings.gradientMapSettings) {
         setGradientMapSettings(settings.gradientMapSettings);
       }
@@ -864,7 +864,6 @@ export default function AdvancedEditor({
       colorSettings,
       thresholdSettings,
       glitchSettings,
-      textDitherSettings,
       gradientMapSettings,
       gridSettings,
       effectInstances,
@@ -999,7 +998,6 @@ export default function AdvancedEditor({
     switch (type) {
       case 'dither':
         defaultSettings = {
-          // Original DitherSettings API properties - these are what actually get used
           enabled: true,
           type: 'floyd-steinberg',
           threshold: 128,
@@ -1032,9 +1030,6 @@ export default function AdvancedEditor({
         break;
       case 'threshold':
         defaultSettings = { ...thresholdSettings, enabled: true };
-        break;
-      case 'textDither':
-        defaultSettings = { ...textDitherSettings, enabled: true };
         break;
       case 'grid':
         defaultSettings = { ...gridSettings, enabled: true };
@@ -1150,6 +1145,20 @@ export default function AdvancedEditor({
           textColor: '#ffffff',
           rotationMax: 0,
           rotationMode: 'none'
+        };
+        break;
+      case 'text':
+        defaultSettings = {
+          enabled: true,
+          text: 'Hello World',
+          fontSize: 24,
+          fontWeight: 'normal',
+          lineHeight: 1.2,
+          letterSpacing: 0,
+          color: '#000000',
+          x: 0.5,
+          y: 0.5,
+          align: 'center'
         };
         break;
       default:
@@ -1305,18 +1314,6 @@ export default function AdvancedEditor({
       colorDepth: 2,
       darkColor: '#000000',
       lightColor: '#FFFFFF'
-    });
-    
-    setTextDitherSettings({
-      enabled: false,
-      text: 'MATRIX',
-      fontSize: 12,
-      fontFamily: 'monospace',
-      colorMode: 'monochrome',
-      contrast: 1,
-      brightness: 0.5,
-      invert: false,
-      resolution: 2
     });
     
     setThresholdSettings({
@@ -1707,9 +1704,6 @@ export default function AdvancedEditor({
     if (settings.glitchSettings) {
       setGlitchSettings(settings.glitchSettings);
     }
-    if (settings.textDitherSettings) {
-      setTextDitherSettings(settings.textDitherSettings);
-    }
     if (settings.gradientMapSettings) {
       setGradientMapSettings(settings.gradientMapSettings);
     }
@@ -1749,7 +1743,6 @@ export default function AdvancedEditor({
         { id: 'threshold-1', type: 'threshold', enabled: false },
         { id: 'dither-1', type: 'dither', enabled: false },
         { id: 'halftone-1', type: 'halftone', enabled: false },
-        { id: 'textDither-1', type: 'textDither', enabled: false },
         { id: 'glitch-1', type: 'glitch', enabled: false },
         { id: 'grid-1', type: 'grid', enabled: false },
         { id: 'mosaicShift-1', type: 'mosaicShift', enabled: false },
@@ -1776,7 +1769,6 @@ export default function AdvancedEditor({
       halftoneSettings,
       gridSettings,
       ditherSettings,
-      textDitherSettings,
       thresholdSettings,
       glitchSettings,
       gradientMapSettings,
@@ -1871,9 +1863,6 @@ export default function AdvancedEditor({
         }
         if (keyframe.settings.ditherSettings) {
           setDitherSettings(keyframe.settings.ditherSettings);
-        }
-        if (keyframe.settings.textDitherSettings) {
-          setTextDitherSettings(keyframe.settings.textDitherSettings);
         }
         if (keyframe.settings.thresholdSettings) {
           setThresholdSettings(keyframe.settings.thresholdSettings);
@@ -2088,8 +2077,6 @@ export default function AdvancedEditor({
         return gridSettings;
       case 'dither':
         return ditherSettings;
-      case 'textDither':
-        return textDitherSettings;
       case 'glitch':
         return glitchSettings;
       case 'blur':
@@ -2261,6 +2248,19 @@ export default function AdvancedEditor({
     return () => window.removeEventListener('export-ascii-text', handleExportAsciiText);
   }, [effectInstances, instanceSettings, canvasWidth, canvasHeight]);
 
+  const [textEffectSettings, setTextEffectSettings] = useState<TextEffectSettings>({
+    enabled: true, // Changed from false to true
+    text: 'Hello World', // Added default text
+    fontSize: 24,
+    fontWeight: 'normal',
+    lineHeight: 1.2,
+    letterSpacing: 0,
+    color: '#000000',
+    x: 0.5,
+    y: 0.5,
+    align: 'center'
+  });
+
   return (
     <div className="flex flex-col lg:flex-row gap-6">
       {/* Canvas Container */}
@@ -2401,19 +2401,17 @@ export default function AdvancedEditor({
             colorSettings={colorSettings}
             thresholdSettings={thresholdSettings}
             glitchSettings={glitchSettings}
-            textDitherSettings={textDitherSettings}
             gradientMapSettings={gradientMapSettings}
             gridSettings={gridSettings}
             effectInstances={effectInstances}
             instanceSettings={instanceSettings}
             updateDitherSettings={(settings) => setDitherSettings(prev => ({ ...prev, ...settings }))}
-            updateHalftoneSettings={handleHalftoneChange}
-            updateColorSettings={handleColorChange}
+            updateHalftoneSettings={(settings: Partial<HalftoneSettings>) => setHalftoneSettings(prev => ({ ...prev, ...settings }))}
+            updateColorSettings={(settings: Partial<ColorSettings>) => setColorSettings(prev => ({ ...prev, ...settings }))}
             updateThresholdSettings={(settings) => setThresholdSettings(prev => ({ ...prev, ...settings }))}
             updateGlitchSettings={(settings) => setGlitchSettings(prev => ({ ...prev, ...settings }))}
-            updateTextDitherSettings={(settings) => setTextDitherSettings(prev => ({ ...prev, ...settings }))}
             updateGradientMapSettings={(settings) => setGradientMapSettings(prev => ({ ...prev, ...settings }))}
-            updateGridSettings={handleGridChange}
+            updateGridSettings={(key: string, value: any) => setGridSettings(prev => ({ ...prev, [key]: value }))}
             updateInstanceSettings={updateInstanceSettings}
             updateEffectInstances={updateEffectInstances}
             addEffect={addEffect}
@@ -2427,17 +2425,14 @@ export default function AdvancedEditor({
             onExportPng={() => canvasRef.current && exportCanvasAsPng(canvasRef.current)}
             onExportSvg={() => canvasRef.current && exportCanvasAsSvg(canvasRef.current)}
             onCropImage={handleCropImage}
-            blur={blur}
-            onBlurChange={(newBlur) => onBlurChange(newBlur)}
-            onSettingsLoaded={handleSettingsLoaded}
-            mosaicShiftSettings={mosaicShiftSettings}
-            updateMosaicShiftSettings={(settings) => setMosaicShiftSettings(prev => ({ ...prev, ...settings }))}
-            sliceShiftSettings={sliceShiftSettings}
-            updateSliceShiftSettings={(settings) => setSliceShiftSettings(prev => ({ ...prev, ...settings }))}
-            posterizeSettings={posterizeSettings}
-            updatePosterizeSettings={(settings) => setPosterizeSettings(prev => ({ ...prev, ...settings }))}
-            findEdgesSettings={findEdgesSettings}
-            updateFindEdgesSettings={(settings) => setFindEdgesSettings(prev => ({ ...prev, ...settings }))}
+            textEffectSettings={textEffectSettings}
+            updateTextEffectSettings={(settings: Partial<TextEffectSettings>) => setTextEffectSettings(prev => ({ ...prev, ...settings }))}
+            onExportVideo={() => {}}
+            onSaveSettings={() => {}}
+            onLoadSettings={() => {}}
+            onRandomImage={() => {}}
+            onUploadImage={() => {}}
+            onClearImage={() => {}}
           />
           {/* Animation Section */}
           <div className="mt-6 border-t border-[var(--border-color)] pt-4">

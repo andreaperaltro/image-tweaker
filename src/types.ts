@@ -4,7 +4,6 @@ import type { HalftoneSettings } from './components/Halftone';
 import type { ColorSettings } from './components/ColorUtils';
 import type { ThresholdSettings } from './components/ThresholdUtils';
 import type { GlitchSettings } from './components/GlitchUtils';
-import type { TextDitherSettings } from './components/TextDitherUtils';
 import type { GradientMapSettings } from './components/GradientMapUtils';
 import type { GridSettings } from './components/Grid';
 import type { ShiftPattern } from './components/MosaicShift';
@@ -21,7 +20,6 @@ export type {
   ColorSettings,
   ThresholdSettings,
   GlitchSettings,
-  TextDitherSettings,
   GradientMapSettings,
   GridSettings,
   ShiftPattern,
@@ -81,7 +79,6 @@ export interface EffectSettings {
   colorSettings: ColorSettings;
   thresholdSettings: ThresholdSettings;
   glitchSettings: GlitchSettings;
-  textDitherSettings: TextDitherSettings;
   gradientMapSettings: GradientMapSettings;
   gridSettings: GridSettings;
   effectInstances: EffectInstance[];
@@ -132,26 +129,42 @@ export interface AsciiEffectSettings {
   rotationMode?: 'none' | 'random' | 'flow';
 }
 
-export type EffectType = 
-  | 'color' 
-  | 'blur' 
-  | 'gradient' 
-  | 'threshold' 
-  | 'dither' 
-  | 'halftone' 
-  | 'textDither' 
-  | 'glitch' 
-  | 'grid' 
-  | 'glow'
+export interface TextEffectSettings {
+  enabled: boolean;
+  text: string;
+  fontSize: number;
+  fontWeight: string;
+  lineHeight: number;
+  letterSpacing: number;
+  color: string;
+  x: number; // 0-1, relative position
+  y: number; // 0-1, relative position
+  align: 'left' | 'center' | 'right';
+  fontFamily?: string;
+}
+
+export type EffectType =
+  | 'color'
+  | 'gradient'
+  | 'threshold'
+  | 'halftone'
+  | 'grid'
+  | 'dither'
+  | 'glitch'
+  | 'blur'
   | 'mosaicShift'
   | 'sliceShift'
   | 'posterize'
   | 'findEdges'
   | 'blob'
+  | 'glow'
+  | 'polarPixel'
   | 'pixel'
   | 'noise'
   | 'linocut'
-  | 'ascii';
+  | 'levels'
+  | 'ascii'
+  | 'text';
 
 export interface NoiseEffectSettings {
   enabled: boolean;

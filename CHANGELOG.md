@@ -522,3 +522,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0] - 2025-03-XX
 - Initial release 
+
+## [Unreleased]
+- Fixed text effect so it overlays on the image instead of replacing it.
+- Text effect now updates live when controls are changed (text, color, size, etc.).
+- Fixed text color input in controls so the text is visible.
+- Refactored text effect controls to use instance-specific settings for consistency.

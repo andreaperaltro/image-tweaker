@@ -8,11 +8,10 @@ import { HalftoneSettings, HalftoneShape, HalftoneArrangement } from './Halftone
 import { ColorSettings } from './ColorUtils'
 import { ThresholdSettings } from './ThresholdUtils'
 import { GlitchSettings } from './GlitchUtils'
-import { TextDitherSettings } from './TextDitherUtils'
 import { GradientMapSettings, GradientMapBlendMode, GradientStop } from './GradientMapUtils'
 import { GridSettings } from './Grid'
 import Slider from './Slider'
-import { BlurSettings, EffectInstance } from '../types'
+import { BlurSettings, EffectInstance, TextEffectSettings, EffectType } from '../types'
 import { saveEffectSettings, loadEffectSettings, EffectSettings } from '../utils/EffectSettingsUtils'
 import { isVectorExportAvailable } from './ExportUtils'
 import { FiFileText, FiPlus, FiCopy, FiTrash2, FiArrowUp, FiArrowDown } from 'react-icons/fi'
@@ -37,39 +36,34 @@ interface MobileControlsProps {
   colorSettings: ColorSettings
   thresholdSettings: ThresholdSettings
   glitchSettings: GlitchSettings
-  textDitherSettings: TextDitherSettings
   gradientMapSettings: GradientMapSettings
   gridSettings: GridSettings
   effectInstances: EffectInstance[]
   instanceSettings: {[id: string]: any}
   updateDitherSettings: (settings: Partial<DitherSettings>) => void
-  updateHalftoneSettings: (setting: keyof HalftoneSettings, value: any) => void
-  updateColorSettings: (setting: keyof ColorSettings, value: any) => void
+  updateHalftoneSettings: (settings: Partial<HalftoneSettings>, key?: string) => void
+  updateColorSettings: (settings: Partial<ColorSettings>) => void
   updateThresholdSettings: (settings: Partial<ThresholdSettings>) => void
   updateGlitchSettings: (settings: Partial<GlitchSettings>) => void
-  updateTextDitherSettings: (settings: Partial<TextDitherSettings>) => void
   updateGradientMapSettings: (settings: Partial<GradientMapSettings>) => void
-  updateGridSettings: (setting: keyof GridSettings, value: any) => void
+  updateGridSettings: (key: string, value: any) => void
   updateInstanceSettings: (id: string, settings: any) => void
   updateEffectInstances: (instances: EffectInstance[]) => void
-  addEffect: (type: string) => void
+  addEffect: (type: EffectType) => void
   duplicateEffect: (id: string) => void
   removeEffect: (id: string) => void
   onResetImage: () => void
   onExportPng: () => void
   onExportSvg: () => void
+  onExportVideo: () => void
+  onSaveSettings: () => void
+  onLoadSettings: () => void
   onCropImage: () => void
-  blur: BlurSettings
-  onBlurChange: (settings: BlurSettings) => void
-  onSettingsLoaded?: (settings: EffectSettings) => void
-  mosaicShiftSettings: MosaicShiftSettings
-  updateMosaicShiftSettings: (settings: Partial<MosaicShiftSettings>) => void
-  sliceShiftSettings: SliceShiftSettings
-  updateSliceShiftSettings: (settings: Partial<SliceShiftSettings>) => void
-  posterizeSettings: PosterizeSettings
-  updatePosterizeSettings: (settings: Partial<PosterizeSettings>) => void
-  findEdgesSettings: FindEdgesSettings
-  updateFindEdgesSettings: (settings: Partial<FindEdgesSettings>) => void
+  onRandomImage: () => void
+  onUploadImage: () => void
+  onClearImage: () => void
+  textEffectSettings: TextEffectSettings;
+  updateTextEffectSettings: (settings: Partial<TextEffectSettings>) => void;
 }
 
 // Debounce function to limit update frequency
@@ -102,7 +96,6 @@ const MobileControls: React.FC<MobileControlsProps> = ({
   colorSettings,
   thresholdSettings,
   glitchSettings,
-  textDitherSettings,
   gradientMapSettings,
   gridSettings,
   effectInstances,
@@ -112,7 +105,6 @@ const MobileControls: React.FC<MobileControlsProps> = ({
   updateColorSettings,
   updateThresholdSettings,
   updateGlitchSettings,
-  updateTextDitherSettings,
   updateGradientMapSettings,
   updateGridSettings,
   updateInstanceSettings,
@@ -123,18 +115,15 @@ const MobileControls: React.FC<MobileControlsProps> = ({
   onResetImage,
   onExportPng,
   onExportSvg,
+  onExportVideo,
+  onSaveSettings,
+  onLoadSettings,
   onCropImage,
-  blur,
-  onBlurChange,
-  onSettingsLoaded,
-  mosaicShiftSettings,
-  updateMosaicShiftSettings,
-  sliceShiftSettings,
-  updateSliceShiftSettings,
-  posterizeSettings,
-  updatePosterizeSettings,
-  findEdgesSettings,
-  updateFindEdgesSettings
+  onRandomImage,
+  onUploadImage,
+  onClearImage,
+  textEffectSettings,
+  updateTextEffectSettings
 }) => {
   const [openSection, setOpenSection] = useState<string | null>(null)
 
@@ -362,15 +351,9 @@ const MobileControls: React.FC<MobileControlsProps> = ({
       colorSettings,
       thresholdSettings,
       glitchSettings,
-      textDitherSettings,
       gradientMapSettings,
       gridSettings,
       effectInstances,
-      blur,
-      mosaicShiftSettings,
-      sliceShiftSettings,
-      posterizeSettings,
-      findEdgesSettings,
       instanceSettings
     };
     saveEffectSettings(settings);
@@ -381,9 +364,6 @@ const MobileControls: React.FC<MobileControlsProps> = ({
     if (file) {
       try {
         const settings = await loadEffectSettings(file);
-        if (onSettingsLoaded) {
-          onSettingsLoaded(settings);
-        }
       } catch (error) {
         console.error('Error loading settings:', error);
         alert('Error loading settings: ' + (error as Error).message);
@@ -431,8 +411,6 @@ const MobileControls: React.FC<MobileControlsProps> = ({
         return gridSettings;
       case 'dither':
         return ditherSettings;
-      case 'textDither':
-        return textDitherSettings;
       case 'glitch':
         return glitchSettings;
       case 'blur':
@@ -468,12 +446,6 @@ const MobileControls: React.FC<MobileControlsProps> = ({
 
   // Modified updateGlitchSettings function that uses instance-specific settings
   const handleGlitchSettingsChange = (instance: EffectInstance, settings: Partial<GlitchSettings>) => {
-    // Update instance-specific settings
-    updateInstanceSettings(instance.id, settings);
-  };
-
-  // Modified updateTextDitherSettings function that uses instance-specific settings
-  const handleTextDitherSettingsChange = (instance: EffectInstance, settings: Partial<TextDitherSettings>) => {
     // Update instance-specific settings
     updateInstanceSettings(instance.id, settings);
   };
@@ -1068,59 +1040,104 @@ const MobileControls: React.FC<MobileControlsProps> = ({
           </div>
         );
 
-      case 'textDither':
+      case 'text':
         return (
           <div className={`mobile-effect-content ${openSection === instance.id ? 'open' : ''}`}>
-            {/* Text dither controls */}
             <div className="mobile-control-group">
-              <label className="mobile-control-label">Text Pattern</label>
-              <input 
-                type="text" 
-                className="mobile-select"
+              <label className="mobile-control-label">Text</label>
+              <input
+                type="text"
+                className="mobile-select text-[var(--text-primary)]"
                 value={settings.text}
                 onChange={(e) => updateInstanceSettings(instance.id, { text: e.target.value })}
+                placeholder="Enter text"
               />
             </div>
-            
             <Slider
               label="Font Size"
               value={settings.fontSize}
               onChange={(value) => updateInstanceSettings(instance.id, { fontSize: value })}
-              min={6}
-              max={24}
+              min={1}
+              max={200}
               step={1}
               unit="px"
             />
-            
-            <Slider
-              label="Resolution"
-              value={settings.resolution}
-              onChange={(value) => updateInstanceSettings(instance.id, { resolution: value })}
-              min={0.5}
-              max={4}
-              step={0.1}
-            />
-            
             <div className="mobile-control-group">
-              <label className="mobile-control-label">Color Mode</label>
-              <select 
+              <label className="mobile-control-label">Font Weight</label>
+              <select
                 className="mobile-select"
-                value={settings.colorMode}
-                onChange={(e) => updateInstanceSettings(instance.id, { colorMode: e.target.value as 'monochrome' | 'colored' })}
+                value={settings.fontWeight}
+                onChange={(e) => updateInstanceSettings(instance.id, { fontWeight: e.target.value })}
               >
-                <option value="monochrome">Monochrome</option>
-                <option value="colored">Colored</option>
+                <option value="normal">Normal</option>
+                <option value="bold">Bold</option>
+                <option value="lighter">Lighter</option>
+                <option value="bolder">Bolder</option>
+                <option value="100">100</option>
+                <option value="200">200</option>
+                <option value="300">300</option>
+                <option value="400">400</option>
+                <option value="500">500</option>
+                <option value="600">600</option>
+                <option value="700">700</option>
+                <option value="800">800</option>
+                <option value="900">900</option>
               </select>
             </div>
-            
             <Slider
-              label="Contrast"
-              value={settings.contrast}
-              onChange={(value) => updateInstanceSettings(instance.id, { contrast: value })}
-              min={0}
-              max={2}
-              step={0.1}
+              label="Letter Spacing"
+              value={settings.letterSpacing}
+              onChange={(value) => updateInstanceSettings(instance.id, { letterSpacing: value })}
+              min={-10}
+              max={100}
+              step={1}
+              unit="px"
             />
+            <Slider
+              label="Line Height"
+              value={settings.lineHeight}
+              onChange={(value) => updateInstanceSettings(instance.id, { lineHeight: value })}
+              min={0.1}
+              max={4}
+              step={0.05}
+            />
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Text Color</label>
+              <input
+                type="color"
+                className="mobile-color-picker"
+                value={settings.color}
+                onChange={(e) => updateInstanceSettings(instance.id, { color: e.target.value })}
+              />
+            </div>
+            <Slider
+              label="X Position"
+              value={settings.x}
+              onChange={(value) => updateInstanceSettings(instance.id, { x: value })}
+              min={0}
+              max={1}
+              step={0.01}
+            />
+            <Slider
+              label="Y Position"
+              value={settings.y}
+              onChange={(value) => updateInstanceSettings(instance.id, { y: value })}
+              min={0}
+              max={1}
+              step={0.01}
+            />
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Alignment</label>
+              <select
+                className="mobile-select"
+                value={settings.align}
+                onChange={(e) => updateInstanceSettings(instance.id, { align: e.target.value as 'left' | 'center' | 'right' })}
+              >
+                <option value="left">Left</option>
+                <option value="center">Center</option>
+                <option value="right">Right</option>
+              </select>
+            </div>
           </div>
         );
 
@@ -2675,7 +2692,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
       instance.type === 'halftone' ? 'Halftone Effect' : 
       instance.type === 'grid' ? 'Grid Effect' :
       instance.type === 'dither' ? 'Dithering' :
-      instance.type === 'textDither' ? 'Text Dithering' :
+      instance.type === 'text' ? 'Text' :
       instance.type === 'glitch' ? 'Glitch Effect' :
       instance.type === 'blur' ? 'Blur Effect' :
       instance.type === 'gradient' ? 'Gradient Map' :
@@ -2729,7 +2746,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
             { label: 'Pixel', type: 'pixel' },
             { label: 'Posterize', type: 'posterize' },
             { label: 'Slice', type: 'sliceShift' },
-            { label: 'Text', type: 'textDither' },
+            { label: 'Text', type: 'text' },
             { label: 'Threshold', type: 'threshold' },
             { label: 'Linocut', type: 'linocut' },
             { label: 'Levels', type: 'levels' },
@@ -2740,7 +2757,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               <button
                 key={effect.type}
                 className="plain-effect-btn"
-                onClick={() => addEffect(effect.type)}
+                onClick={() => addEffect(effect.type as EffectType)}
               >
                 <FiPlus size={12} /> {effect.label}
               </button>
