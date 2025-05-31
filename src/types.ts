@@ -90,6 +90,7 @@ export interface EffectSettings {
   blobSettings: BlobSettings;
   pixelSettings: PixelEffectSettings;
   linocutSettings?: LinocutEffectSettings;
+  lcdSettings?: LCDEffectSettings;
   instanceSettings?: {[id: string]: any};
 }
 
@@ -143,30 +144,34 @@ export interface TextEffectSettings {
   fontFamily?: string;
   rotation?: number; // degrees
   blendMode?: GlobalCompositeOperation; // e.g. 'normal', 'multiply', etc.
+  textStyle?: 'fill' | 'stroke'; // new property for fill/stroke selection
+  strokeWeight?: number; // stroke width in pixels
 }
 
-export type EffectType =
-  | 'color'
-  | 'gradient'
-  | 'threshold'
-  | 'halftone'
-  | 'grid'
-  | 'dither'
-  | 'glitch'
-  | 'blur'
-  | 'mosaicShift'
-  | 'sliceShift'
-  | 'posterize'
-  | 'findEdges'
-  | 'blob'
-  | 'glow'
-  | 'polarPixel'
-  | 'pixel'
-  | 'noise'
-  | 'linocut'
-  | 'levels'
-  | 'ascii'
-  | 'text';
+export enum EffectType {
+  color = 'color',
+  gradient = 'gradient',
+  threshold = 'threshold',
+  halftone = 'halftone',
+  grid = 'grid',
+  dither = 'dither',
+  glitch = 'glitch',
+  blur = 'blur',
+  mosaicShift = 'mosaicShift',
+  sliceShift = 'sliceShift',
+  posterize = 'posterize',
+  findEdges = 'findEdges',
+  blob = 'blob',
+  glow = 'glow',
+  polarPixel = 'polarPixel',
+  pixel = 'pixel',
+  noise = 'noise',
+  linocut = 'linocut',
+  levels = 'levels',
+  ascii = 'ascii',
+  text = 'text',
+  lcd = 'lcd',
+}
 
 export interface NoiseEffectSettings {
   enabled: boolean;
@@ -177,4 +182,15 @@ export interface NoiseEffectSettings {
   blendMode: 'normal' | 'multiply' | 'screen' | 'overlay' | 'darken' | 'lighten' | 'color-dodge' | 'color-burn' | 'hard-light' | 'soft-light' | 'difference' | 'exclusion';
   monochrome?: boolean; // If true, use grayscale noise for all channels
   channel?: 'all' | 'r' | 'g' | 'b'; // Which channel(s) to apply noise to
-} 
+}
+
+export interface LCDEffectSettings {
+  enabled: boolean;
+  cellWidth: number;
+  cellHeight: number;
+  intensity: number;
+  pattern?: 'TV CRT' | 'PC CRT' | 'XO-1 LCD' | 'LCD';
+  padding?: number;
+}
+
+// Remove the duplicate EffectSettings type at the end of the file 

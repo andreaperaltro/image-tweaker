@@ -23,6 +23,7 @@ import { PolarPixelSettings } from './PolarPixel'
 import { PixelEffectSettings, PixelMode, PixelVariant } from './PixelEffect'
 import Toggle from './Toggle'
 import Switch from './Switch'
+import LCDEffect from './LCDEffect'
 
 // Add interface for gradient stop
 interface GradientStopType {
@@ -1111,6 +1112,28 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               step={1}
               unit="°"
             />
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Text Style</label>
+              <select
+                className="mobile-select"
+                value={settings.textStyle || 'fill'}
+                onChange={(e) => updateInstanceSettings(instance.id, { textStyle: e.target.value as 'fill' | 'stroke' })}
+              >
+                <option value="fill">Fill</option>
+                <option value="stroke">Stroke</option>
+              </select>
+            </div>
+            {settings.textStyle === 'stroke' && (
+              <Slider
+                label="Stroke Weight"
+                value={settings.strokeWeight || 1}
+                onChange={(value) => updateInstanceSettings(instance.id, { strokeWeight: value })}
+                min={0.1}
+                max={10}
+                step={0.1}
+                unit="px"
+              />
+            )}
             <div className="mobile-control-group">
               <label className="mobile-control-label">Text Color</label>
               <input
@@ -2756,6 +2779,60 @@ const MobileControls: React.FC<MobileControlsProps> = ({
         );
       }
 
+      case 'lcd':
+        return (
+          <div className={`mobile-effect-content ${openSection === instance.id ? 'open' : ''}`}>
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Pattern</label>
+              <select
+                className="mobile-select"
+                value={settings.pattern || 'LCD'}
+                onChange={e => updateInstanceSettings(instance.id, { ...settings, pattern: e.target.value })}
+              >
+                <option value="TV CRT">TV CRT</option>
+                <option value="PC CRT">PC CRT</option>
+                <option value="XO-1 LCD">XO-1 LCD</option>
+                <option value="LCD">LCD</option>
+              </select>
+            </div>
+            <Slider
+              label="Cell Width"
+              value={settings.cellWidth}
+              onChange={(value) => updateInstanceSettings(instance.id, { ...settings, cellWidth: value })}
+              min={1}
+              max={20}
+              step={1}
+              unit="px"
+            />
+            <Slider
+              label="Cell Height"
+              value={settings.cellHeight}
+              onChange={(value) => updateInstanceSettings(instance.id, { ...settings, cellHeight: value })}
+              min={1}
+              max={20}
+              step={1}
+              unit="px"
+            />
+            <Slider
+              label="Padding"
+              value={settings.padding ?? 2}
+              onChange={(value) => updateInstanceSettings(instance.id, { ...settings, padding: value })}
+              min={0}
+              max={20}
+              step={1}
+              unit="px"
+            />
+            <Slider
+              label="Intensity"
+              value={settings.intensity}
+              onChange={(value) => updateInstanceSettings(instance.id, { ...settings, intensity: value })}
+              min={0}
+              max={10}
+              step={0.1}
+            />
+          </div>
+        );
+
       default:
         return null;
     }
@@ -2790,6 +2867,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
       instance.type === 'linocut' ? 'Linocut' :
       instance.type === 'levels' ? 'Levels' :
       instance.type === 'ascii' ? 'Ascii Effect' :
+      instance.type === 'lcd' ? 'LCD' :
       'Effect';
     
     // Add numbering only if there are multiple effects of the same type
@@ -2833,6 +2911,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
             { label: 'Linocut', type: 'linocut' },
             { label: 'Levels', type: 'levels' },
             { label: 'Ascii', type: 'ascii' },
+            { label: 'LCD', type: 'lcd' },
           ]
             .sort((a, b) => a.label.localeCompare(b.label))
             .map(effect => (

@@ -7,7 +7,7 @@ export const applyTextEffect = (
 ) => {
   if (!settings.enabled || !settings.text) return;
 
-  const { text, fontSize, fontWeight, lineHeight, letterSpacing, color, x, y, align, rotation = 0, blendMode = 'source-over' } = settings;
+  const { text, fontSize, fontWeight, lineHeight, letterSpacing, color, x, y, align, rotation = 0, blendMode = 'source-over', textStyle = 'fill' } = settings;
   
   // Save current context state
   ctx.save();
@@ -17,6 +17,8 @@ export const applyTextEffect = (
   const fontFamily = settings.fontFamily || 'Arial, sans-serif';
   ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
   ctx.fillStyle = color;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = settings.textStyle === 'stroke' ? (settings.strokeWeight || 1) : 0; // Use strokeWeight if stroke style is selected
   ctx.textAlign = 'left'; // We'll handle alignment manually
   ctx.textBaseline = 'middle';
   
@@ -51,7 +53,11 @@ export const applyTextEffect = (
     }
     let charX = startX;
     for (let c = 0; c < line.length; c++) {
-      ctx.fillText(line[c], charX, yOffset + i * fontSize * lineHeight);
+      if (textStyle === 'fill') {
+        ctx.fillText(line[c], charX, yOffset + i * fontSize * lineHeight);
+      } else {
+        ctx.strokeText(line[c], charX, yOffset + i * fontSize * lineHeight);
+      }
       charX += ctx.measureText(line[c]).width + letterSpacing;
     }
   }

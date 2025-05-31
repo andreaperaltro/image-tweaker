@@ -42,6 +42,8 @@ import { applyAsciiEffect } from './AsciiEffect'
 import { AsciiEffectSettings } from '../types'
 import { applyTextEffect } from './TextEffect'
 import { TextEffectSettings } from '../types'
+import LCDEffect from './LCDEffect';
+import { applyLCDEffect } from './LCDEffect';
 
 // Define types
 type AspectRatioPreset = '1:1' | '4:3' | '16:9' | '3:2' | '5:4' | '2:1' | '3:4' | '9:16' | '2:3' | '4:5' | '1:2' | 'custom';
@@ -715,6 +717,9 @@ export default function AdvancedEditor({
             ctx.drawImage(sourceCanvas, 0, 0);
           }
           break;
+        case 'lcd':
+          applyLCDEffect(targetCanvas, settings);
+          break;
       }
     } catch (error) {
       console.error(`Error applying effect ${effectType}:`, error);
@@ -1159,6 +1164,14 @@ export default function AdvancedEditor({
           x: 0.5,
           y: 0.5,
           align: 'center'
+        };
+        break;
+      case 'lcd':
+        defaultSettings = {
+          enabled: true,
+          cellWidth: 3,
+          cellHeight: 3,
+          intensity: 1
         };
         break;
       default:
@@ -2260,6 +2273,176 @@ export default function AdvancedEditor({
     y: 0.5,
     align: 'center'
   });
+
+  const getDefaultSettings = (type: string) => {
+    let defaultSettings: any = {};
+    switch (type) {
+      case 'color':
+        defaultSettings = {
+          enabled: true,
+          hueShift: 0,
+          saturation: 100,
+          brightness: 100,
+          contrast: 100,
+          posterize: 0,
+          invert: false,
+          glitchIntensity: 0,
+          glitchSeed: Math.random(),
+          blendMode: 'normal' as BlendMode
+        };
+        break;
+      case 'halftone':
+        defaultSettings = { ...halftoneSettings, enabled: true };
+        break;
+      case 'gradient':
+        defaultSettings = { ...gradientMapSettings, enabled: true };
+        break;
+      case 'threshold':
+        defaultSettings = { ...thresholdSettings, enabled: true };
+        break;
+      case 'grid':
+        defaultSettings = { ...gridSettings, enabled: true };
+        break;
+      case 'glitch':
+        defaultSettings = { ...glitchSettings, enabled: true };
+        break;
+      case 'blur':
+        defaultSettings = { ...blur, enabled: true };
+        break;
+      case 'mosaicShift':
+        defaultSettings = { 
+          ...mosaicShiftSettings, 
+          enabled: true,
+          seed: Math.random() * 1000 // Generate a new random seed for each new effect
+        };
+        break;
+      case 'sliceShift':
+        defaultSettings = { 
+          ...sliceShiftSettings, 
+          enabled: true,
+          seed: Math.random() * 1000 // Generate a new random seed for each new effect
+        };
+        break;
+      case 'posterize':
+        defaultSettings = { 
+          ...posterizeSettings, 
+          enabled: true
+        };
+        break;
+      case 'findEdges':
+        defaultSettings = { 
+          ...findEdgesSettings, 
+          enabled: true
+        };
+        break;
+      case 'blob':
+        defaultSettings = { 
+          ...blobSettings, 
+          enabled: true 
+        };
+        break;
+      case 'glow':
+        defaultSettings = {
+          enabled: true,
+          color: '#ffffff',
+          intensity: 50,
+          threshold: 128,
+          softness: 5,
+          blendMode: 'normal'
+        };
+        break;
+      case 'polarPixel':
+        defaultSettings = {
+          enabled: true,
+          rings: 24,
+          segments: 48,
+          centerX: 0.5,
+          centerY: 0.5
+        };
+        break;
+      case 'pixel':
+        defaultSettings = {
+          enabled: true,
+          mode: 'grid',
+          cellSize: 16,
+          rings: 24,
+          segments: 48,
+          centerX: 0.5,
+          centerY: 0.5
+        };
+        break;
+      case 'noise':
+        defaultSettings = {
+          enabled: true,
+          type: 'perlin',
+          intensity: 0.5,
+          scale: 0.1,
+          seed: 0,
+          blendMode: 'normal',
+        };
+        break;
+      case 'linocut':
+        defaultSettings = {
+          enabled: true,
+          scale: 12,
+          noiseScale: 0.06,
+          centerX: 0.5,
+          centerY: 0.5,
+          invert: false,
+          orientation: 'horizontal',
+          threshold: 0.5
+        };
+        break;
+      case 'levels':
+        defaultSettings = {
+          enabled: true,
+          black: 0,
+          gamma: 1.0,
+          white: 255
+        };
+        break;
+      case 'ascii':
+        defaultSettings = {
+          enabled: true,
+          cellSize: 8,
+          fontSize: 12,
+          charset: '@%#*+=-:. ',
+          backgroundColor: '#000000',
+          monochrome: true,
+          jitter: 0,
+          preset: 'Dense',
+          textColor: '#ffffff',
+          rotationMax: 0,
+          rotationMode: 'none'
+        };
+        break;
+      case 'text':
+        defaultSettings = {
+          enabled: true,
+          text: 'Hello World',
+          fontSize: 24,
+          fontWeight: 'normal',
+          lineHeight: 1.2,
+          letterSpacing: 0,
+          color: '#000000',
+          x: 0.5,
+          y: 0.5,
+          align: 'center'
+        };
+        break;
+      case 'lcd':
+        defaultSettings = {
+          enabled: true,
+          cellWidth: 3,
+          cellHeight: 3,
+          intensity: 1
+        };
+        break;
+      default:
+        break;
+    }
+    return defaultSettings;
+  };
 
   return (
     <div className="flex flex-col lg:flex-row gap-6">
