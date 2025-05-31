@@ -5,9 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.5.9] - 2024-06-07
+## [0.5.9] - 2025-05-31
 
 ### Added
+- New Text effect 
 - Font family dropdown for the Text effect, allowing users to select from common web fonts.
 - Custom font upload for the Text effect: users can upload .ttf, .otf, .woff, or .woff2 files and use them instantly in their designs.
 
