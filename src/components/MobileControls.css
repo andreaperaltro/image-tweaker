@@ -654,24 +654,27 @@
   flex-wrap: wrap;
   padding: 0 4px;
   margin-bottom: 10px;
+  justify-content: flex-start;
+  gap: 8px 8px;
 }
 
 .plain-effect-btn {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 4px;
+  justify-content: flex-start;
+  gap: 8px;
   background-color: var(--accent-bg);
   color: var(--text-primary);
   border: 1px solid var(--border-color);
   border-radius: 6px;
-  padding: 8px 10px;
-  font-size: 0.8rem;
+  padding: 6px 8px;
+  font-size: 0.78rem;
   cursor: pointer;
   transition: all 0.15s ease;
   margin: 0 4px 8px 4px;
-  flex: 0 0 calc(33.333% - 8px);
-  max-width: 100px;
+  flex: 0 0 calc(25% - 8px);
+  max-width: 110px;
+  min-width: 0;
 }
 
 .plain-effect-btn:hover {

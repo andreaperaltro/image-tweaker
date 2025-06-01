@@ -14,7 +14,10 @@ import Slider from './Slider'
 import { BlurSettings, EffectInstance, TextEffectSettings, EffectType } from '../types'
 import { saveEffectSettings, loadEffectSettings, EffectSettings } from '../utils/EffectSettingsUtils'
 import { isVectorExportAvailable } from './ExportUtils'
-import { FiFileText, FiPlus, FiCopy, FiTrash2, FiArrowUp, FiArrowDown } from 'react-icons/fi'
+import { FiFileText, FiPlus, FiCopy, FiTrash2, FiArrowUp, FiArrowDown, FiGrid, FiDroplet, FiSliders, FiZap, FiEye, FiLayers, FiType, FiHash, FiImage, FiStar, FiAlignCenter, FiBarChart2, FiCpu, FiFilter, FiChevronRight, FiTv } from 'react-icons/fi';
+import { FaRegDotCircle, FaRegSquare, FaRegCircle, FaRegClone, FaRegObjectGroup, FaRegSmile, FaRegSun, FaRegMoon, FaRegSnowflake, FaRegChartBar, FaRegKeyboard, FaThLarge } from 'react-icons/fa';
+import { MdGradient, MdBlurOn, MdOutlineTextFields, MdOutlineNoiseControlOff, MdOutlineGridOn, MdOutlineColorLens, MdOutlineInvertColors, MdOutlineTextIncrease, MdOutlineTextRotateVertical, MdOutlineTextRotationNone, MdOutlineTextRotationAngleup, MdOutlineTextRotationAngledown } from 'react-icons/md';
+import { MdFitbit, MdCompare, MdTexture, MdFingerprint, MdGrain, MdTonality, MdPattern, MdSnowing, MdTerminal, MdStream, MdOutlineWaves } from 'react-icons/md';
 import { MosaicShiftSettings, ShiftPattern } from './MosaicShift'
 import { SliceShiftSettings } from './SliceShift'
 import { PosterizeSettings } from './Posterize'
@@ -312,17 +315,20 @@ const MobileControls: React.FC<MobileControlsProps> = ({
     title: string
   ) => {
     const orderIndex = effectInstances.findIndex(i => i.id === instance.id);
-    
     return (
       <div className={`mobile-effect-header ${openSection === instance.id ? 'section-open' : ''}`}>
         <div className="mobile-header-row effect-title-toggle-container">
-          <div className="effect-title-container">
+          <div className="effect-title-container" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span className="effect-order-number">
               {orderIndex + 1}
             </span>
+            {effectIcons[instance.type] && (
+              <span style={{ display: 'flex', alignItems: 'center', fontSize: 20 }}>{effectIcons[instance.type]}</span>
+            )}
             <h3 
               className="mobile-effect-title"
               onClick={() => toggleSection(instance.id)}
+              style={{ display: 'flex', alignItems: 'center', gap: 8 }}
             >
               {title}
             </h3>
@@ -2857,21 +2863,20 @@ const MobileControls: React.FC<MobileControlsProps> = ({
 
   // Update the rendering of sections to use the new renderEffectContent function
   const renderEffectSection = (instance: EffectInstance) => {
-    // Get the index to help with title numbering
     const sameTypeEffects = effectInstances.filter(i => i.type === instance.type);
     const sameTypeCount = sameTypeEffects.length;
     const instanceIndex = sameTypeEffects.findIndex(i => i.id === instance.id);
-    
-    // Create a more descriptive title if there are multiple effects of the same type
-    const baseTitle = 
-      instance.type === 'color' ? 'Color Adjustments' :
-      instance.type === 'halftone' ? 'Halftone Effect' : 
-      instance.type === 'grid' ? 'Grid Effect' :
-      instance.type === 'dither' ? 'Dithering' :
+
+    // Use only the effect name (no 'Effect' in the label)
+    const effectLabel =
+      instance.type === 'color' ? 'Color' :
+      instance.type === 'halftone' ? 'Halftone' :
+      instance.type === 'grid' ? 'Grid' :
+      instance.type === 'dither' ? 'Dither' :
       instance.type === 'text' ? 'Text' :
-      instance.type === 'glitch' ? 'Glitch Effect' :
-      instance.type === 'blur' ? 'Blur Effect' :
-      instance.type === 'gradient' ? 'Gradient Map' :
+      instance.type === 'glitch' ? 'Glitch' :
+      instance.type === 'blur' ? 'Blur' :
+      instance.type === 'gradient' ? 'Gradient' :
       instance.type === 'threshold' ? 'Threshold' :
       instance.type === 'mosaicShift' ? 'Mosaic' :
       instance.type === 'sliceShift' ? 'Slice' :
@@ -2883,19 +2888,42 @@ const MobileControls: React.FC<MobileControlsProps> = ({
       instance.type === 'noise' ? 'Noise' :
       instance.type === 'linocut' ? 'Linocut' :
       instance.type === 'levels' ? 'Levels' :
-      instance.type === 'ascii' ? 'Ascii Effect' :
+      instance.type === 'ascii' ? 'Ascii' :
       instance.type === 'lcd' ? 'LCD' :
       'Effect';
-    
-    // Add numbering only if there are multiple effects of the same type
-    const title = sameTypeCount > 1 ? `${baseTitle} ${instanceIndex + 1}` : baseTitle;
-                
+    const title = sameTypeCount > 1 ? `${effectLabel} ${instanceIndex + 1}` : effectLabel;
+
     return (
       <div key={instance.id} className="mobile-effect-section">
         {renderSectionHeader(instance, title)}
         {renderEffectContent(instance)}
       </div>
     );
+  };
+
+  // Icon mapping for each effect type
+  const effectIcons: Record<string, React.ReactNode> = {
+    blob: <MdPattern />,
+    blur: <MdBlurOn />,
+    color: <MdOutlineColorLens />,
+    dither: <MdSnowing />,
+    findEdges: <FiEye />,
+    glitch: <FiZap />,
+    glow: <MdStream />,
+    gradient: <MdGradient />,
+    grid: <FiGrid />,
+    halftone: <MdFitbit />,
+    mosaicShift: <FaThLarge />,
+    noise: <MdFingerprint />,
+    pixel: <MdGrain />,
+    posterize: <MdTonality />,
+    sliceShift: <MdTexture />,
+    text: <FiType />,
+    threshold: <MdCompare />,
+    linocut: <MdOutlineWaves />,
+    levels: <FiBarChart2 />,
+    ascii: <MdTerminal />,
+    lcd: <FiTv />,
   };
 
   return (
@@ -2937,7 +2965,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 className="plain-effect-btn"
                 onClick={() => addEffect(effect.type as EffectType)}
               >
-                <FiPlus size={12} /> {effect.label}
+                {effectIcons[effect.type] || <FiPlus size={12} />} {effect.label}
               </button>
             ))}
         </div>

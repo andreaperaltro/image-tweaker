@@ -560,3 +560,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Padding logic now robust: never causes overlap or disappearance of subpixels, clamps to safe values.
 - All four LCD/CRT patterns now render as expected and match reference images.
+
+## [0.5.10] - 2024-06-03
+
+### Changed
+- Updated all effect icons to use more visually descriptive Material Design and Feather icons.
+- Add Effect buttons are now left-aligned, smaller, and arranged in a grid for a cleaner look.
+- Effect section headers now always show the effect icon before the effect name, regardless of enabled state.
+- Effect section titles now use only the effect name (e.g., "Halftone", "Blur"), and append a number only if there are multiple instances.
+- Improved consistency and clarity of effect labels throughout the UI.
