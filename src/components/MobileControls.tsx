@@ -27,6 +27,7 @@ import { PixelEffectSettings, PixelMode, PixelVariant } from './PixelEffect'
 import Toggle from './Toggle'
 import Switch from './Switch'
 import LCDEffect from './LCDEffect'
+import { SnakeEffectSettings, SnakeIcon } from './SnakeEffect'
 
 // Add interface for gradient stop
 interface GradientStopType {
@@ -68,6 +69,8 @@ interface MobileControlsProps {
   onClearImage: () => void
   textEffectSettings: TextEffectSettings;
   updateTextEffectSettings: (settings: Partial<TextEffectSettings>) => void;
+  snakeEffectSettings: SnakeEffectSettings;
+  updateSnakeEffectSettings: (settings: Partial<SnakeEffectSettings>) => void;
 }
 
 // Debounce function to limit update frequency
@@ -127,7 +130,9 @@ const MobileControls: React.FC<MobileControlsProps> = ({
   onUploadImage,
   onClearImage,
   textEffectSettings,
-  updateTextEffectSettings
+  updateTextEffectSettings,
+  snakeEffectSettings,
+  updateSnakeEffectSettings
 }) => {
   const [openSection, setOpenSection] = useState<string | null>(null)
 
@@ -2856,6 +2861,92 @@ const MobileControls: React.FC<MobileControlsProps> = ({
           </div>
         );
 
+      case 'snake':
+        return (
+          <div className={`mobile-effect-content ${openSection === instance.id ? 'open' : ''}`}>
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Shape</label>
+              <select
+                className="mobile-select"
+                value={settings.shape}
+                onChange={e => updateInstanceSettings(instance.id, { ...settings, shape: e.target.value })}
+              >
+                <option value="row">Rows</option>
+                <option value="column">Columns</option>
+                <option value="snake">Snake</option>
+              </select>
+            </div>
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Outline Style</label>
+              <select
+                className="mobile-select"
+                value={settings.outlineStyle}
+                onChange={e => updateInstanceSettings(instance.id, { ...settings, outlineStyle: e.target.value })}
+              >
+                <option value="pixel">Pixel</option>
+                <option value="smooth">Smooth</option>
+              </select>
+            </div>
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Color Mode</label>
+              <select
+                className="mobile-select"
+                value={settings.colorMode}
+                onChange={e => updateInstanceSettings(instance.id, { ...settings, colorMode: e.target.value })}
+              >
+                <option value="grayscale">Grayscale</option>
+                <option value="dominant">Colored</option>
+              </select>
+            </div>
+            <div className="mobile-control-group">
+              <Slider
+                label="Grid Size"
+                value={settings.gridSize}
+                min={10}
+                max={100}
+                onChange={(value) => updateInstanceSettings(instance.id, { ...settings, gridSize: value })}
+              />
+            </div>
+            <div className="mobile-control-group">
+              <Slider
+                label="Color Count"
+                value={settings.colorCount}
+                min={2}
+                max={30}
+                onChange={(value) => updateInstanceSettings(instance.id, { ...settings, colorCount: value })}
+              />
+            </div>
+            <div className="mobile-control-group">
+              <Slider
+                label="Corner Radius"
+                value={settings.cornerRadius}
+                min={0}
+                max={20}
+                step={0.1}
+                onChange={(value) => updateInstanceSettings(instance.id, { ...settings, cornerRadius: value })}
+              />
+            </div>
+            <div className="mobile-control-group">
+              <Slider
+                label="Padding"
+                value={settings.padding}
+                min={0}
+                max={20}
+                onChange={(value) => updateInstanceSettings(instance.id, { ...settings, padding: value })}
+              />
+            </div>
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Background Color</label>
+              <input
+                type="color"
+                className="mobile-color-picker"
+                value={settings.backgroundColor}
+                onChange={e => updateInstanceSettings(instance.id, { ...settings, backgroundColor: e.target.value })}
+              />
+            </div>
+          </div>
+        );
+
       default:
         return null;
     }
@@ -2890,6 +2981,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
       instance.type === 'levels' ? 'Levels' :
       instance.type === 'ascii' ? 'Ascii' :
       instance.type === 'lcd' ? 'LCD' :
+      instance.type === 'snake' ? 'Snake' :
       'Effect';
     const title = sameTypeCount > 1 ? `${effectLabel} ${instanceIndex + 1}` : effectLabel;
 
@@ -2924,6 +3016,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
     levels: <FiBarChart2 />,
     ascii: <MdTerminal />,
     lcd: <FiTv />,
+    snake: <SnakeIcon />,
   };
 
   return (
@@ -2957,6 +3050,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
             { label: 'Levels', type: 'levels' },
             { label: 'Ascii', type: 'ascii' },
             { label: 'LCD', type: 'lcd' },
+            { label: 'Snake', type: 'snake' },
           ]
             .sort((a, b) => a.label.localeCompare(b.label))
             .map(effect => (

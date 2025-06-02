@@ -44,6 +44,7 @@ import { applyTextEffect } from './TextEffect'
 import { TextEffectSettings } from '../types'
 import LCDEffect from './LCDEffect';
 import { applyLCDEffect } from './LCDEffect';
+import { SnakeEffectSettings, applySnakeEffect, SnakeIcon } from './SnakeEffect';
 
 // Define types
 type AspectRatioPreset = '1:1' | '4:3' | '16:9' | '3:2' | '5:4' | '2:1' | '3:4' | '9:16' | '2:3' | '4:5' | '1:2' | 'custom';
@@ -99,6 +100,8 @@ interface MobileControlsProps {
   onRandomImage: () => void;
   onUploadImage: () => void;
   onClearImage: () => void;
+  snakeEffectSettings: SnakeEffectSettings;
+  updateSnakeEffectSettings: (settings: Partial<SnakeEffectSettings>) => void;
 }
 
 export default function AdvancedEditor({
@@ -720,6 +723,9 @@ export default function AdvancedEditor({
         case 'lcd':
           applyLCDEffect(targetCanvas, settings);
           break;
+        case 'snake':
+          applySnakeEffect(ctx, sourceCanvas, targetCanvas.width, targetCanvas.height, settings);
+          break;
       }
     } catch (error) {
       console.error(`Error applying effect ${effectType}:`, error);
@@ -1172,6 +1178,19 @@ export default function AdvancedEditor({
           cellWidth: 3,
           cellHeight: 3,
           intensity: 1
+        };
+        break;
+      case 'snake':
+        defaultSettings = {
+          enabled: true,
+          gridSize: 20,
+          colorCount: 8,
+          cornerRadius: 5,
+          colorMode: 'grayscale',
+          padding: 4,
+          backgroundColor: '#ffffff',
+          outlineStyle: 'pixel',
+          shape: 'row'
         };
         break;
       default:
@@ -2103,6 +2122,8 @@ export default function AdvancedEditor({
         return blobSettings;
       case 'linocut':
         return instanceSettings[instance.id];
+      case 'snake':
+        return instanceSettings[instance.id];
       default:
         return {};
     }
@@ -2439,11 +2460,37 @@ export default function AdvancedEditor({
           intensity: 1
         };
         break;
+      case 'snake':
+        defaultSettings = {
+          enabled: true,
+          gridSize: 20,
+          colorCount: 8,
+          cornerRadius: 5,
+          colorMode: 'grayscale',
+          padding: 4,
+          backgroundColor: '#ffffff',
+          outlineStyle: 'pixel',
+          shape: 'row'
+        };
+        break;
       default:
         break;
     }
     return defaultSettings;
   };
+
+  // Add Snake effect settings state
+  const [snakeEffectSettings, setSnakeEffectSettings] = useState<SnakeEffectSettings>({
+    enabled: false,
+    gridSize: 20,
+    colorCount: 8,
+    cornerRadius: 5,
+    colorMode: 'grayscale',
+    padding: 4,
+    backgroundColor: '#ffffff',
+    outlineStyle: 'pixel',
+    shape: 'row'
+  });
 
   return (
     <div className="flex flex-col lg:flex-row gap-6">
@@ -2617,6 +2664,8 @@ export default function AdvancedEditor({
             onRandomImage={() => {}}
             onUploadImage={() => {}}
             onClearImage={() => {}}
+            snakeEffectSettings={snakeEffectSettings}
+            updateSnakeEffectSettings={(settings: Partial<SnakeEffectSettings>) => setSnakeEffectSettings(prev => ({ ...prev, ...settings }))}
           />
           {/* Animation Section */}
           <div className="mt-6 border-t border-[var(--border-color)] pt-4">

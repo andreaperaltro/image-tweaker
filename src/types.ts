@@ -148,30 +148,29 @@ export interface TextEffectSettings {
   strokeWeight?: number; // stroke width in pixels
 }
 
-export enum EffectType {
-  color = 'color',
-  gradient = 'gradient',
-  threshold = 'threshold',
-  halftone = 'halftone',
-  grid = 'grid',
-  dither = 'dither',
-  glitch = 'glitch',
-  blur = 'blur',
-  mosaicShift = 'mosaicShift',
-  sliceShift = 'sliceShift',
-  posterize = 'posterize',
-  findEdges = 'findEdges',
-  blob = 'blob',
-  glow = 'glow',
-  polarPixel = 'polarPixel',
-  pixel = 'pixel',
-  noise = 'noise',
-  linocut = 'linocut',
-  levels = 'levels',
-  ascii = 'ascii',
-  text = 'text',
-  lcd = 'lcd',
-}
+export type EffectType =
+  | 'color'
+  | 'halftone'
+  | 'dither'
+  | 'threshold'
+  | 'glitch'
+  | 'gradient-map'
+  | 'grid'
+  | 'blur'
+  | 'mosaic-shift'
+  | 'slice-shift'
+  | 'posterize'
+  | 'find-edges'
+  | 'blob'
+  | 'polar-pixel'
+  | 'pixel'
+  | 'noise'
+  | 'linocut'
+  | 'levels'
+  | 'ascii'
+  | 'text'
+  | 'lcd'
+  | 'snake';
 
 export interface NoiseEffectSettings {
   enabled: boolean;

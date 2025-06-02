@@ -543,6 +543,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Text effect now updates live when controls are changed (text, color, size, etc.).
 - Fixed text color input in controls so the text is visible.
 - Refactored text effect controls to use instance-specific settings for consistency.
+- Greatly improved the Snake effect's Corner Radius slider: now supports a range of 0–20 with 0.1 steps for much finer granularity.
+- The effect logic now uses the corner radius value as a pixel radius (not percentage), clamped to the cell size, for more precise and flexible control.
 
 ## [0.6.0] - 2024-06-08
 
