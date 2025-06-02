@@ -650,31 +650,36 @@
 }
 
 .effect-buttons-container {
-  display: flex;
-  flex-wrap: wrap;
-  padding: 0 4px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+  padding: 0 2px;
   margin-bottom: 10px;
-  justify-content: flex-start;
-  gap: 8px 8px;
+}
+
+@media (min-width: 1024px) {
+  .effect-buttons-container {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
 .plain-effect-btn {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: 8px;
+  gap: 6px;
   background-color: var(--accent-bg);
   color: var(--text-primary);
   border: 1px solid var(--border-color);
   border-radius: 6px;
   padding: 6px 8px;
-  font-size: 0.78rem;
+  font-size: 0.82rem;
   cursor: pointer;
   transition: all 0.15s ease;
-  margin: 0 4px 8px 4px;
-  flex: 0 0 calc(25% - 8px);
-  max-width: 110px;
+  margin: 0;
+  width: 100%;
   min-width: 0;
+  box-sizing: border-box;
 }
 
 .plain-effect-btn:hover {
