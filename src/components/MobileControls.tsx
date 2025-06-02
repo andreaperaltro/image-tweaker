@@ -28,6 +28,8 @@ import Toggle from './Toggle'
 import Switch from './Switch'
 import LCDEffect from './LCDEffect'
 import { SnakeEffectSettings, SnakeIcon } from './SnakeEffect'
+// Add import for useDragAndDrop
+// import { useDragAndDrop } from 'react-use-dnd';
 
 // Add interface for gradient stop
 interface GradientStopType {
@@ -2897,13 +2899,45 @@ const MobileControls: React.FC<MobileControlsProps> = ({
     }
   };
 
-  // Update the rendering of sections to use the new renderEffectContent function
-  const renderEffectSection = (instance: EffectInstance) => {
+  // At the top of MobileControls component, add drag-and-drop state
+  const [draggedEffectId, setDraggedEffectId] = useState<string | null>(null);
+  const [dragOverEffectId, setDragOverEffectId] = useState<string | null>(null);
+
+  // Drag event handlers
+  const handleDragStart = (id: string) => (e: React.DragEvent<HTMLDivElement>) => {
+    setDraggedEffectId(id);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+  const handleDragEnd = () => {
+    setDraggedEffectId(null);
+    setDragOverEffectId(null);
+  };
+  const handleDragOver = (id: string) => (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setDragOverEffectId(id);
+  };
+  const handleDrop = (id: string) => (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    if (draggedEffectId && draggedEffectId !== id) {
+      const dragIndex = effectInstances.findIndex(inst => inst.id === draggedEffectId);
+      const hoverIndex = effectInstances.findIndex(inst => inst.id === id);
+      if (dragIndex !== -1 && hoverIndex !== -1 && dragIndex !== hoverIndex) {
+        const newInstances = [...effectInstances];
+        const [draggedItem] = newInstances.splice(dragIndex, 1);
+        newInstances.splice(hoverIndex, 0, draggedItem);
+        updateEffectInstances(newInstances);
+      }
+    }
+    setDraggedEffectId(null);
+    setDragOverEffectId(null);
+  };
+
+  // Update renderEffectSection to use these handlers and remove all hooks from inside
+  const renderEffectSection = (instance: EffectInstance, index: number) => {
     const sameTypeEffects = effectInstances.filter(i => i.type === instance.type);
     const sameTypeCount = sameTypeEffects.length;
     const instanceIndex = sameTypeEffects.findIndex(i => i.id === instance.id);
 
-    // Use only the effect name (no 'Effect' in the label)
     const effectLabel =
       instance.type === 'color' ? 'Color' :
       instance.type === 'halftone' ? 'Halftone' :
@@ -2930,9 +2964,53 @@ const MobileControls: React.FC<MobileControlsProps> = ({
       'Effect';
     const title = sameTypeCount > 1 ? `${effectLabel} ${instanceIndex + 1}` : effectLabel;
 
+    // Visual feedback for drag-over
+    const isDragging = draggedEffectId === instance.id;
+    const isDragOver = dragOverEffectId === instance.id && draggedEffectId !== instance.id;
+
     return (
-      <div key={instance.id} className="mobile-effect-section">
-        {renderSectionHeader(instance, title)}
+      <div
+        key={instance.id}
+        className={`mobile-effect-section${isDragOver ? ' drag-over' : ''}`}
+        draggable
+        onDragStart={handleDragStart(instance.id)}
+        onDragEnd={handleDragEnd}
+        onDragOver={handleDragOver(instance.id)}
+        onDrop={handleDrop(instance.id)}
+        style={{ opacity: isDragging ? 0.5 : 1, border: isDragOver ? '2px dashed var(--accent-bg)' : undefined }}
+      >
+        <div className="mobile-effect-header" style={{ cursor: 'move' }}>
+          <div className="mobile-header-row effect-title-toggle-container">
+            <div className="effect-title-container" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span className="effect-order-number">
+                {index + 1}
+              </span>
+              {effectIcons[instance.type] && (
+                <span style={{ display: 'flex', alignItems: 'center', fontSize: 20 }}>{effectIcons[instance.type]}</span>
+              )}
+              <h3 
+                className="mobile-effect-title"
+                onClick={() => toggleSection(instance.id)}
+                style={{ display: 'flex', alignItems: 'center', gap: 8 }}
+              >
+                {title}
+              </h3>
+            </div>
+            <label className="mobile-effect-toggle">
+              <input 
+                type="checkbox" 
+                checked={instance.enabled}
+                onChange={(e) => toggleEffectEnabled(instance.id, e.target.checked)}
+              />
+              <span className="mobile-effect-toggle-slider"></span>
+            </label>
+          </div>
+          <div className="mobile-header-row">
+            <div className="effect-controls-container">
+              {renderEffectControls(instance)}
+            </div>
+          </div>
+        </div>
         {renderEffectContent(instance)}
       </div>
     );
@@ -2967,7 +3045,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
   return (
     <>
       {/* Effects list first */}
-      {effectInstances.map(instance => renderEffectSection(instance))}
+      {effectInstances.map((instance, index) => renderEffectSection(instance, index))}
       
       {/* Add Effect section */}
       <div>
