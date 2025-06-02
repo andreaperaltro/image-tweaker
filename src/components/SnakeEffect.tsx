@@ -3,7 +3,7 @@ import { GiSnake } from 'react-icons/gi';
 
 export type SnakeColorMode = 'grayscale' | 'dominant';
 export type SnakeOutlineStyle = 'pixel' | 'smooth';
-export type SnakeShape = 'row' | 'column';
+export type SnakeShape = 'row' | 'column' | 'diagonal' | 'diagonal2';
 
 export interface SnakeEffectSettings {
   enabled: boolean;
@@ -14,7 +14,7 @@ export interface SnakeEffectSettings {
   padding: number; // px, space between dots
   backgroundColor: string; // hex color for background
   outlineStyle: SnakeOutlineStyle; // pixel or smooth
-  shape: SnakeShape; // row or column
+  shape: SnakeShape; // row or column or diagonal or diagonal2
 }
 
 interface Color {
@@ -282,6 +282,108 @@ export function applySnakeEffect(
           const y = Math.min(startRow, endRow) * gridSize + cellPad;
           const w = cellW;
           const h = (Math.abs(endRow - startRow) + 1) * gridSize - padding;
+          ctx.beginPath();
+          ctx.moveTo(x + actualRadius, y);
+          ctx.lineTo(x + w - actualRadius, y);
+          ctx.quadraticCurveTo(x + w, y, x + w, y + actualRadius);
+          ctx.lineTo(x + w, y + h - actualRadius);
+          ctx.quadraticCurveTo(x + w, y + h, x + w - actualRadius, y + h);
+          ctx.lineTo(x + actualRadius, y + h);
+          ctx.quadraticCurveTo(x, y + h, x, y + h - actualRadius);
+          ctx.lineTo(x, y + actualRadius);
+          ctx.quadraticCurveTo(x, y, x + actualRadius, y);
+          ctx.closePath();
+          ctx.fill();
+        }
+        direction *= -1;
+      }
+    } else if (shape === 'diagonal') {
+      // Top-left to bottom-right diagonals
+      let direction = 1;
+      for (let d = -(rows - 1); d <= cols - 1; d++) {
+        // Collect all (row, col) where row - col == d
+        const diagCells: [number, number][] = [];
+        for (let row = 0; row < rows; row++) {
+          let col = row - d;
+          if (col >= 0 && col < cols && colorKey(quantizedGrid[row][col]) === key) {
+            diagCells.push([row, col]);
+          }
+        }
+        if (diagCells.length === 0) continue;
+        // Find contiguous runs
+        let runs: [number, number][][] = [];
+        let currentRun: [number, number][] = [];
+        for (let i = 0; i < diagCells.length; i++) {
+          if (
+            i === 0 ||
+            (diagCells[i][0] === diagCells[i - 1][0] + 1 && diagCells[i][1] === diagCells[i - 1][1] + 1)
+          ) {
+            currentRun.push(diagCells[i]);
+          } else {
+            runs.push(currentRun);
+            currentRun = [diagCells[i]];
+          }
+        }
+        if (currentRun.length > 0) runs.push(currentRun);
+        for (let runIdx = 0; runIdx < runs.length; runIdx++) {
+          const run = runs[runIdx];
+          const start = direction === 1 ? run[0] : run[run.length - 1];
+          const end = direction === 1 ? run[run.length - 1] : run[0];
+          const x = Math.min(start[1], end[1]) * gridSize + cellPad;
+          const y = Math.min(start[0], end[0]) * gridSize + cellPad;
+          const w = (Math.abs(end[1] - start[1]) + 1) * gridSize - padding;
+          const h = (Math.abs(end[0] - start[0]) + 1) * gridSize - padding;
+          ctx.beginPath();
+          ctx.moveTo(x + actualRadius, y);
+          ctx.lineTo(x + w - actualRadius, y);
+          ctx.quadraticCurveTo(x + w, y, x + w, y + actualRadius);
+          ctx.lineTo(x + w, y + h - actualRadius);
+          ctx.quadraticCurveTo(x + w, y + h, x + w - actualRadius, y + h);
+          ctx.lineTo(x + actualRadius, y + h);
+          ctx.quadraticCurveTo(x, y + h, x, y + h - actualRadius);
+          ctx.lineTo(x, y + actualRadius);
+          ctx.quadraticCurveTo(x, y, x + actualRadius, y);
+          ctx.closePath();
+          ctx.fill();
+        }
+        direction *= -1;
+      }
+    } else if (shape === 'diagonal2') {
+      // Top-right to bottom-left diagonals
+      let direction = 1;
+      for (let d = 0; d <= rows + cols - 2; d++) {
+        // Collect all (row, col) where row + col == d
+        const diagCells: [number, number][] = [];
+        for (let row = 0; row < rows; row++) {
+          let col = d - row;
+          if (col >= 0 && col < cols && colorKey(quantizedGrid[row][col]) === key) {
+            diagCells.push([row, col]);
+          }
+        }
+        if (diagCells.length === 0) continue;
+        // Find contiguous runs
+        let runs: [number, number][][] = [];
+        let currentRun: [number, number][] = [];
+        for (let i = 0; i < diagCells.length; i++) {
+          if (
+            i === 0 ||
+            (diagCells[i][0] === diagCells[i - 1][0] + 1 && diagCells[i][1] === diagCells[i - 1][1] - 1)
+          ) {
+            currentRun.push(diagCells[i]);
+          } else {
+            runs.push(currentRun);
+            currentRun = [diagCells[i]];
+          }
+        }
+        if (currentRun.length > 0) runs.push(currentRun);
+        for (let runIdx = 0; runIdx < runs.length; runIdx++) {
+          const run = runs[runIdx];
+          const start = direction === 1 ? run[0] : run[run.length - 1];
+          const end = direction === 1 ? run[run.length - 1] : run[0];
+          const x = Math.min(start[1], end[1]) * gridSize + cellPad;
+          const y = Math.min(start[0], end[0]) * gridSize + cellPad;
+          const w = (Math.abs(end[1] - start[1]) + 1) * gridSize - padding;
+          const h = (Math.abs(end[0] - start[0]) + 1) * gridSize - padding;
           ctx.beginPath();
           ctx.moveTo(x + actualRadius, y);
           ctx.lineTo(x + w - actualRadius, y);

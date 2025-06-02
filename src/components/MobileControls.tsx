@@ -2509,62 +2509,6 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               max={1000}
               step={1}
             />
-            <div className="mobile-control-group">
-              <label className="mobile-control-label">Blend Mode</label>
-              <select
-                className="mobile-select"
-                value={settings.blendMode || 'normal'}
-                onChange={e => updateInstanceSettings(instance.id, { blendMode: e.target.value })}
-              >
-                <option value="normal">Normal</option>
-                <option value="multiply">Multiply</option>
-                <option value="screen">Screen</option>
-                <option value="overlay">Overlay</option>
-                <option value="darken">Darken</option>
-                <option value="lighten">Lighten</option>
-                <option value="color-dodge">Color Dodge</option>
-                <option value="color-burn">Color Burn</option>
-                <option value="hard-light">Hard Light</option>
-                <option value="soft-light">Soft Light</option>
-                <option value="difference">Difference</option>
-                <option value="exclusion">Exclusion</option>
-              </select>
-            </div>
-            <div className="mobile-control-group">
-              <label className="mobile-control-label">Monochrome</label>
-              <label className="mobile-effect-toggle">
-                <input
-                  type="checkbox"
-                  checked={!!settings.monochrome}
-                  onChange={e => updateInstanceSettings(instance.id, { monochrome: e.target.checked })}
-                />
-                <span className="mobile-effect-toggle-slider"></span>
-              </label>
-            </div>
-            <div className="mobile-control-group">
-              <label className="mobile-control-label">Channel</label>
-              <select
-                className="mobile-select"
-                value={settings.channel || 'all'}
-                onChange={e => updateInstanceSettings(instance.id, { channel: e.target.value })}
-              >
-                <option value="all">All</option>
-                <option value="r">Red</option>
-                <option value="g">Green</option>
-                <option value="b">Blue</option>
-              </select>
-            </div>
-            {settings.monochrome !== false && (
-              <div className="mobile-control-group">
-                <label className="mobile-control-label">Text Color</label>
-                <input
-                  type="color"
-                  className="mobile-color-picker"
-                  value={settings.textColor || '#ffffff'}
-                  onChange={e => updateInstanceSettings(instance.id, { textColor: e.target.value })}
-                />
-              </div>
-            )}
           </div>
         );
       }
@@ -2873,7 +2817,8 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               >
                 <option value="row">Rows</option>
                 <option value="column">Columns</option>
-                <option value="snake">Snake</option>
+                <option value="diagonal">Diagonal</option>
+                <option value="diagonal2">Diagonal (other side)</option>
               </select>
             </div>
             <div className="mobile-control-group">

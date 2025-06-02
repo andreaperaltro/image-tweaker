@@ -127,4 +127,12 @@ input[type="range"]::-moz-range-thumb:hover {
 
 ::-webkit-scrollbar-thumb:hover {
   @apply bg-gray-500 dark:bg-gray-500;
+}
+
+.effect-buttons-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 8px;
+    padding: 0 2px;
+    margin-bottom: 10px;
 } 
