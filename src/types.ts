@@ -175,7 +175,8 @@ export type EffectType =
   | 'ascii'
   | 'text'
   | 'lcd'
-  | 'snake';
+  | 'snake'
+  | 'threeD';
 
 export interface NoiseEffectSettings {
   enabled: boolean;
@@ -195,6 +196,15 @@ export interface LCDEffectSettings {
   intensity: number;
   pattern?: 'TV CRT' | 'PC CRT' | 'XO-1 LCD' | 'LCD';
   padding?: number;
+}
+
+export interface ThreeDEffectSettings {
+  enabled: boolean;
+  rotationX: number; // -180 to 180 degrees
+  rotationY: number; // -180 to 180 degrees
+  rotationZ: number; // -180 to 180 degrees
+  scale: number; // 0.1 to 2
+  backgroundColor: string; // hex color code
 }
 
 // Remove the duplicate EffectSettings type at the end of the file 

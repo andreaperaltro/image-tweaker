@@ -575,3 +575,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Effect section headers now always show the effect icon before the effect name, regardless of enabled state.
 - Effect section titles now use only the effect name (e.g., "Halftone", "Blur"), and append a number only if there are multiple instances.
 - Improved consistency and clarity of effect labels throughout the UI.
+
+## [0.5.11] - 2025-06-01
+
+### Added
+- Background color control for the 3D effect, allowing users to customize the color visible behind rotated images
+
+### Changed
+- Simplified 3D effect implementation by removing perspective control for better performance
+- Improved 3D rotation handling with proper Z -> Y -> X rotation order
+- Enhanced 3D effect integration with the animation system
+
+### Fixed
+- Fixed 3D effect to properly handle background colors during rotation
+- Improved 3D effect performance by removing complex matrix calculations
+- Fixed animation issues with the 3D effect

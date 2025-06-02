@@ -17,7 +17,7 @@ import { isVectorExportAvailable } from './ExportUtils'
 import { FiFileText, FiPlus, FiCopy, FiTrash2, FiArrowUp, FiArrowDown, FiGrid, FiDroplet, FiSliders, FiZap, FiEye, FiLayers, FiType, FiHash, FiImage, FiStar, FiAlignCenter, FiBarChart2, FiCpu, FiFilter, FiChevronRight, FiTv } from 'react-icons/fi';
 import { FaRegDotCircle, FaRegSquare, FaRegCircle, FaRegClone, FaRegObjectGroup, FaRegSmile, FaRegSun, FaRegMoon, FaRegSnowflake, FaRegChartBar, FaRegKeyboard, FaThLarge } from 'react-icons/fa';
 import { MdGradient, MdBlurOn, MdOutlineTextFields, MdOutlineNoiseControlOff, MdOutlineGridOn, MdOutlineColorLens, MdOutlineInvertColors, MdOutlineTextIncrease, MdOutlineTextRotateVertical, MdOutlineTextRotationNone, MdOutlineTextRotationAngleup, MdOutlineTextRotationAngledown } from 'react-icons/md';
-import { MdFitbit, MdCompare, MdTexture, MdFingerprint, MdGrain, MdTonality, MdPattern, MdSnowing, MdTerminal, MdStream, MdOutlineWaves } from 'react-icons/md';
+import { MdFitbit, MdCompare, MdTexture, MdFingerprint, MdGrain, MdTonality, MdPattern, MdSnowing, MdTerminal, MdStream, MdOutlineWaves, Md3dRotation } from 'react-icons/md';
 import { MosaicShiftSettings, ShiftPattern } from './MosaicShift'
 import { SliceShiftSettings } from './SliceShift'
 import { PosterizeSettings } from './Posterize'
@@ -28,6 +28,7 @@ import Toggle from './Toggle'
 import Switch from './Switch'
 import LCDEffect from './LCDEffect'
 import { SnakeEffectSettings, SnakeIcon } from './SnakeEffect'
+import { ThreeDEffectControls } from './ThreeDEffectControls'
 // Add import for useDragAndDrop
 // import { useDragAndDrop } from 'react-use-dnd';
 
@@ -2917,6 +2918,16 @@ const MobileControls: React.FC<MobileControlsProps> = ({
           </div>
         );
 
+      case 'threeD':
+        return (
+          <div className={`mobile-effect-content ${openSection === instance.id ? 'open' : ''}`}>
+            <ThreeDEffectControls
+              settings={settings}
+              onChange={(newSettings) => updateInstanceSettings(instance.id, newSettings)}
+            />
+          </div>
+        );
+
       default:
         return null;
     }
@@ -2984,6 +2995,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
       instance.type === 'ascii' ? 'Ascii' :
       instance.type === 'lcd' ? 'LCD' :
       instance.type === 'snake' ? 'Snake' :
+      instance.type === 'threeD' ? '3D' :
       'Effect';
     const title = sameTypeCount > 1 ? `${effectLabel} ${instanceIndex + 1}` : effectLabel;
 
@@ -3063,6 +3075,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
     ascii: <MdTerminal />,
     lcd: <FiTv />,
     snake: <SnakeIcon />,
+    threeD: <Md3dRotation />, // Fixed icon name
   };
 
   return (
@@ -3075,6 +3088,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
         <h3 className="text-[var(--text-color)] text-lg pp-mondwest-font mb-3">Add Effect</h3>
         <div className="effect-buttons-container">
           {[
+            { label: '3D', type: 'threeD' }, // Add 3D effect to the list
             { label: 'Blob', type: 'blob' },
             { label: 'Blur', type: 'blur' },
             { label: 'Color', type: 'color' },

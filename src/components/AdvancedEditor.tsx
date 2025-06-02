@@ -45,6 +45,8 @@ import { TextEffectSettings } from '../types'
 import LCDEffect from './LCDEffect';
 import { applyLCDEffect } from './LCDEffect';
 import { SnakeEffectSettings, applySnakeEffect, SnakeIcon } from './SnakeEffect';
+import { applyThreeDEffect } from './ThreeDEffect';
+import { ThreeDEffectSettings } from '../types';
 
 // Define types
 type AspectRatioPreset = '1:1' | '4:3' | '16:9' | '3:2' | '5:4' | '2:1' | '3:4' | '9:16' | '2:3' | '4:5' | '1:2' | 'custom';
@@ -726,6 +728,9 @@ export default function AdvancedEditor({
         case 'snake':
           applySnakeEffect(ctx, sourceCanvas, targetCanvas.width, targetCanvas.height, settings);
           break;
+        case 'threeD':
+          applyThreeDEffect(ctx, sourceCanvas, targetCanvas.width, targetCanvas.height, settings as ThreeDEffectSettings);
+          break;
       }
     } catch (error) {
       console.error(`Error applying effect ${effectType}:`, error);
@@ -1192,6 +1197,16 @@ export default function AdvancedEditor({
           outlineStyle: 'pixel',
           shape: 'row'
         };
+        break;
+      case 'threeD':
+        defaultSettings = {
+          enabled: true,
+          rotationX: 0,
+          rotationY: 0,
+          rotationZ: 0,
+          scale: 1,
+          backgroundColor: '#000000'
+        } as ThreeDEffectSettings;
         break;
       default:
         break;
@@ -2472,6 +2487,16 @@ export default function AdvancedEditor({
           outlineStyle: 'pixel',
           shape: 'row'
         };
+        break;
+      case 'threeD':
+        defaultSettings = {
+          enabled: true,
+          rotationX: 0,
+          rotationY: 0,
+          rotationZ: 0,
+          scale: 1,
+          backgroundColor: '#000000'
+        } as ThreeDEffectSettings;
         break;
       default:
         break;
