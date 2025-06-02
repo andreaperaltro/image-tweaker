@@ -39,13 +39,18 @@ export type ColorAdjustmentSettings = {
   invert: boolean;
 };
 
+// Add 'spin' to BlurType
+type BlurType = 'gaussian' | 'box' | 'radial' | 'motion' | 'tiltshift' | 'spin';
+
 export interface BlurSettings {
   enabled: boolean;
-  type: 'gaussian' | 'radial' | 'motion' | 'tiltshift';
+  type: BlurType;
   radius: number;
+  angle?: number;
   centerX?: number;
   centerY?: number;
-  angle?: number;
+  centerRadius?: number;
+  centerGradient?: number;
   focusPosition?: number;
   focusWidth?: number;
   gradient?: number;

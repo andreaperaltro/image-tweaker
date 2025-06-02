@@ -556,6 +556,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 <option value="radial">Radial</option>
                 <option value="motion">Motion</option>
                 <option value="tiltshift">Tilt Shift</option>
+                <option value="spin">Spin</option>
               </select>
             </div>
 
@@ -569,7 +570,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               unit="px"
             />
 
-            {settings.type === 'radial' && (
+            {(settings.type === 'radial' || settings.type === 'spin') && (
               <>
                 <Slider
                   label="Center X"
@@ -587,6 +588,28 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                   max={100}
                   step={1}
                 />
+                {settings.type === 'spin' && (
+                  <>
+                    <Slider
+                      label="Center Radius"
+                      value={settings.centerRadius || 0}
+                      onChange={(value) => updateInstanceSettings(instance.id, { centerRadius: value })}
+                      min={0}
+                      max={200}
+                      step={1}
+                      unit="px"
+                    />
+                    <Slider
+                      label="Center Gradient"
+                      value={settings.centerGradient || 20}
+                      onChange={(value) => updateInstanceSettings(instance.id, { centerGradient: value })}
+                      min={1}
+                      max={200}
+                      step={1}
+                      unit="px"
+                    />
+                  </>
+                )}
               </>
             )}
 

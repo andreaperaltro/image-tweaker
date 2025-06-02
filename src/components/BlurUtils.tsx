@@ -343,6 +343,146 @@ function applyTiltShiftBlur(
   ctx.putImageData(new ImageData(tempData, width, height), 0, 0);
 }
 
+// Apply box blur (mean filter)
+function applyBoxBlur(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  radius: number
+): void {
+  if (radius <= 0) return;
+  const imageData = ctx.getImageData(0, 0, width, height);
+  const data = imageData.data;
+  const tempData = new Uint8ClampedArray(data);
+  const size = Math.max(1, Math.floor(radius) * 2 + 1);
+  const half = Math.floor(size / 2);
+
+  // Horizontal pass
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      let r = 0, g = 0, b = 0, a = 0, count = 0;
+      for (let i = -half; i <= half; i++) {
+        const xi = x + i;
+        if (xi < 0 || xi >= width) continue;
+        const idx = (y * width + xi) * 4;
+        r += data[idx];
+        g += data[idx + 1];
+        b += data[idx + 2];
+        a += data[idx + 3];
+        count++;
+      }
+      const idx = (y * width + x) * 4;
+      tempData[idx] = r / count;
+      tempData[idx + 1] = g / count;
+      tempData[idx + 2] = b / count;
+      tempData[idx + 3] = a / count;
+    }
+  }
+
+  // Vertical pass
+  for (let x = 0; x < width; x++) {
+    for (let y = 0; y < height; y++) {
+      let r = 0, g = 0, b = 0, a = 0, count = 0;
+      for (let i = -half; i <= half; i++) {
+        const yi = y + i;
+        if (yi < 0 || yi >= height) continue;
+        const idx = (yi * width + x) * 4;
+        r += tempData[idx];
+        g += tempData[idx + 1];
+        b += tempData[idx + 2];
+        a += tempData[idx + 3];
+        count++;
+      }
+      const idx = (y * width + x) * 4;
+      data[idx] = r / count;
+      data[idx + 1] = g / count;
+      data[idx + 2] = b / count;
+      data[idx + 3] = a / count;
+    }
+  }
+
+  ctx.putImageData(imageData, 0, 0);
+}
+
+// Apply spin (rotational) blur
+function applySpinBlur(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  radius: number, // interpreted as max angle in degrees
+  centerX: number,
+  centerY: number,
+  centerRadius?: number,
+  centerGradient?: number
+): void {
+  if (radius <= 0) return;
+  const imageData = ctx.getImageData(0, 0, width, height);
+  const data = imageData.data;
+  const tempData = new Uint8ClampedArray(data);
+  // Convert percentage coordinates to pixel coordinates
+  const cx = (centerX / 100) * width;
+  const cy = (centerY / 100) * height;
+  // Number of samples along the arc
+  const samples = Math.max(3, Math.ceil(radius));
+  const maxAngle = (radius * Math.PI) / 180; // convert to radians
+  const centerR = centerRadius || 0;
+  const transition = centerGradient !== undefined ? centerGradient : 20;
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      // Compute polar coordinates relative to center
+      const dx = x - cx;
+      const dy = y - cy;
+      const r = Math.sqrt(dx * dx + dy * dy);
+      const theta = Math.atan2(dy, dx);
+      let sumR = 0, sumG = 0, sumB = 0, sumA = 0, count = 0;
+      for (let i = 0; i < samples; i++) {
+        // Angle offset from -maxAngle/2 to +maxAngle/2
+        const t = i / (samples - 1);
+        const angle = theta + (t - 0.5) * maxAngle;
+        const sampleX = Math.round(cx + r * Math.cos(angle));
+        const sampleY = Math.round(cy + r * Math.sin(angle));
+        if (sampleX < 0 || sampleX >= width || sampleY < 0 || sampleY >= height) continue;
+        const idx = (sampleY * width + sampleX) * 4;
+        sumR += data[idx];
+        sumG += data[idx + 1];
+        sumB += data[idx + 2];
+        sumA += data[idx + 3];
+        count++;
+      }
+      const idx = (y * width + x) * 4;
+      if (r <= centerR) {
+        // No blur in the protected center
+        tempData[idx] = data[idx];
+        tempData[idx + 1] = data[idx + 1];
+        tempData[idx + 2] = data[idx + 2];
+        tempData[idx + 3] = data[idx + 3];
+      } else if (r > centerR && r < centerR + transition) {
+        // Smooth transition: interpolate between original and blurred
+        const t = (r - centerR) / transition;
+        const blurredR = count > 0 ? sumR / count : data[idx];
+        const blurredG = count > 0 ? sumG / count : data[idx + 1];
+        const blurredB = count > 0 ? sumB / count : data[idx + 2];
+        const blurredA = count > 0 ? sumA / count : data[idx + 3];
+        tempData[idx] = data[idx] * (1 - t) + blurredR * t;
+        tempData[idx + 1] = data[idx + 1] * (1 - t) + blurredG * t;
+        tempData[idx + 2] = data[idx + 2] * (1 - t) + blurredB * t;
+        tempData[idx + 3] = data[idx + 3] * (1 - t) + blurredA * t;
+      } else if (count > 0) {
+        tempData[idx] = sumR / count;
+        tempData[idx + 1] = sumG / count;
+        tempData[idx + 2] = sumB / count;
+        tempData[idx + 3] = sumA / count;
+      } else {
+        tempData[idx] = data[idx];
+        tempData[idx + 1] = data[idx + 1];
+        tempData[idx + 2] = data[idx + 2];
+        tempData[idx + 3] = data[idx + 3];
+      }
+    }
+  }
+  ctx.putImageData(new ImageData(tempData, width, height), 0, 0);
+}
+
 // Main blur processing function
 export function applyBlur(
   ctx: CanvasRenderingContext2D,
@@ -356,6 +496,9 @@ export function applyBlur(
     case 'gaussian':
       applyGaussianBlur(ctx, width, height, settings.radius);
       break;
+    case 'box':
+      applyBoxBlur(ctx, width, height, settings.radius);
+      break;
     case 'radial':
       applyRadialBlur(
         ctx,
@@ -364,6 +507,18 @@ export function applyBlur(
         settings.radius,
         settings.centerX || 50,
         settings.centerY || 50
+      );
+      break;
+    case 'spin':
+      applySpinBlur(
+        ctx,
+        width,
+        height,
+        settings.radius,
+        settings.centerX || 50,
+        settings.centerY || 50,
+        settings.centerRadius,
+        settings.centerGradient
       );
       break;
     case 'motion':
