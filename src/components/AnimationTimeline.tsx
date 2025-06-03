@@ -4,7 +4,6 @@ import React, { useState, useRef } from 'react';
 import { AnimationTimelineProps, EasingType } from '../types/animations';
 import { FiPlay, FiPause, FiSquare, FiTrash, FiPlus } from 'react-icons/fi';
 import { EffectSettings } from '../utils/EffectSettingsUtils';
-import KeyframePanel from './KeyframePanel';
 
 const AnimationTimeline: React.FC<AnimationTimelineProps> = ({
   keyframes,
