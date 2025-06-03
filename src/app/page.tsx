@@ -97,7 +97,7 @@ export default function Home() {
                 <ul className="list-disc pl-4 space-y-1 text-gray-300">
                   <li>Use the <strong>compact toolbar</strong> at the top for quick actions (Upload, Random, Clear, Reset, Save/Load Settings, Export)</li>
                   <li>Click the <strong>effect name</strong> to expand/collapse its controls</li>
-                  <li>Reorder effects using the <strong>up/down arrows</strong> in each effect panel</li>
+                  <li>Reorder effects using the <strong>drag handle</strong> (≡ icon) or the <strong>up/down arrows</strong> in each effect panel</li>
                   <li>Use the <strong>sliders</strong> to adjust values, or click the - / + buttons for precise control</li>
                   <li>Enable <strong>animation mode</strong> to create keyframe-based animations</li>
                 </ul>
@@ -123,6 +123,36 @@ export default function Home() {
                   <li><strong>Crop:</strong> Open the cropping interface with aspect ratio presets</li>
                   <li><strong>PNG:</strong> Export the image as PNG with embedded metadata</li>
                   <li><strong>SVG:</strong> Export the image as SVG with embedded metadata (only available when halftone or dither is the last effect)</li>
+                  <li><strong>Video:</strong> Export animations as MP4 video files</li>
+                </ul>
+              </div>
+
+              <div>
+                <h3 className="text-emerald-500 mb-2">Available Effects</h3>
+                <ul className="list-disc pl-4 space-y-1 text-gray-300">
+                  <li><strong>3D:</strong> Rotate and tilt your image in 3D space for a perspective or isometric look.</li>
+                  <li><strong>Ascii:</strong> Turn your image into ASCII art using customizable character sets.</li>
+                  <li><strong>Blob:</strong> Connect dots based on brightness to create organic, blobby patterns.</li>
+                  <li><strong>Blur:</strong> Soften or distort your image with various blur types (Gaussian, Box, Motion, etc.).</li>
+                  <li><strong>Color:</strong> Adjust brightness, contrast, saturation, hue, and invert colors.</li>
+                  <li><strong>Dither:</strong> Apply classic or modern dithering for a retro, pixelated look.</li>
+                  <li><strong>Find Edges:</strong> Highlight edges in your image using various edge detection algorithms.</li>
+                  <li><strong>Glitch:</strong> Add digital glitch effects: pixel sorting, channel shift, scan lines, and more.</li>
+                  <li><strong>Glow:</strong> Add a glowing aura to bright areas for a dreamy or sci-fi look.</li>
+                  <li><strong>Gradient:</strong> Map image brightness to a custom color gradient for creative colorization.</li>
+                  <li><strong>Grid:</strong> Overlay a grid and manipulate cells for mosaic or tiled effects.</li>
+                  <li><strong>Halftone:</strong> Simulate print halftone patterns with dots, lines, or shapes.</li>
+                  <li><strong>LCD:</strong> Simulate LCD/CRT subpixel patterns for a digital or retro display look.</li>
+                  <li><strong>Levels:</strong> Adjust black, gamma, and white points for precise contrast and brightness control.</li>
+                  <li><strong>Linocut:</strong> Create variable-width line patterns based on image brightness, like a linocut print.</li>
+                  <li><strong>Mosaic:</strong> Displace image tiles for a mosaic or shifting tile effect.</li>
+                  <li><strong>Noise:</strong> Add Perlin noise for organic grain, texture, or film effects.</li>
+                  <li><strong>Pixel:</strong> Pixelate your image with various grid, radial, or random block patterns.</li>
+                  <li><strong>Posterize:</strong> Reduce the number of colors for a bold, poster-like effect.</li>
+                  <li><strong>Slice:</strong> Slice and shift parts of the image for glitchy or collage effects.</li>
+                  <li><strong>Snake:</strong> Create winding, snake-like patterns based on image structure.</li>
+                  <li><strong>Text:</strong> Overlay custom text with full control over font, size, color, and position.</li>
+                  <li><strong>Threshold:</strong> Convert your image to high-contrast black & white or two-color art.</li>
                 </ul>
               </div>
 

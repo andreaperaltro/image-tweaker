@@ -590,3 +590,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed 3D effect to properly handle background colors during rotation
 - Improved 3D effect performance by removing complex matrix calculations
 - Fixed animation issues with the 3D effect
+
+## [0.5.12] - 2025-06-02
+
+### Added
+- Background color control for the 3D effect, allowing users to customize the color visible behind rotated images.
+
+### Changed
+- Simplified 3D effect implementation by removing perspective control for better performance.
+- Improved 3D rotation handling with proper Z -> Y -> X rotation order.
+- Enhanced 3D effect integration with the animation system.
+
+### Fixed
+- Fixed 3D effect to properly handle background colors during rotation.
+- Improved 3D effect performance by removing complex matrix calculations.
+- Fixed animation issues with the 3D effect.

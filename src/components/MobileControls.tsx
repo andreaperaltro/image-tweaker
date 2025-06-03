@@ -16,7 +16,7 @@ import { saveEffectSettings, loadEffectSettings, EffectSettings } from '../utils
 import { isVectorExportAvailable } from './ExportUtils'
 import { FiFileText, FiPlus, FiCopy, FiTrash2, FiArrowUp, FiArrowDown, FiGrid, FiDroplet, FiSliders, FiZap, FiEye, FiLayers, FiType, FiHash, FiImage, FiStar, FiAlignCenter, FiBarChart2, FiCpu, FiFilter, FiChevronRight, FiTv } from 'react-icons/fi';
 import { FaRegDotCircle, FaRegSquare, FaRegCircle, FaRegClone, FaRegObjectGroup, FaRegSmile, FaRegSun, FaRegMoon, FaRegSnowflake, FaRegChartBar, FaRegKeyboard, FaThLarge } from 'react-icons/fa';
-import { MdGradient, MdBlurOn, MdOutlineTextFields, MdOutlineNoiseControlOff, MdOutlineGridOn, MdOutlineColorLens, MdOutlineInvertColors, MdOutlineTextIncrease, MdOutlineTextRotateVertical, MdOutlineTextRotationNone, MdOutlineTextRotationAngleup, MdOutlineTextRotationAngledown } from 'react-icons/md';
+import { MdGradient, MdBlurOn, MdOutlineTextFields, MdOutlineNoiseControlOff, MdOutlineGridOn, MdOutlineColorLens, MdOutlineInvertColors, MdOutlineTextIncrease, MdOutlineTextRotateVertical, MdOutlineTextRotationNone, MdOutlineTextRotationAngleup, MdOutlineTextRotationAngledown, MdDragIndicator } from 'react-icons/md';
 import { MdFitbit, MdCompare, MdTexture, MdFingerprint, MdGrain, MdTonality, MdPattern, MdSnowing, MdTerminal, MdStream, MdOutlineWaves, Md3dRotation } from 'react-icons/md';
 import { MosaicShiftSettings, ShiftPattern } from './MosaicShift'
 import { SliceShiftSettings } from './SliceShift'
@@ -3007,16 +3007,24 @@ const MobileControls: React.FC<MobileControlsProps> = ({
       <div
         key={instance.id}
         className={`mobile-effect-section${isDragOver ? ' drag-over' : ''}`}
-        draggable
-        onDragStart={handleDragStart(instance.id)}
-        onDragEnd={handleDragEnd}
         onDragOver={handleDragOver(instance.id)}
         onDrop={handleDrop(instance.id)}
         style={{ opacity: isDragging ? 0.5 : 1, border: isDragOver ? '2px dashed var(--accent-bg)' : undefined }}
       >
-        <div className="mobile-effect-header" style={{ cursor: 'move' }}>
+        <div className="mobile-effect-header">
           <div className="mobile-header-row effect-title-toggle-container">
             <div className="effect-title-container" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {/* Drag handle icon */}
+              <span
+                className="effect-drag-handle"
+                draggable
+                onDragStart={handleDragStart(instance.id)}
+                onDragEnd={handleDragEnd}
+                style={{ cursor: 'grab', display: 'flex', alignItems: 'center', marginRight: 4 }}
+                title="Drag to reorder"
+              >
+                <MdDragIndicator size={20} />
+              </span>
               <span className="effect-order-number">
                 {index + 1}
               </span>
@@ -3088,29 +3096,29 @@ const MobileControls: React.FC<MobileControlsProps> = ({
         <h3 className="text-[var(--text-color)] text-lg pp-mondwest-font mb-3">Add Effect</h3>
         <div className="effect-buttons-container">
           {[
-            { label: '3D', type: 'threeD' }, // Add 3D effect to the list
-            { label: 'Blob', type: 'blob' },
-            { label: 'Blur', type: 'blur' },
-            { label: 'Color', type: 'color' },
-            { label: 'Dither', type: 'dither' },
-            { label: 'Find Edges', type: 'findEdges' },
-            { label: 'Glitch', type: 'glitch' },
-            { label: 'Glow', type: 'glow' },
-            { label: 'Gradient', type: 'gradient' },
-            { label: 'Grid', type: 'grid' },
-            { label: 'Halftone', type: 'halftone' },
-            { label: 'Mosaic', type: 'mosaicShift' },
-            { label: 'Noise', type: 'noise' },
-            { label: 'Pixel', type: 'pixel' },
-            { label: 'Posterize', type: 'posterize' },
-            { label: 'Slice', type: 'sliceShift' },
-            { label: 'Text', type: 'text' },
-            { label: 'Threshold', type: 'threshold' },
-            { label: 'Linocut', type: 'linocut' },
-            { label: 'Levels', type: 'levels' },
-            { label: 'Ascii', type: 'ascii' },
-            { label: 'LCD', type: 'lcd' },
-            { label: 'Snake', type: 'snake' },
+            { label: '3D', type: 'threeD', desc: 'Rotate and tilt your image in 3D space for a perspective or isometric look.' },
+            { label: 'Blob', type: 'blob', desc: 'Connect dots based on brightness to create organic, blobby patterns.' },
+            { label: 'Blur', type: 'blur', desc: 'Soften or distort your image with various blur types (Gaussian, Box, Motion, etc.).' },
+            { label: 'Color', type: 'color', desc: 'Adjust brightness, contrast, saturation, hue, and invert colors.' },
+            { label: 'Dither', type: 'dither', desc: 'Apply classic or modern dithering for a retro, pixelated look.' },
+            { label: 'Find Edges', type: 'findEdges', desc: 'Highlight edges in your image using various edge detection algorithms.' },
+            { label: 'Glitch', type: 'glitch', desc: 'Add digital glitch effects: pixel sorting, channel shift, scan lines, and more.' },
+            { label: 'Glow', type: 'glow', desc: 'Add a glowing aura to bright areas for a dreamy or sci-fi look.' },
+            { label: 'Gradient', type: 'gradient', desc: 'Map image brightness to a custom color gradient for creative colorization.' },
+            { label: 'Grid', type: 'grid', desc: 'Overlay a grid and manipulate cells for mosaic or tiled effects.' },
+            { label: 'Halftone', type: 'halftone', desc: 'Simulate print halftone patterns with dots, lines, or shapes.' },
+            { label: 'LCD', type: 'lcd', desc: 'Simulate LCD/CRT subpixel patterns for a digital or retro display look.' },
+            { label: 'Levels', type: 'levels', desc: 'Adjust black, gamma, and white points for precise contrast and brightness control.' },
+            { label: 'Linocut', type: 'linocut', desc: 'Create variable-width line patterns based on image brightness, like a linocut print.' },
+            { label: 'Mosaic', type: 'mosaicShift', desc: 'Displace image tiles for a mosaic or shifting tile effect.' },
+            { label: 'Noise', type: 'noise', desc: 'Add Perlin noise for organic grain, texture, or film effects.' },
+            { label: 'Pixel', type: 'pixel', desc: 'Pixelate your image with various grid, radial, or random block patterns.' },
+            { label: 'Posterize', type: 'posterize', desc: 'Reduce the number of colors for a bold, poster-like effect.' },
+            { label: 'Slice', type: 'sliceShift', desc: 'Slice and shift parts of the image for glitchy or collage effects.' },
+            { label: 'Snake', type: 'snake', desc: 'Create winding, snake-like patterns based on image structure.' },
+            { label: 'Text', type: 'text', desc: 'Overlay custom text with full control over font, size, color, and position.' },
+            { label: 'Threshold', type: 'threshold', desc: 'Convert your image to high-contrast black & white or two-color art.' },
+            { label: 'Ascii', type: 'ascii', desc: 'Turn your image into ASCII art using customizable character sets.' },
           ]
             .sort((a, b) => a.label.localeCompare(b.label))
             .map(effect => (
@@ -3118,6 +3126,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 key={effect.type}
                 className="plain-effect-btn"
                 onClick={() => addEffect(effect.type as EffectType)}
+                title={effect.desc}
               >
                 {effectIcons[effect.type] || <FiPlus size={12} />} {effect.label}
               </button>
