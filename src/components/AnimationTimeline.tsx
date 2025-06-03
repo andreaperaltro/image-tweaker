@@ -4,6 +4,7 @@ import React, { useState, useRef } from 'react';
 import { AnimationTimelineProps, EasingType } from '../types/animations';
 import { FiPlay, FiPause, FiSquare, FiTrash, FiPlus } from 'react-icons/fi';
 import { EffectSettings } from '../utils/EffectSettingsUtils';
+import KeyframePanel from './KeyframePanel';
 
 const AnimationTimeline: React.FC<AnimationTimelineProps> = ({
   keyframes,
@@ -19,6 +20,7 @@ const AnimationTimeline: React.FC<AnimationTimelineProps> = ({
   const timelineRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [dragKeyframeId, setDragKeyframeId] = useState<string | null>(null);
+  const [openPanelId, setOpenPanelId] = useState<string | null>(null);
 
   // Format time as MM:SS.ms
   const formatTime = (seconds: number): string => {
@@ -40,31 +42,28 @@ const AnimationTimeline: React.FC<AnimationTimelineProps> = ({
     // Calculate time from position
     const clickTime = (offsetX / width) * state.duration;
     
-    // Set the current time (navigation)
+    // Always set the current time on click
     controls.setTime(clickTime);
     
-    // If Control key is pressed, also add a keyframe
+    // If Control/Command key is pressed, add a keyframe at current time
     if (e.ctrlKey || e.metaKey) {
-      // Create snapshot of current settings
       const currentSettings: EffectSettings = {} as EffectSettings;
       
       // Only capture current state if we have a selected keyframe to base it off
       if (selectedKeyframeId) {
         const selectedKeyframe = keyframes.find(k => k.id === selectedKeyframeId);
         if (selectedKeyframe) {
-          // Use settings from selected keyframe as base
           onAddKeyframe(selectedKeyframe.settings);
           return;
         }
       }
       
-      // If no selected keyframe, add new keyframe with current state
       onAddKeyframe(currentSettings);
     }
   };
 
   // Handle keyframe drag start
-  const handleKeyframeDragStart = (e: React.MouseEvent<HTMLDivElement>, id: string) => {
+  const handleKeyframeDragStart = (e: React.MouseEvent<HTMLElement>, id: string) => {
     e.stopPropagation();
     setIsDragging(true);
     setDragKeyframeId(id);
@@ -96,6 +95,13 @@ const AnimationTimeline: React.FC<AnimationTimelineProps> = ({
     document.addEventListener('mouseup', handleMouseUp);
   };
 
+  // Handle keyframe click
+  const handleKeyframeClick = (e: React.MouseEvent<HTMLElement>, id: string) => {
+    e.stopPropagation();
+    onSelectKeyframe(id);
+    setOpenPanelId(id);
+  };
+
   // Handle keyframe delete
   const handleKeyframeDelete = (e: React.MouseEvent<SVGElement>, id: string) => {
     e.stopPropagation();
@@ -116,6 +122,7 @@ const AnimationTimeline: React.FC<AnimationTimelineProps> = ({
 
   return (
     <div className="bg-[var(--accent-bg)] p-4 rounded-lg border border-[var(--border-color)]">
+      {/* Top controls */}
       <div className="flex items-center justify-between mb-2">
         <div className="flex space-x-3 items-center">
           {/* Play/Pause button */}
@@ -164,97 +171,162 @@ const AnimationTimeline: React.FC<AnimationTimelineProps> = ({
         </div>
       </div>
       
-      {/* Timeline */}
-      <div 
-        className="relative h-24 bg-[var(--header-bg)] rounded mt-2 overflow-hidden" 
-        ref={timelineRef} 
-        onClick={handleTimelineClick}
-      >
-        {/* Time markers */}
-        <div className="absolute top-0 left-0 w-full h-full">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div 
-              key={i} 
-              className="absolute top-0 h-full w-px bg-gray-600"
-              style={{ left: `${(i / 5) * 100}%` }}
-            >
-              <div className="absolute top-0 transform -translate-x-1/2 text-xs font-mono text-gray-400">
-                {formatTime((i / 5) * state.duration)}
-              </div>
-            </div>
-          ))}
-        </div>
-        
-        {/* Current time indicator */}
+      {/* Timeline container */}
+      <div className="relative">
+        {/* Base timeline with time markers */}
         <div 
-          className="absolute top-0 h-full w-0.5 bg-[#10b981] z-10"
-          style={{ left: `${(state.currentTime / state.duration) * 100}%` }}
-        ></div>
-        
-        {/* Keyframes */}
-        {keyframes.map((keyframe) => (
-          <div
-            key={keyframe.id}
-            className={`absolute w-4 h-4 rounded-full cursor-move transform -translate-x-1/2 -translate-y-1/2 border-2 ${
-              keyframe.id === selectedKeyframeId
-                ? 'bg-[#10b981] border-[#059669]'
-                : 'bg-[var(--header-bg)] border-gray-600'
-            } hover:scale-110 transition-transform`}
-            style={{
-              left: `${(keyframe.time / state.duration) * 100}%`,
-              top: '50%',
-            }}
-            onMouseDown={(e) => handleKeyframeDragStart(e, keyframe.id)}
-            title={`Keyframe at ${formatTime(keyframe.time)}`}
-          >
-            {/* Delete button */}
-            <FiTrash
-              size={12}
-              className="absolute top-full left-1/2 transform -translate-x-1/2 mt-1 text-red-500 hover:text-red-400 cursor-pointer"
-              onClick={(e) => handleKeyframeDelete(e, keyframe.id)}
-            />
-          </div>
-        ))}
-        
-        {/* Add keyframe button */}
-        <button
-          className="absolute right-2 bottom-2 bg-[var(--header-bg)] text-white p-1 rounded-full hover:bg-gray-800 transition-colors"
-          onClick={(e) => {
-            e.stopPropagation();
-            onAddKeyframe({} as EffectSettings); // Add keyframe at current time
-          }}
+          className="h-24 bg-[var(--header-bg)] rounded mt-2 cursor-pointer relative" 
+          ref={timelineRef}
+          onClick={handleTimelineClick}
         >
-          <FiPlus size={16} />
-        </button>
-      </div>
-      
-      {/* Selected keyframe details */}
-      {selectedKeyframeId && (
-        <div className="mt-2 bg-[var(--header-bg)] p-2 rounded text-sm text-[var(--text-color)]">
-          <div className="flex justify-between items-center">
-            <div>Selected: {formatTime(keyframes.find(k => k.id === selectedKeyframeId)?.time || 0)}</div>
-            <div className="flex items-center space-x-2">
-              <span>Easing:</span>
-              <select
-                className="bg-[var(--secondary-bg)] border border-[var(--border-color)] rounded py-1 px-2 text-xs text-[var(--text-color)]"
-                value={keyframes.find(k => k.id === selectedKeyframeId)?.easing || 'linear'}
-                onChange={(e) => handleEasingChange(selectedKeyframeId, e.target.value as EasingType)}
-              >
-                <option value="linear">Linear</option>
-                <option value="ease-in">Ease In</option>
-                <option value="ease-out">Ease Out</option>
-                <option value="ease-in-out">Ease In Out</option>
-                <option value="cubic-bezier">Cubic Bezier</option>
-              </select>
+          {/* Time markers container with padding */}
+          <div className="absolute inset-x-4 inset-y-0">
+            {/* Time markers */}
+            <div className="relative h-full">
+              {/* Start marker */}
+              <div className="absolute left-0 h-full">
+                <div className="absolute top-2 text-xs font-mono text-gray-400">
+                  {formatTime(0)}
+                </div>
+                <div className="absolute h-full w-px bg-gray-600" />
+              </div>
+
+              {/* Middle markers */}
+              {[1, 2, 3, 4].map((i) => (
+                <div 
+                  key={i}
+                  className="absolute h-full"
+                  style={{ left: `${(i * 20)}%` }}
+                >
+                  <div className="absolute top-2 left-1/2 -translate-x-1/2 text-xs font-mono text-gray-400 whitespace-nowrap">
+                    {formatTime((i / 5) * state.duration)}
+                  </div>
+                  <div className="absolute h-full w-px bg-gray-600" />
+                </div>
+              ))}
+
+              {/* End marker */}
+              <div className="absolute right-0 h-full">
+                <div className="absolute top-2 right-0 text-xs font-mono text-gray-400">
+                  {formatTime(state.duration)}
+                </div>
+                <div className="absolute h-full w-px bg-gray-600" />
+              </div>
+
+              {/* Current time indicator */}
+              <div 
+                className="absolute top-0 h-full w-0.5 bg-[#10b981] pointer-events-none"
+                style={{ 
+                  left: `clamp(0%, ${(state.currentTime / state.duration) * 100}%, 100%)`
+                }}
+              />
+
+              {/* Keyframes */}
+              {keyframes.map((keyframe) => (
+                <div 
+                  key={keyframe.id}
+                  className="absolute top-1/2 -translate-y-1/2"
+                  style={{ 
+                    left: `clamp(0%, ${(keyframe.time / state.duration) * 100}%, 100%)`
+                  }}
+                >
+                  <button
+                    className={`w-8 h-8 rounded-full cursor-pointer transform -translate-x-1/2 border-2 flex items-center justify-center ${
+                      keyframe.id === selectedKeyframeId
+                        ? 'bg-[#10b981] border-[#059669]'
+                        : 'bg-[var(--header-bg)] border-gray-600'
+                    } hover:scale-110 transition-transform`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSelectKeyframe(keyframe.id);
+                    }}
+                    title={`Keyframe at ${formatTime(keyframe.time)}`}
+                  >
+                    <div className="w-3 h-3 rounded-full bg-current" />
+                  </button>
+                </div>
+              ))}
             </div>
           </div>
-          <div className="mt-1 text-xs text-gray-400">
-            Click timeline to navigate • Ctrl+Click to add keyframe
+        </div>
+
+        {/* Controls below timeline */}
+        <div className="flex items-start mt-2 gap-3">
+          {/* Add keyframe button */}
+          <button
+            className="bg-[var(--header-bg)] text-white p-2.5 rounded-full hover:bg-gray-800 transition-colors shadow-lg flex items-center justify-center group"
+            onClick={(e) => {
+              e.stopPropagation();
+              onAddKeyframe({} as EffectSettings);
+            }}
+            title="Add keyframe at current time"
+          >
+            <FiPlus size={24} className="group-hover:rotate-90 transition-transform" />
+          </button>
+
+          {/* Keyframe controls - always visible */}
+          <div className="flex-1 bg-[var(--header-bg)] p-3 rounded text-sm text-[var(--text-color)]">
+            {selectedKeyframeId ? (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  {/* Time input */}
+                  <div className="flex items-center gap-2">
+                    <span>Time:</span>
+                    <input
+                      type="number"
+                      min={0}
+                      max={state.duration}
+                      step={0.01}
+                      value={keyframes.find(k => k.id === selectedKeyframeId)?.time || 0}
+                      onChange={(e) => {
+                        const newTime = Math.min(Math.max(0, parseFloat(e.target.value)), state.duration);
+                        onUpdateKeyframe(selectedKeyframeId, newTime);
+                      }}
+                      className="w-20 bg-[var(--secondary-bg)] border border-[var(--border-color)] rounded py-1 px-2 text-sm"
+                    />
+                    <span className="text-[var(--text-secondary)]">/ {state.duration}s</span>
+                  </div>
+
+                  {/* Easing selector */}
+                  <div className="flex items-center gap-2">
+                    <span>Easing:</span>
+                    <select
+                      className="bg-[var(--secondary-bg)] border border-[var(--border-color)] rounded py-1 px-2 text-sm"
+                      value={keyframes.find(k => k.id === selectedKeyframeId)?.easing || 'linear'}
+                      onChange={(e) => handleEasingChange(selectedKeyframeId, e.target.value as EasingType)}
+                    >
+                      <option value="linear">Linear</option>
+                      <option value="ease-in">Ease In</option>
+                      <option value="ease-out">Ease Out</option>
+                      <option value="ease-in-out">Ease In Out</option>
+                      <option value="cubic-bezier">Cubic Bezier</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Delete button */}
+                <button
+                  onClick={() => {
+                    onDeleteKeyframe(selectedKeyframeId);
+                    onSelectKeyframe(''); // Clear selection after delete
+                  }}
+                  className="flex items-center gap-1 text-red-500 hover:text-red-400 transition-colors"
+                  title="Delete keyframe"
+                >
+                  <FiTrash size={16} />
+                  <span>Delete</span>
+                </button>
+              </div>
+            ) : (
+              <div className="text-[var(--text-secondary)]">
+                Click timeline to navigate • Ctrl+Click to add keyframe • Click keyframe to edit
+              </div>
+            )}
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };
 
-export default AnimationTimeline; 
+export default AnimationTimeline;

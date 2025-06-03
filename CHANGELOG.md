@@ -603,3 +603,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed 3D effect to properly handle background colors during rotation.
 - Improved 3D effect performance by removing complex matrix calculations.
 - Fixed animation issues with the 3D effect.
+
+## [0.6.1] - 2025-06-02
+
+### Changed
+- Improved animation timeline controls for better usability
+  - Removed keyframe dragging for more precise control
+  - Added direct time input (0-5 seconds) for precise keyframe positioning
+  - Improved keyframe selection and editing UI
+  - Fixed keyframe controls visibility when switching between keyframes
+  - Enhanced bottom panel layout with consistent styling
+  - Added clear delete button with automatic selection clearing
