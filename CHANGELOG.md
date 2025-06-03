@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2025-06-01
+
+### Fixed
+- Fixed 3D effect not showing the transformed image
+- Improved 3D transformation stability and reliability
+- Added robust error handling for edge cases in 3D transformations
+- Fixed perspective transform initialization and point mapping
+- Added safeguards against invalid transformation values
+
+### Changed
+- Enhanced 3D effect with better value clamping for more stable transformations
+- Improved perspective projection with proper focal length calculations
+- Added fallback to show original image if transformation fails
+- Better handling of extreme rotation and perspective values
+
 ## [0.5.9] - 2025-05-31
 
 ### Added
@@ -549,23 +564,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Spin Blur now supports a Center Radius (protected area) and Center Gradient (feather/transition) control for smooth transitions from sharp to blurred.
 - Fixed Box Blur: now works as a true mean filter.
 - Improved Blur effect UI: Spin Blur, Box Blur, and all controls are now more flexible and intuitive.
-
-## [0.6.0] - 2024-06-08
-
-### Added
-- New LCD effect with selectable subpixel patterns: TV CRT, PC CRT, XO-1 LCD, and LCD.
-- Pattern selector in the LCD effect controls for choosing between different subpixel layouts.
-- Padding slider to control the gap between LCD/CRT cells, works for both stripes and dots.
-- Intensity slider max increased to 10 for more dramatic effects.
-
-### Changed
-- Improved LCD effect rendering logic for accurate simulation of real subpixel patterns, including proper gaps, rounded rectangles, and staggered dot grids.
-- LCD effect section title now displays as "LCD" (or "LCD 2", etc. for multiple instances).
-- UI/UX improvements for effect controls: consistent padding, labeling, and section titles.
-
-### Fixed
-- Padding logic now robust: never causes overlap or disappearance of subpixels, clamps to safe values.
-- All four LCD/CRT patterns now render as expected and match reference images.
 
 ## [0.5.10] - 2024-06-03
 

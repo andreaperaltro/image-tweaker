@@ -1205,7 +1205,9 @@ export default function AdvancedEditor({
           rotationY: 0,
           rotationZ: 0,
           scale: 1,
-          backgroundColor: '#000000'
+          backgroundColor: '#000000',
+          perspective: 45,
+          distance: 500
         } as ThreeDEffectSettings;
         break;
       default:
@@ -1665,14 +1667,30 @@ export default function AdvancedEditor({
   const updateInstanceSettings = useCallback((id: string, settings: any) => {
     // Don't allow updates while processing
     if (isProcessingRef.current) return;
-    
-    setInstanceSettings(prev => ({
-      ...prev,
-      [id]: {
-        ...prev[id],
-        ...settings
+
+    setInstanceSettings(prev => {
+      const prevSettings = prev[id] || {};
+      // If this is a threeD effect, always merge with full defaults
+      const isThreeD = prevSettings && (prevSettings.perspective !== undefined || prevSettings.rotationX !== undefined || prevSettings.scale !== undefined);
+      if (isThreeD) {
+        return {
+          ...prev,
+          [id]: {
+            ...getDefaultThreeDSettings(),
+            ...prevSettings,
+            ...settings
+          }
+        };
+      } else {
+        return {
+          ...prev,
+          [id]: {
+            ...prevSettings,
+            ...settings
+          }
+        };
       }
-    }));
+    });
 
     // Trigger processing after state update
     setTimeout(() => processImage(), 0);
@@ -2495,7 +2513,9 @@ export default function AdvancedEditor({
           rotationY: 0,
           rotationZ: 0,
           scale: 1,
-          backgroundColor: '#000000'
+          backgroundColor: '#000000',
+          perspective: 45,
+          distance: 500
         } as ThreeDEffectSettings;
         break;
       default:
@@ -2516,6 +2536,20 @@ export default function AdvancedEditor({
     outlineStyle: 'pixel',
     shape: 'row'
   });
+
+  // Helper: get full default 3D settings
+  function getDefaultThreeDSettings(): ThreeDEffectSettings {
+    return {
+      enabled: true,
+      rotationX: 0,
+      rotationY: 0,
+      rotationZ: 0,
+      scale: 1,
+      backgroundColor: '#000000',
+      perspective: 45,
+      distance: 500
+    };
+  }
 
   return (
     <div className="flex flex-col lg:flex-row gap-6">

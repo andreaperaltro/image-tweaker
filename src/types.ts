@@ -205,6 +205,8 @@ export interface ThreeDEffectSettings {
   rotationZ: number; // -180 to 180 degrees
   scale: number; // 0.1 to 2
   backgroundColor: string; // hex color code
+  perspective: number; // 0 to 100, controls field of view
+  distance: number; // 100 to 1000, controls camera distance
 }
 
 // Remove the duplicate EffectSettings type at the end of the file 

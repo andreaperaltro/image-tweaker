@@ -62,6 +62,28 @@ export const ThreeDEffectControls: React.FC<ThreeDEffectControlsProps> = ({ sett
         />
       </div>
       <div className="mobile-control-group">
+        <Slider
+          label="Perspective"
+          value={settings.perspective || 45}
+          min={0}
+          max={100}
+          step={1}
+          unit="°"
+          onChange={(value: number) => handleChange('perspective', value)}
+        />
+      </div>
+      <div className="mobile-control-group">
+        <Slider
+          label="Distance"
+          value={settings.distance || 500}
+          min={100}
+          max={1000}
+          step={10}
+          unit=""
+          onChange={(value: number) => handleChange('distance', value)}
+        />
+      </div>
+      <div className="mobile-control-group">
         <label>Background Color</label>
         <input
           type="color"

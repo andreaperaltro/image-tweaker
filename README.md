@@ -19,6 +19,7 @@ A powerful web-based image manipulation tool that allows you to apply various ef
   - Slice Shift
   - Blur
   - Blob Effect
+  - 3D Transform (rotation, perspective, and distance controls)
 
 - Export options:
   - PNG export with embedded metadata
