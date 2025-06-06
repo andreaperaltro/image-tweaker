@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { HexColorPicker } from 'react-colorful';
-import { ShapeGridSettings } from './ShapeGridEffect';
+import { ShapeGridSettings, ShapeType } from './ShapeGridEffect';
+import { MdExpandMore, MdExpandLess } from 'react-icons/md';
 
 interface ShapeGridControlsProps {
   settings: ShapeGridSettings;
@@ -8,9 +9,10 @@ interface ShapeGridControlsProps {
 }
 
 export default function ShapeGridControls({ settings, onSettingsChange }: ShapeGridControlsProps) {
-  const availableShapes = ['circle', 'square', 'triangle', 'cross'] as const;
+  const [isShapesOpen, setIsShapesOpen] = useState(true);
+  const availableShapes: ShapeType[] = ['circle', 'square', 'triangle', 'cross', 'heart'];
 
-  const handleShapeToggle = (shape: typeof availableShapes[number]) => {
+  const handleShapeToggle = (shape: ShapeType) => {
     const newShapes = settings.shapes.includes(shape)
       ? settings.shapes.filter(s => s !== shape)
       : [...settings.shapes, shape];
@@ -50,60 +52,84 @@ export default function ShapeGridControls({ settings, onSettingsChange }: ShapeG
       </div>
 
       <div>
+        <label className="block text-sm font-medium mb-1">Merge Levels</label>
+        <input
+          type="range"
+          min="0"
+          max="5"
+          value={settings.mergeLevels}
+          onChange={(e) => onSettingsChange({ mergeLevels: Number(e.target.value) })}
+          className="w-full"
+        />
+        <div className="text-sm text-gray-500">{settings.mergeLevels}</div>
+      </div>
+
+      <div>
         <label className="block text-sm font-medium mb-2">Background Color</label>
         <div className="relative">
-          <div
-            className="w-8 h-8 rounded border cursor-pointer"
-            style={{ backgroundColor: settings.colors.background }}
-            onClick={() => onSettingsChange({ 
-              colors: { ...settings.colors, background: settings.colors.background } 
-            })}
-          />
-          <HexColorPicker
-            color={settings.colors.background}
-            onChange={(color) => onSettingsChange({ 
-              colors: { ...settings.colors, background: color } 
+          <input 
+            type="color" 
+            className="mobile-color-picker"
+            value={settings.colors.background}
+            onChange={(e) => onSettingsChange({ 
+              colors: { ...settings.colors, background: e.target.value } 
             })}
           />
         </div>
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-2">Foreground Color</label>
+        <label className="block text-sm font-medium mb-2">Pattern Color</label>
         <div className="relative">
-          <div
-            className="w-8 h-8 rounded border cursor-pointer"
-            style={{ backgroundColor: settings.colors.foreground }}
-            onClick={() => onSettingsChange({ 
-              colors: { ...settings.colors, foreground: settings.colors.foreground } 
-            })}
-          />
-          <HexColorPicker
-            color={settings.colors.foreground}
-            onChange={(color) => onSettingsChange({ 
-              colors: { ...settings.colors, foreground: color } 
+          <input 
+            type="color" 
+            className="mobile-color-picker"
+            value={settings.colors.foreground}
+            onChange={(e) => onSettingsChange({ 
+              colors: { ...settings.colors, foreground: e.target.value } 
             })}
           />
         </div>
       </div>
 
-      <div>
-        <label className="block text-sm font-medium mb-2">Shapes</label>
-        <div className="flex flex-wrap gap-2">
-          {availableShapes.map((shape) => (
-            <button
-              key={shape}
-              className={`px-3 py-1 rounded ${
-                settings.shapes.includes(shape)
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-200 text-gray-700'
-              }`}
-              onClick={() => handleShapeToggle(shape)}
-            >
-              {shape}
-            </button>
-          ))}
-        </div>
+      <div className="mobile-control-section">
+        <button
+          className="mobile-control-section-header"
+          onClick={() => setIsShapesOpen(!isShapesOpen)}
+        >
+          <span>Available Shapes</span>
+          {isShapesOpen ? <MdExpandLess size={20} /> : <MdExpandMore size={20} />}
+        </button>
+        
+        {isShapesOpen && (
+          <div className="mobile-control-section-content">
+            {availableShapes.map((shape) => (
+              <div key={shape} className="mobile-control-group">
+                <label className="mobile-control-label capitalize">{shape}</label>
+                <label className="mobile-effect-toggle">
+                  <input 
+                    type="checkbox" 
+                    checked={settings.shapes.includes(shape)}
+                    onChange={() => handleShapeToggle(shape)}
+                  />
+                  <span className="mobile-effect-toggle-slider"></span>
+                </label>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="mobile-control-group">
+        <label className="mobile-control-label">Random Rotation</label>
+        <label className="mobile-effect-toggle">
+          <input 
+            type="checkbox" 
+            checked={settings.randomRotation}
+            onChange={(e) => onSettingsChange({ randomRotation: e.target.checked })}
+          />
+          <span className="mobile-effect-toggle-slider"></span>
+        </label>
       </div>
     </div>
   );

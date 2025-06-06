@@ -16,8 +16,9 @@ import { saveEffectSettings, loadEffectSettings, EffectSettings } from '../utils
 import { isVectorExportAvailable } from './ExportUtils'
 import { FiFileText, FiPlus, FiCopy, FiTrash2, FiArrowUp, FiArrowDown, FiGrid, FiDroplet, FiSliders, FiZap, FiEye, FiLayers, FiType, FiHash, FiImage, FiStar, FiAlignCenter, FiBarChart2, FiCpu, FiFilter, FiChevronRight, FiTv } from 'react-icons/fi';
 import { FaRegDotCircle, FaRegSquare, FaRegCircle, FaRegClone, FaRegObjectGroup, FaRegSmile, FaRegSun, FaRegMoon, FaRegSnowflake, FaRegChartBar, FaRegKeyboard, FaThLarge } from 'react-icons/fa';
-import { MdGradient, MdBlurOn, MdOutlineTextFields, MdOutlineNoiseControlOff, MdOutlineGridOn, MdOutlineColorLens, MdOutlineInvertColors, MdOutlineTextIncrease, MdOutlineTextRotateVertical, MdOutlineTextRotationNone, MdOutlineTextRotationAngleup, MdOutlineTextRotationAngledown, MdDragIndicator } from 'react-icons/md';
-import { MdFitbit, MdCompare, MdTexture, MdFingerprint, MdGrain, MdTonality, MdPattern, MdSnowing, MdTerminal, MdStream, MdOutlineWaves, Md3dRotation } from 'react-icons/md';
+import { MdGradient, MdBlurOn, MdOutlineTextFields, MdOutlineNoiseControlOff, MdOutlineGridOn, MdOutlineColorLens, MdOutlineInvertColors, MdOutlineTextIncrease, MdOutlineTextRotateVertical, MdOutlineTextRotationNone, MdOutlineTextRotationAngleup, MdOutlineTextRotationAngledown, MdDragIndicator, MdExpandLess, MdExpandMore } from 'react-icons/md';
+import { MdFitbit, MdCompare, MdTexture, MdFingerprint, MdGrain, MdTonality, MdPattern, MdSnowing, MdTerminal, MdStream, MdOutlineWaves, Md3dRotation, MdInterests, MdEmojiSymbols } from 'react-icons/md';
+import { MdOutlineGrid4X4 } from 'react-icons/md';
 import { MosaicShiftSettings, ShiftPattern } from './MosaicShift'
 import { SliceShiftSettings } from './SliceShift'
 import { PosterizeSettings } from './Posterize'
@@ -30,7 +31,9 @@ import LCDEffect from './LCDEffect'
 import { SnakeEffectSettings, SnakeIcon } from './SnakeEffect'
 import { ThreeDEffectControls } from './ThreeDEffectControls'
 import { ShapeGridSettings } from './ShapeGridEffect'
-import { MdOutlineGrid4X4 } from 'react-icons/md';
+import { TruchetControls } from './TruchetControls';
+import { TruchetSettings } from './TruchetEffect';
+import { GiGearStickPattern } from 'react-icons/gi';
 // Add import for useDragAndDrop
 // import { useDragAndDrop } from 'react-use-dnd';
 
@@ -76,6 +79,8 @@ interface MobileControlsProps {
   updateTextEffectSettings: (settings: Partial<TextEffectSettings>) => void;
   snakeEffectSettings: SnakeEffectSettings;
   updateSnakeEffectSettings: (settings: Partial<SnakeEffectSettings>) => void;
+  truchetSettings: TruchetSettings;
+  updateTruchetSettings: (settings: Partial<TruchetSettings>) => void;
 }
 
 // Debounce function to limit update frequency
@@ -137,9 +142,12 @@ const MobileControls: React.FC<MobileControlsProps> = ({
   textEffectSettings,
   updateTextEffectSettings,
   snakeEffectSettings,
-  updateSnakeEffectSettings
+  updateSnakeEffectSettings,
+  truchetSettings,
+  updateTruchetSettings
 }) => {
   const [openSection, setOpenSection] = useState<string | null>(null)
+  const [shapesOpenStates, setShapesOpenStates] = useState<{[key: string]: boolean}>({});
 
   // Create debounced versions of update functions for color pickers
   const debouncedUpdateGradientMapSettings = useDebounce(updateGradientMapSettings, 100);
@@ -477,6 +485,13 @@ const MobileControls: React.FC<MobileControlsProps> = ({
   const handleBlurChange = (instance: EffectInstance, settings: BlurSettings) => {
     // Update instance-specific settings
     updateInstanceSettings(instance.id, settings);
+  };
+
+  const toggleShapesSection = (instanceId: string) => {
+    setShapesOpenStates(prev => ({
+      ...prev,
+      [instanceId]: !prev[instanceId]
+    }));
   };
 
   // Update the renderEffectContent function to use instance-specific settings
@@ -2931,6 +2946,10 @@ const MobileControls: React.FC<MobileControlsProps> = ({
         );
 
       case 'shapegrid':
+        const availableShapes = ['circle', 'square', 'triangle', 'cross', 'heart'] as const;
+        type ShapeType = typeof availableShapes[number];
+        const isShapesOpen = shapesOpenStates[instance.id] ?? true;
+        
         return (
           <div className={`mobile-effect-content ${openSection === instance.id ? 'open' : ''}`}>
             <Slider
@@ -2996,32 +3015,51 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               />
             </div>
 
-            <div className="mobile-control-group">
-              <label className="mobile-control-label">Shapes</label>
-              <div className="flex flex-wrap gap-2">
-                {['circle', 'square', 'triangle', 'cross'].map((shape) => (
-                  <button
-                    key={shape}
-                    className={`mobile-effect-btn ${
-                      settings.shapes.includes(shape)
-                        ? 'mobile-effect-btn-active'
-                        : ''
-                    }`}
-                    onClick={() => {
-                      const newShapes = settings.shapes.includes(shape)
-                        ? settings.shapes.filter((s: 'circle' | 'square' | 'triangle' | 'cross') => s !== shape)
-                        : [...settings.shapes, shape];
-                      if (newShapes.length > 0) {
-                        updateInstanceSettings(instance.id, { shapes: newShapes });
-                      }
-                    }}
-                  >
-                    {shape}
-                  </button>
-                ))}
-              </div>
+            <div className="mobile-control-section">
+              <button
+                className="mobile-control-section-header"
+                onClick={() => toggleShapesSection(instance.id)}
+              >
+                <div className="flex items-center justify-between w-full">
+                  <span>Available Shapes</span>
+                  {isShapesOpen ? <MdExpandLess size={20} /> : <MdExpandMore size={20} />}
+                </div>
+              </button>
+              
+              {isShapesOpen && (
+                <div className="mobile-control-section-content">
+                  {availableShapes.map((shape) => (
+                    <div key={shape} className="mobile-control-group">
+                      <label className="mobile-control-label capitalize">{shape}</label>
+                      <label className="mobile-effect-toggle">
+                        <input 
+                          type="checkbox" 
+                          checked={settings.shapes.includes(shape)}
+                          onChange={() => {
+                            const newShapes = settings.shapes.includes(shape)
+                              ? settings.shapes.filter((s: ShapeType) => s !== shape)
+                              : [...settings.shapes, shape];
+                            if (newShapes.length > 0) {
+                              updateInstanceSettings(instance.id, { shapes: newShapes });
+                            }
+                          }}
+                        />
+                        <span className="mobile-effect-toggle-slider"></span>
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
+        );
+
+      case 'truchet':
+        return (
+          <TruchetControls
+            settings={getInstanceSettings(instance)}
+            onChange={(settings) => updateInstanceSettings(instance.id, settings)}
+          />
         );
 
       default:
@@ -3093,6 +3131,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
       instance.type === 'snake' ? 'Snake' :
       instance.type === 'threeD' ? '3D' :
       instance.type === 'shapegrid' ? 'Shape Grid' :
+      instance.type === 'truchet' ? 'Truchet' :
       'Effect';
     const title = sameTypeCount > 1 ? `${effectLabel} ${instanceIndex + 1}` : effectLabel;
 
@@ -3161,27 +3200,22 @@ const MobileControls: React.FC<MobileControlsProps> = ({
     blob: <MdPattern />,
     blur: <MdBlurOn />,
     color: <MdOutlineColorLens />,
-    dither: <MdSnowing />,
-    findEdges: <FiEye />,
-    glitch: <FiZap />,
-    glow: <MdStream />,
+    dither: <MdGrain />,
+    findEdges: <MdFingerprint />,
+    glitch: <MdSnowing />,
+    glow: <FaRegSun />,
     gradient: <MdGradient />,
-    grid: <FiGrid />,
-    halftone: <MdFitbit />,
-    mosaicShift: <FaThLarge />,
-    noise: <MdFingerprint />,
-    pixel: <MdGrain />,
-    posterize: <MdTonality />,
-    sliceShift: <MdTexture />,
-    text: <FiType />,
-    threshold: <MdCompare />,
+    grid: <MdOutlineGridOn />,
+    halftone: <FaRegDotCircle />,
+    invert: <MdOutlineInvertColors />,
     linocut: <MdOutlineWaves />,
     levels: <FiBarChart2 />,
-    ascii: <MdTerminal />,
+    ascii: <MdEmojiSymbols />,
     lcd: <FiTv />,
     snake: <SnakeIcon />,
-    threeD: <Md3dRotation />, // Fixed icon name
-    shapegrid: <MdOutlineGrid4X4 />, // Fixed icon name
+    threeD: <Md3dRotation />,
+    shapegrid: <MdInterests />,
+    truchet: <GiGearStickPattern />,
   };
 
   return (
@@ -3218,6 +3252,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
             { label: 'Threshold', type: 'threshold', desc: 'Convert your image to high-contrast black & white or two-color art.' },
             { label: 'Ascii', type: 'ascii', desc: 'Turn your image into ASCII art using customizable character sets.' },
             { label: 'Shape Grid', type: 'shapegrid', desc: 'Create a grid of shapes based on image brightness.' },
+            { label: 'Truchet', type: 'truchet', desc: 'Create a unique pattern based on the Truchet tiling technique.' },
           ]
             .sort((a, b) => a.label.localeCompare(b.label))
             .map(effect => (

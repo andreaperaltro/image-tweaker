@@ -48,6 +48,7 @@ import { SnakeEffectSettings, applySnakeEffect, SnakeIcon } from './SnakeEffect'
 import { applyThreeDEffect } from './ThreeDEffect';
 import { ThreeDEffectSettings } from '../types';
 import { applyShapeGridEffect, ShapeGridSettings } from './ShapeGridEffect';
+import { useTruchetEffect, TruchetSettings } from './TruchetEffect';
 
 // Define types
 type AspectRatioPreset = '1:1' | '4:3' | '16:9' | '3:2' | '5:4' | '2:1' | '3:4' | '9:16' | '2:3' | '4:5' | '1:2' | 'custom';
@@ -105,7 +106,22 @@ interface MobileControlsProps {
   onClearImage: () => void;
   snakeEffectSettings: SnakeEffectSettings;
   updateSnakeEffectSettings: (settings: Partial<SnakeEffectSettings>) => void;
+  truchetSettings: TruchetSettings;
+  updateTruchetSettings: (settings: Partial<TruchetSettings>) => void;
 }
+
+const defaultTruchetSettings: TruchetSettings = {
+  enabled: false,
+  tileSize: 30,
+  tileTypes: ['quarter-circles', 'diagonal'],
+  colors: {
+    background: '#1a1a1a',
+    foreground: '#ffffff'
+  },
+  threshold: 128,  // Mid-point brightness threshold
+  patternDensity: 80,
+  lineWidth: 2
+};
 
 export default function AdvancedEditor({
   blur,
@@ -395,6 +411,9 @@ export default function AdvancedEditor({
   
   // Flag to prevent multiple simultaneous processing
   const isProcessingRef = useRef(false);
+  
+  // Initialize hooks
+  const applyTruchetEffect = useTruchetEffect();
   
   // Preload image when originalImageDataRef changes
   useEffect(() => {
@@ -734,6 +753,9 @@ export default function AdvancedEditor({
           break;
         case 'shapegrid':
           applyShapeGridEffect(ctx, targetCanvas, targetCanvas.width, targetCanvas.height, { ...settings, enabled: true });
+          break;
+        case 'truchet':
+          applyTruchetEffect(targetCanvas, settings as TruchetSettings);
           break;
       }
     } catch (error) {
@@ -1216,17 +1238,31 @@ export default function AdvancedEditor({
         break;
       case 'shapegrid':
         defaultSettings = {
-          enabled: false,
-          gridSize: 8,
+          enabled: true,
+          gridSize: 20,
           threshold: 128,
           colors: {
-            background: '#000000',
-            foreground: '#00ff00'
+            background: '#1a1a1a',
+            foreground: '#ffffff'
           },
-          shapes: ['circle', 'square', 'triangle', 'cross'],
-          mergeLevels: 2,
+          shapes: ['circle', 'square', 'triangle', 'cross', 'heart'],
+          mergeLevels: 3,
           randomRotation: false
         } as ShapeGridSettings;
+        break;
+      case 'truchet':
+        defaultSettings = {
+          enabled: true,
+          tileSize: 30,
+          tileTypes: ['quarter-circles', 'diagonal'],
+          colors: {
+            background: '#1a1a1a',
+            foreground: '#ffffff'
+          },
+          threshold: 128,  // Mid-point brightness threshold
+          patternDensity: 80,
+          lineWidth: 2
+        };
         break;
       default:
         break;
@@ -2178,17 +2214,19 @@ export default function AdvancedEditor({
         return instanceSettings[instance.id];
       case 'shapegrid':
         return {
-          enabled: false,
-          gridSize: 8,
+          enabled: true,
+          gridSize: 20,
           threshold: 128,
           colors: {
-            background: '#000000',
-            foreground: '#00ff00'
+            background: '#1a1a1a',
+            foreground: '#ffffff'
           },
-          shapes: ['circle', 'square', 'triangle', 'cross'],
-          mergeLevels: 2,
+          shapes: ['circle', 'square', 'triangle', 'cross', 'heart'],
+          mergeLevels: 3,
           randomRotation: false
         } as ShapeGridSettings;
+      case 'truchet':
+        return instanceSettings[instance.id];
       default:
         return {};
     }
@@ -2552,17 +2590,31 @@ export default function AdvancedEditor({
         break;
       case 'shapegrid':
         defaultSettings = {
-          enabled: false,
-          gridSize: 8,
+          enabled: true,
+          gridSize: 20,
           threshold: 128,
           colors: {
-            background: '#000000',
-            foreground: '#00ff00'
+            background: '#1a1a1a',
+            foreground: '#ffffff'
           },
-          shapes: ['circle', 'square', 'triangle', 'cross'],
-          mergeLevels: 2,
+          shapes: ['circle', 'square', 'triangle', 'cross', 'heart'],
+          mergeLevels: 3,
           randomRotation: false
         } as ShapeGridSettings;
+        break;
+      case 'truchet':
+        defaultSettings = {
+          enabled: true,
+          tileSize: 30,
+          tileTypes: ['quarter-circles', 'diagonal'],
+          colors: {
+            background: '#1a1a1a',
+            foreground: '#ffffff'
+          },
+          threshold: 128,  // Mid-point brightness threshold
+          patternDensity: 80,
+          lineWidth: 2
+        };
         break;
       default:
         break;
@@ -2596,6 +2648,22 @@ export default function AdvancedEditor({
       distance: 500
     };
   }
+
+  const defaultTruchetSettings: TruchetSettings = {
+    enabled: false,
+    tileSize: 30,
+    tileTypes: ['quarter-circles', 'diagonal'],
+    colors: {
+      background: '#1a1a1a',
+      foreground: '#ffffff'
+    },
+    threshold: 128,  // Mid-point brightness threshold
+    patternDensity: 80,
+    lineWidth: 2
+  };
+
+  // Truchet settings
+  const [truchetSettings, setTruchetSettings] = useState<TruchetSettings>(defaultTruchetSettings);
 
   return (
     <div className="flex flex-col lg:flex-row gap-6">
@@ -2771,6 +2839,8 @@ export default function AdvancedEditor({
             onClearImage={() => {}}
             snakeEffectSettings={snakeEffectSettings}
             updateSnakeEffectSettings={(settings: Partial<SnakeEffectSettings>) => setSnakeEffectSettings(prev => ({ ...prev, ...settings }))}
+            truchetSettings={defaultTruchetSettings}
+            updateTruchetSettings={(settings: Partial<TruchetSettings>) => setTruchetSettings(prev => ({ ...prev, ...settings }))}
           />
           {/* Animation Section */}
           <div className="mt-6 border-t border-[var(--border-color)] pt-4">

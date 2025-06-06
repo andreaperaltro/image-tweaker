@@ -6,25 +6,71 @@ A powerful web-based image manipulation tool that allows you to apply various ef
 
 - Multiple image effects:
   - Color adjustments (hue, saturation, brightness, contrast)
-  - Posterize
-  - Find Edges
-  - Dithering
+  - Posterize (with adjustable levels)
+  - Find Edges (edge detection with customizable threshold)
+  - Dithering (Floyd-Steinberg and other algorithms)
+    - Multiple dither types
+    - Adjustable resolution and threshold
+    - Color modes: grayscale, 2-color, full color
+    - Custom color selection for 2-color mode
   - Halftone
+    - Multiple patterns: grid, spiral, concentric
+    - Shape options: circles, squares, lines
+    - CMYK color separation with angle control
+    - Size and mix adjustments
   - Linocut (variable-width line patterns with noise modulation)
-  - Glitch
+    - Line spacing and stroke width controls
+    - Perlin noise modulation
+    - Center point adjustment
+    - Threshold and orientation controls
+  - Glitch (digital distortion effects)
   - Threshold
+    - Multiple modes: solid, gradient
+    - Custom colors for dark and light areas
   - Gradient Map
-  - Grid
-  - Mosaic Shift
-  - Slice Shift
-  - Blur
-  - Blob Effect
-  - 3D Transform (rotation, perspective, and distance controls)
+    - Unlimited color stops
+    - Interactive gradient preview
+    - Multiple blend modes
+  - Grid (image subdivision and manipulation)
+    - Row and column controls
+    - Rotation options
+    - Recursive splitting
+  - Mosaic Shift (tile-based displacement)
+    - Multiple patterns: Random, Alternating, Wave
+    - Directional controls
+    - Background color options
+  - Slice Shift (vertical/horizontal slicing)
+    - Multiple patterns: Random, Wave, Rearrange
+    - Direction controls
+    - Background fill options
+  - Blur (Gaussian blur effect)
+  - Blob Effect (organic shape distortion)
+  - 3D Transform
+    - Rotation on all axes
+    - Perspective control
+    - Distance adjustment
+  - ASCII Art
+    - Character set selection
+    - Size and resolution controls
+  - Text Effect
+    - Custom font support
+    - Size and position controls
+    - Multiple font options
+  - LCD Effect (simulated LCD screen)
+  - Snake Effect (snake-like pattern generation)
+  - Shape Grid Effect (geometric pattern overlay)
+  - Truchet Tiles
+    - Multiple tile types (diagonal, quarter-circles, triangles)
+    - Size and density controls
+    - Custom colors
+    - Pattern density adjustment
+    - Line width customization
 
 - Export options:
   - PNG export with embedded metadata
   - Vector SVG export (for compatible effects)
   - Video export (MP4) for animations
+  - High-resolution export up to 500%
   - Save/load effect settings
 
 - Animation support:
@@ -40,6 +86,8 @@ A powerful web-based image manipulation tool that allows you to apply various ef
   - Real-time effect preview
   - Mobile-responsive design
   - Effect stacking and ordering
+  - Independent effect instances
+  - Duplicate effect feature
   - Proper aspect ratio preservation
   - Comprehensive help panel
   - Dark/light theme support

@@ -149,10 +149,12 @@ export default function Home() {
                   <li><strong>Noise:</strong> Add Perlin noise for organic grain, texture, or film effects.</li>
                   <li><strong>Pixel:</strong> Pixelate your image with various grid, radial, or random block patterns.</li>
                   <li><strong>Posterize:</strong> Reduce the number of colors for a bold, poster-like effect.</li>
+                  <li><strong>Shape Grid:</strong> Create geometric patterns that respond to image brightness.</li>
                   <li><strong>Slice:</strong> Slice and shift parts of the image for glitchy or collage effects.</li>
                   <li><strong>Snake:</strong> Create winding, snake-like patterns based on image structure.</li>
                   <li><strong>Text:</strong> Overlay custom text with full control over font, size, color, and position.</li>
                   <li><strong>Threshold:</strong> Convert your image to high-contrast black & white or two-color art.</li>
+                  <li><strong>Truchet Tiles:</strong> Generate mesmerizing patterns with diagonal lines, quarter-circles, and triangles based on image brightness.</li>
                 </ul>
               </div>
 
@@ -247,6 +249,20 @@ export default function Home() {
                       <li><strong>Colored:</strong> Toggle between monochrome and color</li>
                       <li><strong>CMYK:</strong> Enable for color separation with individual channel control</li>
                       <li><strong>Invert:</strong> Reverse the brightness pattern</li>
+                    </ul>
+                  )
+                },
+                {
+                  title: 'Truchet Tiles',
+                  content: (
+                    <ul className="list-disc pl-4 space-y-1 text-gray-300">
+                      <li><strong>Tile Size:</strong> Control the size of each pattern tile (3-30px)</li>
+                      <li><strong>Pattern Types:</strong> Choose from diagonal lines, quarter-circles, and triangles</li>
+                      <li><strong>Pattern Density:</strong> Adjust how many tiles show patterns (0-200%)</li>
+                      <li><strong>Line Width:</strong> Set the thickness of pattern lines (1-3px)</li>
+                      <li><strong>Colors:</strong> Customize background and pattern colors</li>
+                      <li><strong>Threshold:</strong> Control brightness level that triggers pattern generation</li>
+                      <li><strong>Performance:</strong> Optimized with pre-calculated brightness map</li>
                     </ul>
                   )
                 },

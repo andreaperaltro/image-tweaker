@@ -606,11 +606,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.6.1] - 2025-06-02
 
+### Added
+- New Truchet Tile effect for creating mesmerizing patterns
+  - Multiple tile types: diagonal lines, quarter-circles, triangles
+  - Customizable tile size (3px to 30px)
+  - Pattern density control (0-200%)
+  - Line width adjustment (1-3px)
+  - Custom colors for background and pattern
+  - Brightness-based pattern generation
+  - Optimized performance with pre-calculated brightness map
+
 ### Changed
-- Improved animation timeline controls for better usability
-  - Removed keyframe dragging for more precise control
-  - Added direct time input (0-5 seconds) for precise keyframe positioning
-  - Improved keyframe selection and editing UI
-  - Fixed keyframe controls visibility when switching between keyframes
-  - Enhanced bottom panel layout with consistent styling
-  - Added clear delete button with automatic selection clearing
+- Improved effect performance with Float32Array for brightness calculations
+- Enhanced pattern consistency and visual appeal
+- Better memory usage in pattern generation
