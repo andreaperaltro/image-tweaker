@@ -29,6 +29,8 @@ import Switch from './Switch'
 import LCDEffect from './LCDEffect'
 import { SnakeEffectSettings, SnakeIcon } from './SnakeEffect'
 import { ThreeDEffectControls } from './ThreeDEffectControls'
+import { ShapeGridSettings } from './ShapeGridEffect'
+import { MdOutlineGrid4X4 } from 'react-icons/md';
 // Add import for useDragAndDrop
 // import { useDragAndDrop } from 'react-use-dnd';
 
@@ -2928,6 +2930,100 @@ const MobileControls: React.FC<MobileControlsProps> = ({
           </div>
         );
 
+      case 'shapegrid':
+        return (
+          <div className={`mobile-effect-content ${openSection === instance.id ? 'open' : ''}`}>
+            <Slider
+              label="Grid Size"
+              value={settings.gridSize}
+              onChange={(value) => updateInstanceSettings(instance.id, { gridSize: value })}
+              min={2}
+              max={50}
+              step={1}
+              unit="px"
+            />
+            <Slider
+              label="Threshold"
+              value={settings.threshold}
+              onChange={(value) => updateInstanceSettings(instance.id, { threshold: value })}
+              min={0}
+              max={255}
+              step={1}
+            />
+            
+            <Slider
+              label="Merge Levels"
+              value={settings.mergeLevels}
+              onChange={(value) => updateInstanceSettings(instance.id, { mergeLevels: value })}
+              min={0}
+              max={5}
+              step={1}
+            />
+            
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Random Rotation</label>
+              <label className="mobile-effect-toggle">
+                <input 
+                  type="checkbox" 
+                  checked={settings.randomRotation}
+                  onChange={(e) => updateInstanceSettings(instance.id, { randomRotation: e.target.checked })}
+                />
+                <span className="mobile-effect-toggle-slider"></span>
+              </label>
+            </div>
+            
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Background Color</label>
+              <input 
+                type="color" 
+                className="mobile-color-picker"
+                value={settings.colors.background}
+                onChange={(e) => updateInstanceSettings(instance.id, { 
+                  colors: { ...settings.colors, background: e.target.value } 
+                })}
+              />
+            </div>
+            
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Foreground Color</label>
+              <input 
+                type="color" 
+                className="mobile-color-picker"
+                value={settings.colors.foreground}
+                onChange={(e) => updateInstanceSettings(instance.id, { 
+                  colors: { ...settings.colors, foreground: e.target.value } 
+                })}
+              />
+            </div>
+
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Shapes</label>
+              <div className="flex flex-wrap gap-2">
+                {['circle', 'square', 'triangle', 'cross'].map((shape) => (
+                  <button
+                    key={shape}
+                    className={`mobile-effect-btn ${
+                      settings.shapes.includes(shape)
+                        ? 'mobile-effect-btn-active'
+                        : ''
+                    }`}
+                    onClick={() => {
+                      const newShapes = settings.shapes.includes(shape)
+                        ? settings.shapes.filter((s: 'circle' | 'square' | 'triangle' | 'cross') => s !== shape)
+                        : [...settings.shapes, shape];
+                      if (newShapes.length > 0) {
+                        updateInstanceSettings(instance.id, { shapes: newShapes });
+                      }
+                    }}
+                  >
+                    {shape}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+
       default:
         return null;
     }
@@ -2996,6 +3092,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
       instance.type === 'lcd' ? 'LCD' :
       instance.type === 'snake' ? 'Snake' :
       instance.type === 'threeD' ? '3D' :
+      instance.type === 'shapegrid' ? 'Shape Grid' :
       'Effect';
     const title = sameTypeCount > 1 ? `${effectLabel} ${instanceIndex + 1}` : effectLabel;
 
@@ -3060,7 +3157,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
   };
 
   // Icon mapping for each effect type
-  const effectIcons: Record<string, React.ReactNode> = {
+  const effectIcons: { [key: string]: React.ReactNode } = {
     blob: <MdPattern />,
     blur: <MdBlurOn />,
     color: <MdOutlineColorLens />,
@@ -3084,6 +3181,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
     lcd: <FiTv />,
     snake: <SnakeIcon />,
     threeD: <Md3dRotation />, // Fixed icon name
+    shapegrid: <MdOutlineGrid4X4 />, // Fixed icon name
   };
 
   return (
@@ -3119,6 +3217,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
             { label: 'Text', type: 'text', desc: 'Overlay custom text with full control over font, size, color, and position.' },
             { label: 'Threshold', type: 'threshold', desc: 'Convert your image to high-contrast black & white or two-color art.' },
             { label: 'Ascii', type: 'ascii', desc: 'Turn your image into ASCII art using customizable character sets.' },
+            { label: 'Shape Grid', type: 'shapegrid', desc: 'Create a grid of shapes based on image brightness.' },
           ]
             .sort((a, b) => a.label.localeCompare(b.label))
             .map(effect => (

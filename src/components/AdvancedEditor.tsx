@@ -47,6 +47,7 @@ import { applyLCDEffect } from './LCDEffect';
 import { SnakeEffectSettings, applySnakeEffect, SnakeIcon } from './SnakeEffect';
 import { applyThreeDEffect } from './ThreeDEffect';
 import { ThreeDEffectSettings } from '../types';
+import { applyShapeGridEffect, ShapeGridSettings } from './ShapeGridEffect';
 
 // Define types
 type AspectRatioPreset = '1:1' | '4:3' | '16:9' | '3:2' | '5:4' | '2:1' | '3:4' | '9:16' | '2:3' | '4:5' | '1:2' | 'custom';
@@ -731,6 +732,9 @@ export default function AdvancedEditor({
         case 'threeD':
           applyThreeDEffect(ctx, sourceCanvas, targetCanvas.width, targetCanvas.height, settings as ThreeDEffectSettings);
           break;
+        case 'shapegrid':
+          applyShapeGridEffect(ctx, targetCanvas, targetCanvas.width, targetCanvas.height, { ...settings, enabled: true });
+          break;
       }
     } catch (error) {
       console.error(`Error applying effect ${effectType}:`, error);
@@ -1209,6 +1213,20 @@ export default function AdvancedEditor({
           perspective: 45,
           distance: 500
         } as ThreeDEffectSettings;
+        break;
+      case 'shapegrid':
+        defaultSettings = {
+          enabled: false,
+          gridSize: 8,
+          threshold: 128,
+          colors: {
+            background: '#000000',
+            foreground: '#00ff00'
+          },
+          shapes: ['circle', 'square', 'triangle', 'cross'],
+          mergeLevels: 2,
+          randomRotation: false
+        } as ShapeGridSettings;
         break;
       default:
         break;
@@ -1813,6 +1831,7 @@ export default function AdvancedEditor({
         { id: 'mosaicShift-1', type: 'mosaicShift', enabled: false },
         { id: 'sliceShift-1', type: 'sliceShift', enabled: false },
         { id: 'blob-1', type: 'blob', enabled: false },
+        { id: 'shapegrid-1', type: 'shapegrid', enabled: false },
       ]);
     }
     
@@ -2157,6 +2176,19 @@ export default function AdvancedEditor({
         return instanceSettings[instance.id];
       case 'snake':
         return instanceSettings[instance.id];
+      case 'shapegrid':
+        return {
+          enabled: false,
+          gridSize: 8,
+          threshold: 128,
+          colors: {
+            background: '#000000',
+            foreground: '#00ff00'
+          },
+          shapes: ['circle', 'square', 'triangle', 'cross'],
+          mergeLevels: 2,
+          randomRotation: false
+        } as ShapeGridSettings;
       default:
         return {};
     }
@@ -2517,6 +2549,20 @@ export default function AdvancedEditor({
           perspective: 45,
           distance: 500
         } as ThreeDEffectSettings;
+        break;
+      case 'shapegrid':
+        defaultSettings = {
+          enabled: false,
+          gridSize: 8,
+          threshold: 128,
+          colors: {
+            background: '#000000',
+            foreground: '#00ff00'
+          },
+          shapes: ['circle', 'square', 'triangle', 'cross'],
+          mergeLevels: 2,
+          randomRotation: false
+        } as ShapeGridSettings;
         break;
       default:
         break;

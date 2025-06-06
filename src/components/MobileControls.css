@@ -789,4 +789,27 @@
   align-items: center;
   min-width: 40px;
   flex-shrink: 0;
+}
+
+.mobile-effect-btn {
+  padding: 6px 12px;
+  border-radius: 4px;
+  background-color: var(--accent-bg);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-size: 0.9rem;
+}
+
+.mobile-effect-btn:hover {
+  background-color: var(--header-bg);
+  color: white;
+  transform: translateY(-1px);
+}
+
+.mobile-effect-btn-active {
+  background-color: var(--header-bg);
+  color: white;
+  border-color: var(--header-bg);
 } 
