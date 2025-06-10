@@ -17,7 +17,7 @@ import MobileControls from './MobileControls'
 import { BlurSettings } from '../types'
 import { applyBlur } from './BlurUtils'
 import { EffectSettings, saveEffectSettings } from '../utils/EffectSettingsUtils'
-import { FiUpload, FiShuffle, FiTrash, FiRefreshCw, FiSave, FiFolder, FiImage, FiFileText, FiDownload, FiCrop } from 'react-icons/fi'
+import { FiUpload, FiShuffle, FiTrash, FiRefreshCw, FiSave, FiFolder, FiImage, FiFileText, FiDownload, FiCrop, FiCamera } from 'react-icons/fi'
 import { EffectInstance } from '../types'
 import { applyMosaicShift, MosaicShiftSettings } from './MosaicShift'
 import { applySliceShift, SliceShiftSettings } from './SliceShift'
@@ -49,6 +49,7 @@ import { applyThreeDEffect } from './ThreeDEffect';
 import { ThreeDEffectSettings } from '../types';
 import { applyShapeGridEffect, ShapeGridSettings } from './ShapeGridEffect';
 import { useTruchetEffect, TruchetSettings } from './TruchetEffect';
+import CameraModal from './CameraModal'; // Import CameraModal
 
 // Define types
 type AspectRatioPreset = '1:1' | '4:3' | '16:9' | '3:2' | '5:4' | '2:1' | '3:4' | '9:16' | '2:3' | '4:5' | '1:2' | 'custom';
@@ -2665,6 +2666,40 @@ export default function AdvancedEditor({
   // Truchet settings
   const [truchetSettings, setTruchetSettings] = useState<TruchetSettings>(defaultTruchetSettings);
 
+  // State for CameraModal
+  const [isCameraModalOpen, setIsCameraModalOpen] = useState(false);
+
+  // Handler for capturing image from camera
+  const handleCaptureFromCamera = (imageDataUrl: string) => {
+    console.log('Captured image data URL:', imageDataUrl);
+    // Here you would typically set this image data to be processed or displayed
+    // For example, similar to how onDrop handles new images:
+    const img = new Image();
+    img.onload = () => {
+      const viewportWidth = window.innerWidth - 80;
+      const viewportHeight = window.innerHeight - 200;
+      const { naturalWidth, naturalHeight } = img;
+      let newWidth, newHeight;
+      if (naturalWidth > viewportWidth || naturalHeight > viewportHeight) {
+        const widthRatio = viewportWidth / naturalWidth;
+        const heightRatio = viewportHeight / naturalHeight;
+        const scaleFactor = Math.min(widthRatio, heightRatio);
+        newWidth = naturalWidth * scaleFactor;
+        newHeight = naturalHeight * scaleFactor;
+      } else {
+        newWidth = naturalWidth;
+        newHeight = naturalHeight;
+      }
+      setCanvasWidth(Math.round(newWidth));
+      setCanvasHeight(Math.round(newHeight));
+      setAspectRatio('custom');
+      setOriginalImageDataRef(imageDataUrl);
+      setImage(imageDataUrl); // This will trigger processing
+    };
+    img.src = imageDataUrl;
+    setIsCameraModalOpen(false); // Close modal after capture
+  };
+
   return (
     <div className="flex flex-col lg:flex-row gap-6">
       {/* Canvas Container */}
@@ -2695,6 +2730,13 @@ export default function AdvancedEditor({
                 >
                   <FiShuffle size={16} />
                   <span className="hidden sm:inline">Random</span>
+                </button>
+                <button
+                  onClick={() => setIsCameraModalOpen(true)}
+                  className="px-2 py-1 bg-[var(--topbar-bg)] text-[var(--text-primary)] text-xs rounded hover:bg-[var(--secondary-bg)] transition-colors pp-mondwest-font flex items-center gap-1 min-w-fit"
+                >
+                  <FiCamera size={16} />
+                  <span className="hidden sm:inline">Camera</span>
                 </button>
                 <button
                   onClick={() => {
@@ -2944,6 +2986,11 @@ export default function AdvancedEditor({
           onCancel={() => setIsCropping(false)}
         />
       )}
+      <CameraModal
+        isOpen={isCameraModalOpen}
+        onClose={() => setIsCameraModalOpen(false)}
+        onCapture={handleCaptureFromCamera}
+      />
     </div>
   );
-} 
+}
