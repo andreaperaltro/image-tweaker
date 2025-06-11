@@ -6,6 +6,7 @@ import {
   drawCoverImage, pseudoNoise, clamp, hexToRgb, rgbToHex, 
   rgbToHsl, hslToRgb, HalftoneArrangement, HalftoneShape, drawHalftoneDot
 } from '@/utils/imageUtils';
+import { applyDithering } from '@/utils/DitherUtils';
 
 interface ImageCanvasProps {
   image: HTMLImageElement;
@@ -105,9 +106,14 @@ const ImageCanvas = forwardRef<HTMLCanvasElement, ImageCanvasProps>(
       offSrcCtx.clearRect(0, 0, width, height);
       drawCoverImage(offSrcCtx, width, height, image);
       
+      // Clear the main canvas
+      ctx.clearRect(0, 0, width, height);
+      
+      // Start with the source image
+      ctx.drawImage(offscreenSourceRef.current, 0, 0);
+      
       // Apply distortion effect if enabled
       if (params.distortSettings.enabled) {
-        // Apply distortion effect without displacement map
         const imageData = ctx.getImageData(0, 0, width, height);
         const { data } = imageData;
         
@@ -141,19 +147,27 @@ const ImageCanvas = forwardRef<HTMLCanvasElement, ImageCanvasProps>(
         }
         
         ctx.putImageData(imageData, 0, 0);
-      } else if (!params.distortSettings.enabled) {
-        // Just copy the image if no effects
-        ctx.drawImage(offscreenSourceRef.current, 0, 0);
       }
       
-      // Apply other effects
+      // Apply displacement and color effects
       if (
         params.displaceAmountX !== 0 || 
         params.displaceAmountY !== 0 || 
         params.colorShiftAmount !== 0 ||
         params.saturationVariation !== 0
       ) {
-        applyDisplacementAndColorEffects(ctx, offSrcCtx, width, height);
+        applyDisplacementAndColorEffects(ctx, ctx, width, height);
+      }
+      
+      // Apply dithering effect if enabled
+      if (params.ditherEnabled) {
+        const imageData = ctx.getImageData(0, 0, width, height);
+        applyDithering(imageData, {
+          threshold: params.ditherThreshold,
+          matrix: 'bayer' as const,
+          matrixSize: params.ditherMatrixSize as 2 | 4 | 8
+        });
+        ctx.putImageData(imageData, 0, 0);
       }
       
       // Apply halftone effect if enabled

@@ -791,7 +791,7 @@ export default function AdvancedEditor({
     const newInstance: EffectInstance = {
       id,
       type,
-      enabled: false // Enable new effects by default
+      enabled: true // Enable new effects by default
     };
     
     // Create default instance-specific settings based on effect type
@@ -1013,6 +1013,18 @@ export default function AdvancedEditor({
           threshold: 128,  // Mid-point brightness threshold
           patternDensity: 80,
           lineWidth: 2
+        };
+        break;
+      case 'dither':
+        defaultSettings = { 
+          enabled: true,
+          type: 'floyd-steinberg',
+          threshold: 128,
+          colorMode: 'grayscale',
+          resolution: 30,
+          colorDepth: 2,
+          darkColor: '#000000',
+          lightColor: '#FFFFFF'
         };
         break;
       default:
@@ -1994,7 +2006,28 @@ export default function AdvancedEditor({
           grid.forEach(cell => renderGridCell(ctx, cell, targetCanvas, gridSettings));
           break;
         case 'dither':
-          applyDithering(ctx, targetCanvas, targetCanvas.width, targetCanvas.height, { ...settings, enabled: true });
+          if (settings.enabled) {
+            const ditherSettings = {
+              enabled: true,
+              type: settings.type || 'floyd-steinberg',
+              threshold: Number(settings.threshold) || 128,
+              colorMode: settings.colorMode || 'grayscale',
+              resolution: Number(settings.resolution) || 30,
+              colorDepth: Number(settings.colorDepth) || 2,
+              darkColor: settings.darkColor || '#000000',
+              lightColor: settings.lightColor || '#FFFFFF'
+            };
+            // Save current canvas state
+            const sourceCanvas = document.createElement('canvas');
+            sourceCanvas.width = targetCanvas.width;
+            sourceCanvas.height = targetCanvas.height;
+            const sourceCtx = sourceCanvas.getContext('2d');
+            if (sourceCtx) {
+              sourceCtx.drawImage(targetCanvas, 0, 0);
+              // Apply dithering
+              applyDithering(ctx, sourceCanvas, targetCanvas.width, targetCanvas.height, ditherSettings);
+            }
+          }
           break;
         case 'glitch':
           applyGlitch(ctx, targetCanvas, targetCanvas.width, targetCanvas.height, { ...settings, masterEnabled: true });

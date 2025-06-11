@@ -8,9 +8,14 @@ export interface ColorSettings {
 }
 
 export interface DitherSettings {
-  type: 'ordered' | 'floyd-steinberg';
+  enabled: boolean;
+  type: 'ordered' | 'floyd-steinberg' | 'jarvis' | 'judice-ninke' | 'stucki' | 'burkes';
   threshold: number;
-  colorMode: 'grayscale' | 'color';
+  colorMode: 'grayscale' | 'color' | '2-color';
+  resolution: number; // 1-100, where 100 is full resolution
+  colorDepth: number; // 2-256 colors
+  darkColor: string;  // Color for dark areas when using 2-color mode
+  lightColor: string; // Color for light areas when using 2-color mode
 }
 
 export interface GridSettings {

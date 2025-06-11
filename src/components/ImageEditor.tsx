@@ -44,6 +44,12 @@ const defaultParams = {
   glitchBlendMode: 'linear',
   glitchBlendFactor: 0,
   
+  // Dithering settings
+  ditherEnabled: false,
+  ditherThreshold: 128,
+  ditherMatrix: 'bayer',
+  ditherMatrixSize: 4,
+  
   // Distort effect settings
   distortSettings: {
     enabled: false,

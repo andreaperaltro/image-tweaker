@@ -387,6 +387,48 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ params, onChange }) => {
           </div>
         </div>
       </div>
+
+      {/* Dithering Controls */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold">Dithering</h3>
+        <div className="space-y-2">
+          <label className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              checked={params.ditherEnabled}
+              onChange={(e) => onChange({ ditherEnabled: e.target.checked })}
+              className="form-checkbox"
+            />
+            <span>Enable Dithering</span>
+          </label>
+          
+          {params.ditherEnabled && (
+            <>
+              <Slider
+                label="Threshold"
+                value={params.ditherThreshold}
+                onChange={(value) => onChange({ ditherThreshold: value })}
+                min={0}
+                max={255}
+                step={1}
+              />
+              
+              <div className="space-y-2">
+                <label className="block">Matrix Size</label>
+                <select
+                  value={params.ditherMatrixSize}
+                  onChange={(e) => onChange({ ditherMatrixSize: Number(e.target.value) })}
+                  className="w-full p-2 border rounded"
+                >
+                  <option value={2}>2x2</option>
+                  <option value={4}>4x4</option>
+                  <option value={8}>8x8</option>
+                </select>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

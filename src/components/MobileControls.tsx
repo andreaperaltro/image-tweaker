@@ -1028,35 +1028,29 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               max={255}
               step={1}
             />
-            {/* Color Depth - Only show if not in 2-color mode */}
-            {settings.colorMode !== '2-color' && (
-              <Slider
-                label="Color Depth"
-                value={settings.colorDepth || 2}
-                onChange={(value) => updateInstanceSettings(instance.id, { colorDepth: value })}
-                min={2}
-                max={256}
-                step={1}
-                unit=" colors"
-              />
-            )}
-            {/* Color controls for 2-color mode */}
+            <Slider
+              label="Color Depth"
+              value={settings.colorDepth || 2}
+              onChange={(value) => updateInstanceSettings(instance.id, { colorDepth: value })}
+              min={2}
+              max={256}
+              step={1}
+              unit=" colors"
+            />
             {settings.colorMode === '2-color' && (
               <>
                 <div className="mobile-control-group">
                   <label className="mobile-control-label">Dark Color</label>
-                  <input 
-                    type="color" 
-                    className="mobile-color-picker"
+                  <input
+                    type="color"
                     value={settings.darkColor || '#000000'}
                     onChange={(e) => updateInstanceSettings(instance.id, { darkColor: e.target.value })}
                   />
                 </div>
                 <div className="mobile-control-group">
                   <label className="mobile-control-label">Light Color</label>
-                  <input 
-                    type="color" 
-                    className="mobile-color-picker"
+                  <input
+                    type="color"
                     value={settings.lightColor || '#FFFFFF'}
                     onChange={(e) => updateInstanceSettings(instance.id, { lightColor: e.target.value })}
                   />
