@@ -162,12 +162,24 @@ const ImageCanvas = forwardRef<HTMLCanvasElement, ImageCanvasProps>(
       // Apply dithering effect if enabled
       if (params.ditherEnabled) {
         const imageData = ctx.getImageData(0, 0, width, height);
-        applyDithering(imageData, {
-          threshold: params.ditherThreshold,
-          matrix: 'bayer' as const,
-          matrixSize: params.ditherMatrixSize as 2 | 4 | 8
-        });
-        ctx.putImageData(imageData, 0, 0);
+        // Create temporary canvas for source image
+        const sourceCanvas = document.createElement('canvas');
+        sourceCanvas.width = width;
+        sourceCanvas.height = height;
+        const sourceCtx = sourceCanvas.getContext('2d');
+        if (sourceCtx) {
+          sourceCtx.putImageData(imageData, 0, 0);
+          applyDithering(ctx, sourceCanvas, width, height, {
+            enabled: true,
+            type: 'ordered',
+            threshold: params.ditherThreshold,
+            colorMode: 'grayscale',
+            resolution: 30,
+            colorDepth: 2,
+            darkColor: '#000000',
+            lightColor: '#FFFFFF'
+          });
+        }
       }
       
       // Apply halftone effect if enabled
