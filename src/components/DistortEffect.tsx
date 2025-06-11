@@ -17,7 +17,7 @@ export const DistortEffect: React.FC<DistortEffectProps> = ({ settings, onChange
       reader.onload = () => {
         onChange({
           ...settings,
-          displacementMap: reader.result as string
+          displacementMap: null
         });
       };
       

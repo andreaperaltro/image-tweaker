@@ -106,8 +106,44 @@ const ImageCanvas = forwardRef<HTMLCanvasElement, ImageCanvasProps>(
       drawCoverImage(offSrcCtx, width, height, image);
       
       // Apply distortion effect if enabled
-      if (params.distortSettings.enabled && params.distortSettings.displacementMap) {
-        applyDistortionEffect(ctx, offSrcCtx, width, height);
+      if (params.distortSettings.enabled) {
+        // Apply distortion effect without displacement map
+        const imageData = ctx.getImageData(0, 0, width, height);
+        const { data } = imageData;
+        
+        for (let y = 0; y < height; y++) {
+          for (let x = 0; x < width; x++) {
+            const index = (y * width + x) * 4;
+            
+            // Calculate distortion based on position
+            const displaceX = (x / width - 0.5) * 2;
+            const displaceY = (y / height - 0.5) * 2;
+            
+            const dx = Math.round(displaceX * params.distortSettings.xAmount);
+            const dy = Math.round(displaceY * params.distortSettings.yAmount);
+            
+            // Get source coordinates with displacement
+            let srcX = x + dx;
+            let srcY = y + dy;
+            
+            // Clamp to image boundaries
+            srcX = Math.max(0, Math.min(width - 1, srcX));
+            srcY = Math.max(0, Math.min(height - 1, srcY));
+            
+            const srcIndex = (srcY * width + srcX) * 4;
+            
+            // Copy pixels from the displaced position
+            data[index] = data[srcIndex];
+            data[index + 1] = data[srcIndex + 1];
+            data[index + 2] = data[srcIndex + 2];
+            data[index + 3] = data[srcIndex + 3];
+          }
+        }
+        
+        ctx.putImageData(imageData, 0, 0);
+      } else if (!params.distortSettings.enabled) {
+        // Just copy the image if no effects
+        ctx.drawImage(offscreenSourceRef.current, 0, 0);
       }
       
       // Apply other effects
@@ -118,80 +154,12 @@ const ImageCanvas = forwardRef<HTMLCanvasElement, ImageCanvasProps>(
         params.saturationVariation !== 0
       ) {
         applyDisplacementAndColorEffects(ctx, offSrcCtx, width, height);
-      } else if (!params.distortSettings.enabled) {
-        // Just copy the image if no effects
-        ctx.drawImage(offscreenSourceRef.current, 0, 0);
       }
       
       // Apply halftone effect if enabled
       if (params.halftoneEnabled) {
         renderHalftone(ctx, width, height);
       }
-    };
-    
-    // Apply distortion effect using displacement map
-    const applyDistortionEffect = (
-      destCtx: CanvasRenderingContext2D,
-      srcCtx: CanvasRenderingContext2D,
-      width: number,
-      height: number
-    ) => {
-      // Create a temporary canvas for the displacement map
-      const mapCanvas = document.createElement('canvas');
-      mapCanvas.width = width;
-      mapCanvas.height = height;
-      const mapCtx = mapCanvas.getContext('2d', { willReadFrequently: true });
-      if (!mapCtx) return;
-
-      // Load the displacement map
-      const mapImage = new Image();
-      mapImage.onload = () => {
-        // Draw and scale the displacement map to match canvas size
-        mapCtx.drawImage(mapImage, 0, 0, width, height);
-        
-        // Get image data
-        const srcData = srcCtx.getImageData(0, 0, width, height);
-        const mapData = mapCtx.getImageData(0, 0, width, height);
-        const output = destCtx.createImageData(width, height);
-        
-        // Process each pixel
-        for (let y = 0; y < height; y++) {
-          for (let x = 0; x < width; x++) {
-            const i = (y * width + x) * 4;
-            
-            // Get displacement map brightness (0-1)
-            const brightness = (
-              mapData.data[i] * 0.299 + 
-              mapData.data[i + 1] * 0.587 + 
-              mapData.data[i + 2] * 0.114
-            ) / 255;
-            
-            // Map brightness from 0-1 to -1 to +1
-            const displaceX = (brightness - 0.5) * 2;
-            const displaceY = (brightness - 0.5) * 2;
-            
-            // Calculate displacement in pixels
-            const dx = Math.round(displaceX * params.distortSettings.xAmount);
-            const dy = Math.round(displaceY * params.distortSettings.yAmount);
-            
-            // Get source pixel coordinates with displacement
-            const srcX = Math.min(Math.max(x + dx, 0), width - 1);
-            const srcY = Math.min(Math.max(y + dy, 0), height - 1);
-            const srcI = (srcY * width + srcX) * 4;
-            
-            // Copy pixel from source position
-            output.data[i] = srcData.data[srcI];
-            output.data[i + 1] = srcData.data[srcI + 1];
-            output.data[i + 2] = srcData.data[srcI + 2];
-            output.data[i + 3] = srcData.data[srcI + 3];
-          }
-        }
-        
-        // Apply the processed image
-        destCtx.putImageData(output, 0, 0);
-      };
-      
-      mapImage.src = params.distortSettings.displacementMap!;
     };
     
     // Apply displacement and color effects

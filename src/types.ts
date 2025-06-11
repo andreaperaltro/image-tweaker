@@ -82,7 +82,7 @@ export interface DistortSettings {
   enabled: boolean;
   xAmount: number;  // -500 to 500
   yAmount: number;  // -500 to 500
-  displacementMap: string | null;  // base64 string of the uploaded image
+  displacementMap: null;  // Changed from string | null to just null to match the expected type
 }
 
 export interface EffectSettings {
