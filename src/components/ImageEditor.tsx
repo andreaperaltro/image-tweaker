@@ -44,6 +44,14 @@ const defaultParams = {
   glitchBlendMode: 'linear',
   glitchBlendFactor: 0,
   
+  // Distort effect settings
+  distortSettings: {
+    enabled: false,
+    xAmount: 0,
+    yAmount: 0,
+    displacementMap: null
+  },
+  
   // Halftone options
   halftoneEnabled: false,
   halftoneCellSize: 5,

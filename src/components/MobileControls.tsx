@@ -34,6 +34,7 @@ import { ShapeGridSettings } from './ShapeGridEffect'
 import { TruchetControls } from './TruchetControls';
 import { TruchetSettings } from './TruchetEffect';
 import { GiGearStickPattern } from 'react-icons/gi';
+import { MdWaves } from 'react-icons/md';
 // Add import for useDragAndDrop
 // import { useDragAndDrop } from 'react-use-dnd';
 
@@ -504,6 +505,66 @@ const MobileControls: React.FC<MobileControlsProps> = ({
   
     // Render appropriate controls based on effect type
     switch (instance.type) {
+      case 'distort':
+        return (
+          <div className={`mobile-effect-content ${openSection === instance.id ? 'open' : ''}`}>
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Upload Displacement Map</label>
+              <div className="mobile-file-upload">
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onload = () => {
+                        updateInstanceSettings(instance.id, {
+                          ...settings,
+                          displacementMap: reader.result
+                        });
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                />
+              </div>
+            </div>
+            <div className="mobile-control-group">
+              <Slider
+                label="X Distortion"
+                value={settings.xAmount || 0}
+                onChange={(value) => {
+                  updateInstanceSettings(instance.id, {
+                    ...settings,
+                    xAmount: value
+                  });
+                }}
+                min={-500}
+                max={500}
+                step={1}
+                showValue={true}
+              />
+            </div>
+            <div className="mobile-control-group">
+              <Slider
+                label="Y Distortion"
+                value={settings.yAmount || 0}
+                onChange={(value) => {
+                  updateInstanceSettings(instance.id, {
+                    ...settings,
+                    yAmount: value
+                  });
+                }}
+                min={-500}
+                max={500}
+                step={1}
+                showValue={true}
+              />
+            </div>
+          </div>
+        );
+      
       case 'color':
         return (
           <div className={`mobile-effect-content ${openSection === instance.id ? 'open' : ''}`}>
@@ -3062,6 +3123,63 @@ const MobileControls: React.FC<MobileControlsProps> = ({
           />
         );
 
+      case 'distort':
+        return (
+          <div className={`mobile-effect-content ${openSection === instance.id ? 'open' : ''}`}>
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Upload Displacement Map</label>
+              <div className="mobile-file-upload">
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onload = () => {
+                        updateInstanceSettings(instance.id, {
+                          displacementMap: reader.result as string
+                        });
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                />
+              </div>
+            </div>
+
+            <Slider
+              label="X Distortion"
+              value={settings.xAmount || 0}
+              onChange={(value) => {
+                updateInstanceSettings(instance.id, {
+                  ...settings,
+                  xAmount: value
+                });
+              }}
+              min={-500}
+              max={500}
+              step={1}
+              showValue={true}
+            />
+
+            <Slider
+              label="Y Distortion"
+              value={settings.yAmount || 0}
+              onChange={(value) => {
+                updateInstanceSettings(instance.id, {
+                  ...settings,
+                  yAmount: value
+                });
+              }}
+              min={-500}
+              max={500}
+              step={1}
+              showValue={true}
+            />
+          </div>
+        );
+
       default:
         return null;
     }
@@ -3132,6 +3250,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
       instance.type === 'threeD' ? '3D' :
       instance.type === 'shapegrid' ? 'Shape Grid' :
       instance.type === 'truchet' ? 'Truchet' :
+      instance.type === 'distort' ? 'Distort' :
       'Effect';
     const title = sameTypeCount > 1 ? `${effectLabel} ${instanceIndex + 1}` : effectLabel;
 
@@ -3201,6 +3320,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
     blur: <MdBlurOn />,
     color: <MdOutlineColorLens />,
     dither: <MdGrain />,
+    distort: <MdWaves />,  // Add distort icon
     findEdges: <MdFingerprint />,
     glitch: <MdSnowing />,
     glow: <FaRegSun />,
@@ -3229,10 +3349,12 @@ const MobileControls: React.FC<MobileControlsProps> = ({
         <div className="effect-buttons-container">
           {[
             { label: '3D', type: 'threeD', desc: 'Rotate and tilt your image in 3D space for a perspective or isometric look.' },
+            { label: 'Ascii', type: 'ascii', desc: 'Convert your image into ASCII art using characters.' },
             { label: 'Blob', type: 'blob', desc: 'Connect dots based on brightness to create organic, blobby patterns.' },
             { label: 'Blur', type: 'blur', desc: 'Soften or distort your image with various blur types (Gaussian, Box, Motion, etc.).' },
             { label: 'Color', type: 'color', desc: 'Adjust brightness, contrast, saturation, hue, and invert colors.' },
             { label: 'Dither', type: 'dither', desc: 'Apply classic or modern dithering for a retro, pixelated look.' },
+            { label: 'Distort', type: 'distort', desc: 'Apply displacement map distortion using a grayscale image.' },
             { label: 'Find Edges', type: 'findEdges', desc: 'Highlight edges in your image using various edge detection algorithms.' },
             { label: 'Glitch', type: 'glitch', desc: 'Add digital glitch effects: pixel sorting, channel shift, scan lines, and more.' },
             { label: 'Glow', type: 'glow', desc: 'Add a glowing aura to bright areas for a dreamy or sci-fi look.' },
@@ -3240,31 +3362,23 @@ const MobileControls: React.FC<MobileControlsProps> = ({
             { label: 'Grid', type: 'grid', desc: 'Overlay a grid and manipulate cells for mosaic or tiled effects.' },
             { label: 'Halftone', type: 'halftone', desc: 'Simulate print halftone patterns with dots, lines, or shapes.' },
             { label: 'LCD', type: 'lcd', desc: 'Simulate LCD/CRT subpixel patterns for a digital or retro display look.' },
-            { label: 'Levels', type: 'levels', desc: 'Adjust black, gamma, and white points for precise contrast and brightness control.' },
-            { label: 'Linocut', type: 'linocut', desc: 'Create variable-width line patterns based on image brightness, like a linocut print.' },
-            { label: 'Mosaic', type: 'mosaicShift', desc: 'Displace image tiles for a mosaic or shifting tile effect.' },
-            { label: 'Noise', type: 'noise', desc: 'Add Perlin noise for organic grain, texture, or film effects.' },
-            { label: 'Pixel', type: 'pixel', desc: 'Pixelate your image with various grid, radial, or random block patterns.' },
-            { label: 'Posterize', type: 'posterize', desc: 'Reduce the number of colors for a bold, poster-like effect.' },
-            { label: 'Slice', type: 'sliceShift', desc: 'Slice and shift parts of the image for glitchy or collage effects.' },
-            { label: 'Snake', type: 'snake', desc: 'Create winding, snake-like patterns based on image structure.' },
-            { label: 'Text', type: 'text', desc: 'Overlay custom text with full control over font, size, color, and position.' },
-            { label: 'Threshold', type: 'threshold', desc: 'Convert your image to high-contrast black & white or two-color art.' },
-            { label: 'Ascii', type: 'ascii', desc: 'Turn your image into ASCII art using customizable character sets.' },
-            { label: 'Shape Grid', type: 'shapegrid', desc: 'Create a grid of shapes based on image brightness.' },
-            { label: 'Truchet', type: 'truchet', desc: 'Create a unique pattern based on the Truchet tiling technique.' },
-          ]
-            .sort((a, b) => a.label.localeCompare(b.label))
-            .map(effect => (
-              <button
-                key={effect.type}
-                className="plain-effect-btn"
-                onClick={() => addEffect(effect.type as EffectType)}
-                title={effect.desc}
-              >
-                {effectIcons[effect.type] || <FiPlus size={12} />} {effect.label}
-              </button>
-            ))}
+            { label: 'Levels', type: 'levels', desc: 'Fine-tune image brightness, contrast, and color levels.' },
+            { label: 'Linocut', type: 'linocut', desc: 'Create a linocut or woodcut print effect.' },
+            { label: 'Noise', type: 'noise', desc: 'Add various types of noise patterns to your image.' },
+            { label: 'Pixel', type: 'pixel', desc: 'Create pixel art effects with customizable grid sizes.' },
+            { label: 'Shape Grid', type: 'shapegrid', desc: 'Fill a grid with various shapes based on image brightness.' },
+            { label: 'Snake', type: 'snake', desc: 'Create a snake-like pattern that follows image contours.' },
+            { label: 'Truchet', type: 'truchet', desc: 'Generate Truchet tile patterns based on your image.' }
+          ].map(effect => (
+            <button
+              key={effect.type}
+              className="plain-effect-btn"
+              onClick={() => addEffect(effect.type as EffectType)}
+              title={effect.desc}
+            >
+              {effectIcons[effect.type] || <FiPlus size={12} />} {effect.label}
+            </button>
+          ))}
         </div>
       </div>
     </>

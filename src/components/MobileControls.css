@@ -730,6 +730,35 @@
   border: 1px solid var(--border-color);
 }
 
+/* File upload styles */
+.mobile-file-upload {
+  margin: 8px 0;
+}
+
+.mobile-file-upload input[type="file"] {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--accent-bg);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.mobile-file-upload input[type="file"]::-webkit-file-upload-button {
+  background: var(--header-bg);
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  color: white;
+  margin-right: 8px;
+  cursor: pointer;
+}
+
+.mobile-file-upload input[type="file"]::-webkit-file-upload-button:hover {
+  background: var(--header-bg-hover);
+}
+
 /* Style for reorder buttons */
 .reorder-buttons {
   display: flex;

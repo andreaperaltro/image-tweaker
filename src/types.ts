@@ -78,6 +78,13 @@ export type MosaicShiftSettings = {
   useBackgroundColor: boolean;
 };
 
+export interface DistortSettings {
+  enabled: boolean;
+  xAmount: number;  // -500 to 500
+  yAmount: number;  // -500 to 500
+  displacementMap: string | null;  // base64 string of the uploaded image
+}
+
 export interface EffectSettings {
   ditherSettings: DitherSettings;
   halftoneSettings: HalftoneSettings;
@@ -97,6 +104,7 @@ export interface EffectSettings {
   linocutSettings?: LinocutEffectSettings;
   lcdSettings?: LCDEffectSettings;
   instanceSettings?: {[id: string]: any};
+  distortSettings: DistortSettings;
 }
 
 export interface GlowSettings {
@@ -176,7 +184,8 @@ export type EffectType =
   | 'text'
   | 'lcd'
   | 'snake'
-  | 'threeD';
+  | 'threeD'
+  | 'distort';
 
 export interface NoiseEffectSettings {
   enabled: boolean;

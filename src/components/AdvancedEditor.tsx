@@ -288,6 +288,12 @@ export default function AdvancedEditor({
     blocksDensity: 20
   });
 
+  // Truchet settings state
+  const [truchetSettings, setTruchetSettings] = useState<TruchetSettings>(defaultTruchetSettings);
+
+  // Add state for crop functionality
+  const [showCropEditor, setShowCropEditor] = useState(false);
+  const [shouldGenerateCropData, setShouldGenerateCropData] = useState(false);
   const [isCropping, setIsCropping] = useState(false);
   const [cropImageData, setCropImageData] = useState<string | null>(null);
 
@@ -391,9 +397,6 @@ export default function AdvancedEditor({
   // Add a cache for the loaded image
   const imageInstanceRef = useRef<HTMLImageElement | null>(null);
   
-  // Only generate crop data when needed
-  const [shouldGenerateCropData, setShouldGenerateCropData] = useState(false);
-  
   // Add loading indicator
   const [imageLoading, setImageLoading] = useState(false);
   
@@ -435,21 +438,22 @@ export default function AdvancedEditor({
   }, [originalImageDataRef]);
   
   // Define processImage
-  const processImage = useCallback(() => {
-    // Prevent multiple simultaneous processing requests
-    if (isProcessingRef.current || !canvasRef.current || !sourceCanvasRef.current) return;
-    
-    // Set flags
-    isProcessingRef.current = true;
-    setProcessing(true);
+  const processImage = useCallback(async () => {
+    if (!canvasRef.current || !sourceCanvasRef.current || !originalImageDataRef || isProcessingRef.current) {
+      return;
+    }
     
     try {
+      isProcessingRef.current = true;
+      setProcessing(true);
+      
       const canvas = canvasRef.current;
-      const ctx = canvas.getContext('2d', { willReadFrequently: true });
       const sourceCanvas = sourceCanvasRef.current;
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
       const sourceCtx = sourceCanvas.getContext('2d', { willReadFrequently: true });
       
       if (!ctx || !sourceCtx) {
+        console.error('Could not get canvas context');
         return;
       }
       
@@ -458,51 +462,52 @@ export default function AdvancedEditor({
       canvas.height = canvasHeight;
       sourceCanvas.width = canvasWidth;
       sourceCanvas.height = canvasHeight;
+
+
       
-      // Function to actually render the image
-      const performRendering = () => {
+      const performRendering = async () => {
         // Clear canvases
         ctx.clearRect(0, 0, canvasWidth, canvasHeight);
         sourceCtx.clearRect(0, 0, canvasWidth, canvasHeight);
         
-        // Load the image
+        // Load and wait for the image
         const img = new Image();
-        let hasFinishedLoading = false;
+        await new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = reject;
+          img.src = originalImageDataRef || image || '';
+        });
+
+        // Draw original image to source canvas
+        sourceCtx.drawImage(img, 0, 0, canvasWidth, canvasHeight);
         
-        img.onload = () => {
-          // Draw original image to source canvas
-          sourceCtx.drawImage(img, 0, 0, canvasWidth, canvasHeight);
+        // Get enabled effects only
+        const enabledEffects = effectInstances.filter(instance => instance.enabled);
+        
+        // If no effects are enabled, just draw the original image
+        if (enabledEffects.length === 0) {
+          ctx.drawImage(sourceCanvas, 0, 0);
           
-          // Get enabled effects only
-          const enabledEffects = effectInstances.filter(instance => instance.enabled);
-          
-          // If no effects are enabled, just draw the original image
-          if (enabledEffects.length === 0) {
-            ctx.drawImage(sourceCanvas, 0, 0);
-            
-            // Set flags
-            hasFinishedLoading = true;
-            isProcessingRef.current = false;
-            setProcessing(false);
-            
-            // Update crop data if needed
-            if (shouldGenerateCropData) {
-              setCropImageData(canvas.toDataURL());
-              setShouldGenerateCropData(false);
-            }
-            
-            return;
+          // Update crop data if needed
+          if (shouldGenerateCropData) {
+            setCropImageData(canvas.toDataURL());
+            setShouldGenerateCropData(false);
           }
           
-          // Define maximum number of effects to process at once to prevent memory issues
-          // Increase this number if performance allows
-          const MAX_EFFECTS = 10;
-          const effectsToProcess = enabledEffects.slice(0, MAX_EFFECTS);
-          
-          if (enabledEffects.length > MAX_EFFECTS) {
-            console.warn(`Too many effects active (${enabledEffects.length}). Limiting to ${MAX_EFFECTS} effects.`);
-          }
-          
+          isProcessingRef.current = false;
+          setProcessing(false);
+          return;
+        }
+        
+        // Define maximum number of effects to process at once
+        const MAX_EFFECTS = 10;
+        const effectsToProcess = enabledEffects.slice(0, MAX_EFFECTS);
+        
+        if (enabledEffects.length > MAX_EFFECTS) {
+          console.warn(`Too many effects active (${enabledEffects.length}). Limiting to ${MAX_EFFECTS} effects.`);
+        }
+        
+        try {
           // Process each effect, fast path for the simple case
           if (effectsToProcess.length === 1) {
             // Just one effect, simplify processing
@@ -510,7 +515,7 @@ export default function AdvancedEditor({
             const settings = getInstanceSettings(instance);
             
             // Apply the effect directly
-            applyEffectDirectly(instance.type, sourceCtx, sourceCanvas, sourceCanvas, settings);
+            await applyEffectDirectly(instance.type, sourceCtx, sourceCanvas, sourceCanvas, settings);
             
             // Copy result to main canvas
             ctx.drawImage(sourceCanvas, 0, 0);
@@ -536,18 +541,18 @@ export default function AdvancedEditor({
               tempCtx1.drawImage(sourceCanvas, 0, 0);
               
               // Process each effect sequentially
-              effectsToProcess.forEach((instance, index) => {
+              for (const instance of effectsToProcess) {
                 const settings = getInstanceSettings(instance);
-                const isLast = index === effectsToProcess.length - 1;
+                const isLast = instance === effectsToProcess[effectsToProcess.length - 1];
                 
                 // Determine source and destination contexts for this iteration
-                const srcCanvas = index % 2 === 0 ? tempCanvas1 : tempCanvas2;
-                const destCanvas = index % 2 === 0 ? tempCanvas2 : tempCanvas1;
-                const destCtx = index % 2 === 0 ? tempCtx2 : tempCtx1;
+                const srcCanvas = effectsToProcess.indexOf(instance) % 2 === 0 ? tempCanvas1 : tempCanvas2;
+                const destCanvas = effectsToProcess.indexOf(instance) % 2 === 0 ? tempCanvas2 : tempCanvas1;
+                const destCtx = effectsToProcess.indexOf(instance) % 2 === 0 ? tempCtx2 : tempCtx1;
                 
-                // Set a reasonable timeout for effect processing to prevent UI freezing
+                // Set a reasonable timeout for effect processing
                 const effectStartTime = performance.now();
-                const MAX_EFFECT_TIME = 2000; // 2 seconds max per effect
+                const MAX_EFFECT_TIME = 2000;
                 
                 if (!isLast) {
                   // Clear the destination canvas
@@ -558,7 +563,7 @@ export default function AdvancedEditor({
                   
                   // Apply effect to destination canvas
                   try {
-                    applyEffectDirectly(instance.type, destCtx, destCanvas, srcCanvas, settings);
+                    await applyEffectDirectly(instance.type, destCtx, destCanvas, srcCanvas, settings);
                     
                     // Check if effect took too long
                     const effectTime = performance.now() - effectStartTime;
@@ -578,7 +583,7 @@ export default function AdvancedEditor({
                   
                   // Apply final effect directly to main canvas
                   try {
-                    applyEffectDirectly(instance.type, ctx, canvas, srcCanvas, settings);
+                    await applyEffectDirectly(instance.type, ctx, canvas, srcCanvas, settings);
                     
                     // Check if effect took too long
                     const effectTime = performance.now() - effectStartTime;
@@ -592,10 +597,9 @@ export default function AdvancedEditor({
                     ctx.drawImage(srcCanvas, 0, 0);
                   }
                 }
-              });
+              }
               
               // Cleanup canvas resources
-              // This helps ensure we don't leak memory over time
               URL.revokeObjectURL(tempCanvas1.toDataURL());
               URL.revokeObjectURL(tempCanvas2.toDataURL());
             }
@@ -606,330 +610,76 @@ export default function AdvancedEditor({
             setCropImageData(canvas.toDataURL());
             setShouldGenerateCropData(false);
           }
-          
-          // Set flags
-          hasFinishedLoading = true;
+        } catch (error) {
+          console.error('Error processing effects:', error);
+        } finally {
+          // Always reset processing flags
           isProcessingRef.current = false;
           setProcessing(false);
-        };
-        
-        // Handle load errors
-        img.onerror = () => {
-          console.error('Failed to load image');
-          hasFinishedLoading = true;
-          isProcessingRef.current = false;
-          setProcessing(false);
-        };
-        
-        // Load the image
-        img.src = originalImageDataRef || image || '';
-        
-        // Safety timeout to prevent UI freeze if image loading hangs
-        setTimeout(() => {
-          if (!hasFinishedLoading) {
-            console.warn('Image loading timed out');
-            isProcessingRef.current = false;
-            setProcessing(false);
-          }
-        }, 5000);
+        }
       };
       
-      // Defer processing to next frame for better UI responsiveness
-      requestAnimationFrame(performRendering);
+      // Start the rendering process
+      await performRendering();
     } catch (error) {
       console.error('Error processing image:', error);
       isProcessingRef.current = false;
       setProcessing(false);
     }
   }, [canvasWidth, canvasHeight, image, originalImageDataRef, effectInstances, instanceSettings, shouldGenerateCropData]);
-  
-  // Helper function to apply effects directly
-  const applyEffectDirectly = (
-    effectType: string,
-    ctx: CanvasRenderingContext2D,
-    targetCanvas: HTMLCanvasElement,
-    sourceCanvas: HTMLCanvasElement,
-    settings: any
-  ) => {
-    try {
-      switch (effectType) {
-        case 'color':
-          if (settings.enabled) {
-            const colorSettings: ColorSettings = {
-              enabled: true,
-              hueShift: Number(settings.hueShift) || 0,
-              saturation: Number(settings.saturation) || 100,
-              brightness: Number(settings.brightness) || 100,
-              contrast: Number(settings.contrast) || 100,
-              posterize: Number(settings.posterize) || 0,
-              invert: Boolean(settings.invert),
-              glitchIntensity: Number(settings.glitchIntensity) || 0,
-              glitchSeed: settings.glitchSeed || Math.random(),
-              blendMode: settings.blendMode || 'normal'
-            };
-            applyColorAdjustments(ctx, targetCanvas.width, targetCanvas.height, colorSettings);
-          }
-          break;
-        case 'gradient':
-          applyGradientMap(ctx, targetCanvas, targetCanvas.width, targetCanvas.height, { ...settings, enabled: true });
-          break;
-        case 'threshold':
-          applyThreshold(ctx, targetCanvas.width, targetCanvas.height, { ...settings, enabled: true });
-          break;
-        case 'halftone':
-          applyHalftone(ctx, targetCanvas, targetCanvas.width, targetCanvas.height, { ...settings, enabled: true });
-          break;
-        case 'grid':
-          const gridSettings = { ...settings, enabled: true };
-          const grid = createGrid(targetCanvas.width, targetCanvas.height, gridSettings);
-          grid.forEach(cell => renderGridCell(ctx, cell, targetCanvas, gridSettings));
-          break;
-        case 'dither':
-          applyDithering(ctx, targetCanvas, targetCanvas.width, targetCanvas.height, { ...settings, enabled: true });
-          break;
-        case 'glitch':
-          applyGlitch(ctx, targetCanvas, targetCanvas.width, targetCanvas.height, { ...settings, masterEnabled: true });
-          break;
-        case 'blur':
-          applyBlur(ctx, targetCanvas.width, targetCanvas.height, { ...settings, enabled: true });
-          break;
-        case 'mosaicShift':
-          applyMosaicShift(ctx, targetCanvas, targetCanvas.width, targetCanvas.height, { ...settings, enabled: true });
-          break;
-        case 'sliceShift':
-          applySliceShift(ctx, targetCanvas, targetCanvas.width, targetCanvas.height, { ...settings, enabled: true });
-          break;
-        case 'posterize':
-          applyPosterize(ctx, targetCanvas, targetCanvas.width, targetCanvas.height, settings);
-          break;
-        case 'findEdges':
-          applyFindEdges(ctx, targetCanvas, targetCanvas.width, targetCanvas.height, settings);
-          break;
-        case 'blob':
-          applyBlob(ctx, targetCanvas, targetCanvas.width, targetCanvas.height, settings);
-          break;
-        case 'glow':
-          applyGlow(ctx, targetCanvas.width, targetCanvas.height, settings);
-          break;
-        case 'polarPixel':
-          applyPolarPixelEffect(ctx, targetCanvas, targetCanvas.width, targetCanvas.height, settings);
-          break;
-        case 'pixel':
-          applyPixelEffect(ctx, targetCanvas, targetCanvas.width, targetCanvas.height, settings);
-          break;
-        case 'noise':
-          applyNoiseEffect(ctx, targetCanvas, targetCanvas.width, targetCanvas.height, settings);
-          break;
-        case 'linocut':
-          applyLinocutEffect(ctx, targetCanvas, targetCanvas.width, targetCanvas.height, settings);
-          break;
-        case 'levels':
-          applyLevelsEffect(ctx, targetCanvas.width, targetCanvas.height, settings);
-          break;
-        case 'ascii':
-          if (typeof applyAsciiEffect === 'function') {
-            applyAsciiEffect(sourceCanvas, targetCanvas, settings);
-          }
-          break;
-        case 'text':
-          if (settings.enabled) {
-            // Draw the source image
-            ctx.drawImage(sourceCanvas, 0, 0);
-            // Apply text effect
-            applyTextEffect(ctx, targetCanvas, settings);
-          } else {
-            // If text effect is disabled, just copy the source image
-            ctx.drawImage(sourceCanvas, 0, 0);
-          }
-          break;
-        case 'lcd':
-          applyLCDEffect(targetCanvas, settings);
-          break;
-        case 'snake':
-          applySnakeEffect(ctx, sourceCanvas, targetCanvas.width, targetCanvas.height, settings);
-          break;
-        case 'threeD':
-          applyThreeDEffect(ctx, sourceCanvas, targetCanvas.width, targetCanvas.height, settings as ThreeDEffectSettings);
-          break;
-        case 'shapegrid':
-          applyShapeGridEffect(ctx, targetCanvas, targetCanvas.width, targetCanvas.height, { ...settings, enabled: true });
-          break;
-        case 'truchet':
-          applyTruchetEffect(targetCanvas, settings as TruchetSettings);
-          break;
-      }
-    } catch (error) {
-      console.error(`Error applying effect ${effectType}:`, error);
-      // If an effect fails, we can at least keep the current state of the canvas
-      // rather than showing nothing at all
-    }
-  };
-  
-  // Clear cache when effect instances change
-  useEffect(() => {
-    effectResultsCache.current = {
-      effects: {},
-      lastWidth: effectResultsCache.current.lastWidth,
-      lastHeight: effectResultsCache.current.lastHeight
-    };
-  }, [effectInstances.length]);
-  
-  // Now define the animation hook handler, after processImage is defined
-  const handleAnimationFrame = useCallback((time: number, settings: EffectSettings) => {
-    if (!settings || !canvasRef.current || !sourceCanvasRef.current) return;
-    
-    // For smoother animation playback, apply settings directly to the canvas
-    // instead of updating all React state
-    if (animationState?.isPlaying) {
-      // Get the canvas contexts
-      const ctx = canvasRef.current.getContext('2d', { willReadFrequently: true });
-      const sourceCtx = sourceCanvasRef.current.getContext('2d', { willReadFrequently: true });
-      
-      if (ctx && sourceCtx && originalImageDataRef) {
-        // Clear canvases
-        ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-        sourceCtx.clearRect(0, 0, canvasWidth, canvasHeight);
-        
-        const processWithImage = (img: HTMLImageElement) => {
-          // Draw image on source canvas using drawCoverImage to maintain aspect ratio
-          drawCoverImage(sourceCtx, canvasWidth, canvasHeight, img);
-          
-          // Apply effects based on the effectInstances from settings
-          if (settings.effectInstances) {
-            const activeEffects = settings.effectInstances.filter(instance => instance.enabled);
-            
-            activeEffects.forEach(instance => {
-              // Get instance-specific settings
-              const effectSettings = settings.instanceSettings?.[instance.id] || {};
-              
-              // Apply effect directly
-              applyEffectDirectly(instance.type, sourceCtx, sourceCanvasRef.current!, sourceCanvasRef.current!, effectSettings);
-            });
-          }
-          
-          // Copy final result to main canvas
-          ctx.drawImage(sourceCanvasRef.current!, 0, 0);
-        };
-        
-        // Use the cached image if possible, otherwise create and cache a new one
-        if (imageInstanceRef.current && originalImageDataRef === imageInstanceRef.current.src) {
-          // Use the cached image
-          processWithImage(imageInstanceRef.current);
-        } else {
-          // Create a new image and cache it
-          const img = new Image();
-          img.onload = () => {
-            imageInstanceRef.current = img;
-            processWithImage(img);
-          };
-          img.src = originalImageDataRef;
-        }
-      }
-    } else {
-      // If not playing, update React state for UI controls
-      if (settings.ditherSettings) {
-        setDitherSettings(settings.ditherSettings);
-      }
-      if (settings.halftoneSettings) {
-        setHalftoneSettings(settings.halftoneSettings);
-      }
-      if (settings.colorSettings) {
-        setColorSettings(settings.colorSettings);
-      }
-      if (settings.thresholdSettings) {
-        setThresholdSettings(settings.thresholdSettings);
-      }
-      if (settings.glitchSettings) {
-        setGlitchSettings(settings.glitchSettings);
-      }
-      if (settings.gradientMapSettings) {
-        setGradientMapSettings(settings.gradientMapSettings);
-      }
-      if (settings.gridSettings) {
-        setGridSettings(settings.gridSettings);
-      }
-      if (settings.mosaicShiftSettings) {
-        setMosaicShiftSettings(settings.mosaicShiftSettings);
-      }
-      if (settings.sliceShiftSettings) {
-        setSliceShiftSettings(settings.sliceShiftSettings);
-      }
-      if (settings.posterizeSettings) {
-        setPosterizeSettings(settings.posterizeSettings);
-      }
-      if (settings.findEdgesSettings) {
-        setFindEdgesSettings(settings.findEdgesSettings);
-      }
-      if (settings.blobSettings) {
-        setBlobSettings(settings.blobSettings);
-      }
-      if (settings.effectInstances) {
-        setEffectInstances(settings.effectInstances);
-      }
-      if (settings.instanceSettings) {
-        setInstanceSettings(settings.instanceSettings);
-      }
-      
-      // Process the image through the normal React flow
-      processImage();
-    }
-  }, [canvasWidth, canvasHeight, originalImageDataRef]);
-  
-  // Initialize the animation state
-  const [animationState, animationControls] = useAnimation(
-    animationDuration, 
-    handleAnimationFrame,
-    keyframes
-  );
-  
-  // Update animation duration when it changes
-  useEffect(() => {
-    if (animationState && animationState.duration !== animationDuration) {
-      // Stop animation if it's playing
-      if (animationState.isPlaying) {
-        animationControls.stop();
-      }
-      
-      // Need to create a new animation state
-      const currentTime = Math.min(animationState.currentTime, animationDuration);
-      animationControls.setTime(currentTime);
-    }
-  }, [animationDuration, animationState, animationControls]);
 
-  // Save settings function
-  const handleSaveSettings = (e: React.MouseEvent) => {
-    e.preventDefault();
+  // Add this function to get settings for an instance
+  const getInstanceSettings = (instance: EffectInstance) => {
+    // If instance-specific settings exist, use them
+    if (instanceSettings[instance.id]) {
+      return instanceSettings[instance.id];
+    }
     
-    const settings: EffectSettings = {
-      ditherSettings,
-      halftoneSettings,
-      colorSettings,
-      thresholdSettings,
-      glitchSettings,
-      gradientMapSettings,
-      gridSettings,
-      effectInstances,
-      blur,
-      mosaicShiftSettings,
-      sliceShiftSettings,
-      posterizeSettings,
-      findEdgesSettings,
-      instanceSettings
-    };
-    saveEffectSettings(settings);
-  };
-
-  // Load settings function
-  const handleLoadSettings = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      try {
-        const text = await file.text();
-        const settings = JSON.parse(text);
-        handleSettingsLoaded(settings);
-      } catch (error) {
-        alert('Error loading settings: ' + (error as Error).message);
-      }
+    // Otherwise, fall back to global settings
+    switch (instance.type) {
+      case 'color':
+        return colorSettings;
+      case 'gradient':
+        return gradientMapSettings;
+      case 'threshold':
+        return thresholdSettings;
+      case 'halftone':
+        return halftoneSettings;
+      case 'grid':
+        return gridSettings;
+      case 'dither':
+        return ditherSettings;
+      case 'glitch':
+        return glitchSettings;
+      case 'blur':
+        return blur;
+      case 'mosaicShift':
+        return mosaicShiftSettings;
+      case 'sliceShift':
+        return sliceShiftSettings;
+      case 'blob':
+        return blobSettings;
+      case 'linocut':
+        return instanceSettings[instance.id];
+      case 'snake':
+        return instanceSettings[instance.id];
+      case 'shapegrid':
+        return {
+          enabled: true,
+          gridSize: 20,
+          threshold: 128,
+          colors: {
+            background: '#1a1a1a',
+            foreground: '#ffffff'
+          },
+          shapes: ['circle', 'square', 'triangle', 'cross', 'heart'],
+          mergeLevels: 3,
+          randomRotation: false
+        } as ShapeGridSettings;
+      case 'truchet':
+        return instanceSettings[instance.id];
+      default:
+        return {};
     }
   };
 
@@ -1038,30 +788,21 @@ export default function AdvancedEditor({
     let defaultSettings = {};
     
     switch (type) {
-      case 'dither':
+      case 'distort':
         defaultSettings = {
           enabled: true,
-          type: 'floyd-steinberg',
-          threshold: 128,
-          colorMode: 'grayscale',
-          resolution: 30,
-          colorDepth: 2,
-          darkColor: '#000000',
-          lightColor: '#FFFFFF'
+          xAmount: 0,
+          yAmount: 0,
+          displacementMap: null
         };
         break;
       case 'color':
         defaultSettings = {
-          enabled: true,
-          hueShift: 0,
-          saturation: 100,
           brightness: 100,
           contrast: 100,
-          posterize: 0,
-          invert: false,
-          glitchIntensity: 0,
-          glitchSeed: Math.random(),
-          blendMode: 'normal' as BlendMode
+          saturation: 100,
+          hueShift: 0,
+          invert: false
         };
         break;
       case 'halftone':
@@ -1343,9 +1084,10 @@ export default function AdvancedEditor({
       // Set the new image (this will trigger processImage)
       setImage(croppedOriginal);
       setIsCropping(false);
+      setShowCropEditor(false);
     };
     img.src = croppedModified; // Use modified image dimensions
-  }, []);
+  }, [setCanvasWidth, setCanvasHeight, setOriginalImageDataRef, setImage, setIsCropping, setShowCropEditor]);
 
   const resetAllEffects = () => {
     // Reset all effect settings to default
@@ -1896,9 +1638,7 @@ export default function AdvancedEditor({
       mosaicShiftSettings,
       sliceShiftSettings,
       posterizeSettings,
-      findEdgesSettings,
-      blobSettings,
-      textEffectSettings
+      findEdgesSettings
     };
   };
 
@@ -2045,7 +1785,7 @@ export default function AdvancedEditor({
       console.log('Starting video export. This may take some time...');
       
       // Set up an optimized event listener for frame updates that directly applies settings
-      const handleFrameRequest = (e: Event) => {
+      const handleFrameRequest = async (e: Event) => {
         const customEvent = e as CustomEvent;
         const time = customEvent.detail.time;
         
@@ -2070,22 +1810,25 @@ export default function AdvancedEditor({
                   sourceCtx.clearRect(0, 0, canvasWidth, canvasHeight);
                   
                   // Load the original image
-                  const img = new Image();
-                  img.onload = () => {
-                    // Draw original image on source canvas
-                    sourceCtx.drawImage(img, 0, 0, canvasWidth, canvasHeight);
-                    
-                    // Apply effects directly
-                    activeEffects.forEach(effect => {
-                      const effectSettings = settings.instanceSettings?.[effect.id] || {};
-                      // Fix the parameter order to match the function definition
-                      applyEffectDirectly(effect.type, sourceCtx, sourceCanvasRef.current!, sourceCanvasRef.current!, effectSettings);
-                    });
-                    
-                    // Copy result to main canvas
-                    ctx.drawImage(sourceCanvasRef.current!, 0, 0);
-                  };
-                  img.src = originalImageDataRef;
+                  await new Promise<void>((resolve) => {
+                    const img = new Image();
+                    img.onload = async () => {
+                      // Draw original image on source canvas
+                      sourceCtx.drawImage(img, 0, 0, canvasWidth, canvasHeight);
+                      
+                      // Apply effects sequentially
+                      for (const effect of activeEffects) {
+                        const effectSettings = settings.instanceSettings?.[effect.id] || {};
+                        // Fix the parameter order to match the function definition
+                        await applyEffectDirectly(effect.type, sourceCtx, sourceCanvasRef.current!, sourceCanvasRef.current!, effectSettings);
+                      }
+                      
+                      // Copy result to main canvas
+                      ctx.drawImage(sourceCanvasRef.current!, 0, 0);
+                      resolve();
+                    };
+                    img.src = originalImageDataRef;
+                  });
                 }
               }
             }
@@ -2136,102 +1879,429 @@ export default function AdvancedEditor({
     }
   };
 
-  // Helper function to manually trigger processing when effects change
-  const updateEffectsAndProcess = useCallback(() => {
-    // Use timeout to ensure state updates are complete before processing
-    setTimeout(() => {
-      if (image) {
-        processImage();
+  // Helper function to apply effects directly
+  const applyEffectDirectly = async (
+    effectType: string,
+    ctx: CanvasRenderingContext2D,
+    targetCanvas: HTMLCanvasElement,
+    sourceCanvas: HTMLCanvasElement,
+    settings: any
+  ) => {
+    try {
+      switch (effectType) {
+        case 'distort':
+          const applyDistortion = async () => {
+            if (settings.displacementMap) {
+              const displacementImage = new Image();
+              displacementImage.src = settings.displacementMap;
+              await new Promise((resolve) => {
+                displacementImage.onload = resolve;
+              });
+              
+              // Create a temporary canvas for the displacement map
+              const tempCanvas = document.createElement('canvas');
+              tempCanvas.width = targetCanvas.width;
+              tempCanvas.height = targetCanvas.height;
+              const tempCtx = tempCanvas.getContext('2d');
+              
+              if (tempCtx) {
+                // Draw and process the displacement map
+                tempCtx.drawImage(displacementImage, 0, 0, targetCanvas.width, targetCanvas.height);
+                const displacementData = tempCtx.getImageData(0, 0, targetCanvas.width, targetCanvas.height).data;
+                
+                // Get the source image data
+                const imageData = ctx.getImageData(0, 0, targetCanvas.width, targetCanvas.height);
+                const data = imageData.data;
+                const newData = new Uint8ClampedArray(data.length);
+                
+                // Apply displacement
+                for (let y = 0; y < targetCanvas.height; y++) {
+                  for (let x = 0; x < targetCanvas.width; x++) {
+                    const i = (y * targetCanvas.width + x) * 4;
+                    
+                    // Get displacement values from red and green channels
+                    const dx = (displacementData[i] / 255 - 0.5) * (settings.xAmount * 5); // Scale up by 5x to match -500/500 range
+                    const dy = (displacementData[i + 1] / 255 - 0.5) * (settings.yAmount * 5); // Scale up by 5x to match -500/500 range
+                    
+                    // Calculate source position
+                    const sx = Math.round(x + dx);
+                    const sy = Math.round(y + dy);
+                    
+                    // Check bounds
+                    if (sx >= 0 && sx < targetCanvas.width && sy >= 0 && sy < targetCanvas.height) {
+                      const srcI = (sy * targetCanvas.width + sx) * 4;
+                      newData[i] = data[srcI];
+                      newData[i + 1] = data[srcI + 1];
+                      newData[i + 2] = data[srcI + 2];
+                      newData[i + 3] = data[srcI + 3];
+                    } else {
+                      // Use original pixel if out of bounds
+                      newData[i] = data[i];
+                      newData[i + 1] = data[i + 1];
+                      newData[i + 2] = data[i + 2];
+                      newData[i + 3] = data[i + 3];
+                    }
+                  }
+                }
+                
+                ctx.putImageData(new ImageData(newData, targetCanvas.width, targetCanvas.height), 0, 0);
+              }
+            }
+          };
+          
+          await applyDistortion();
+          break;
+        
+        case 'color':
+          if (settings.enabled) {
+            const colorSettings: ColorSettings = {
+              enabled: true,
+              hueShift: Number(settings.hueShift) || 0,
+              saturation: Number(settings.saturation) || 100,
+              brightness: Number(settings.brightness) || 100,
+              contrast: Number(settings.contrast) || 100,
+              posterize: Number(settings.posterize) || 0,
+              invert: Boolean(settings.invert),
+              glitchIntensity: Number(settings.glitchIntensity) || 0,
+              glitchSeed: settings.glitchSeed || Math.random(),
+              blendMode: settings.blendMode || 'normal'
+            };
+            applyColorAdjustments(ctx, targetCanvas.width, targetCanvas.height, colorSettings);
+          }
+          break;
+        case 'gradient':
+          applyGradientMap(ctx, targetCanvas, targetCanvas.width, targetCanvas.height, { ...settings, enabled: true });
+          break;
+        case 'threshold':
+          applyThreshold(ctx, targetCanvas.width, targetCanvas.height, { ...settings, enabled: true });
+          break;
+        case 'halftone':
+          applyHalftone(ctx, targetCanvas, targetCanvas.width, targetCanvas.height, { ...settings, enabled: true });
+          break;
+        case 'grid':
+          const gridSettings = { ...settings, enabled: true };
+          const grid = createGrid(targetCanvas.width, targetCanvas.height, gridSettings);
+          grid.forEach(cell => renderGridCell(ctx, cell, targetCanvas, gridSettings));
+          break;
+        case 'dither':
+          applyDithering(ctx, targetCanvas, targetCanvas.width, targetCanvas.height, { ...settings, enabled: true });
+          break;
+        case 'glitch':
+          applyGlitch(ctx, targetCanvas, targetCanvas.width, targetCanvas.height, { ...settings, masterEnabled: true });
+          break;
+        case 'blur':
+          applyBlur(ctx, targetCanvas.width, targetCanvas.height, { ...settings, enabled: true });
+          break;
+        case 'mosaicShift':
+          applyMosaicShift(ctx, targetCanvas, targetCanvas.width, targetCanvas.height, { ...settings, enabled: true });
+          break;
+        case 'sliceShift':
+          applySliceShift(ctx, targetCanvas, targetCanvas.width, targetCanvas.height, { ...settings, enabled: true });
+          break;
+        case 'posterize':
+          applyPosterize(ctx, targetCanvas, targetCanvas.width, targetCanvas.height, settings);
+          break;
+        case 'findEdges':
+          applyFindEdges(ctx, targetCanvas, targetCanvas.width, targetCanvas.height, settings);
+          break;
+        case 'blob':
+          applyBlob(ctx, targetCanvas, targetCanvas.width, targetCanvas.height, settings);
+          break;
+        case 'glow':
+          applyGlow(ctx, targetCanvas.width, targetCanvas.height, settings);
+          break;
+        case 'polarPixel':
+          applyPolarPixelEffect(ctx, targetCanvas, targetCanvas.width, targetCanvas.height, settings);
+          break;
+        case 'pixel':
+          applyPixelEffect(ctx, targetCanvas, targetCanvas.width, targetCanvas.height, settings);
+          break;
+        case 'noise':
+          applyNoiseEffect(ctx, targetCanvas, targetCanvas.width, targetCanvas.height, settings);
+          break;
+        case 'linocut':
+          applyLinocutEffect(ctx, targetCanvas, targetCanvas.width, targetCanvas.height, settings);
+          break;
+        case 'levels':
+          applyLevelsEffect(ctx, targetCanvas.width, targetCanvas.height, settings);
+          break;
+        case 'ascii':
+          if (typeof applyAsciiEffect === 'function') {
+            applyAsciiEffect(sourceCanvas, targetCanvas, settings);
+          }
+          break;
+        case 'text':
+          if (settings.enabled) {
+            // Draw the source image
+            ctx.drawImage(sourceCanvas, 0, 0);
+            // Apply text effect
+            applyTextEffect(ctx, targetCanvas, settings);
+          } else {
+            // If text effect is disabled, just copy the source image
+            ctx.drawImage(sourceCanvas, 0, 0);
+          }
+          break;
+        case 'lcd':
+          applyLCDEffect(targetCanvas, settings);
+          break;
+        case 'snake':
+          applySnakeEffect(ctx, sourceCanvas, targetCanvas.width, targetCanvas.height, settings);
+          break;
+        case 'threeD':
+          applyThreeDEffect(ctx, sourceCanvas, targetCanvas.width, targetCanvas.height, settings as ThreeDEffectSettings);
+          break;
+        case 'shapegrid':
+          applyShapeGridEffect(ctx, targetCanvas, targetCanvas.width, targetCanvas.height, { ...settings, enabled: true });
+          break;
+        case 'truchet':
+          applyTruchetEffect(targetCanvas, settings as TruchetSettings);
+          break;
+        default:
+          break;
       }
-    }, 0);
-  }, [image, processImage]);
-
-  // Update instance settings with processing
-  const updateInstanceSettingsWithProcess = useCallback((id: string, settings: any) => {
-    setInstanceSettings(prev => ({
-      ...prev,
-      [id]: {
-        ...prev[id],
-        ...settings
-      }
-    }));
-    updateEffectsAndProcess();
-  }, [updateEffectsAndProcess]);
-
-  // Function to toggle effect enabled state with processing
-  const toggleEffectEnabledWithProcess = useCallback((id: string, enabled: boolean) => {
-    setEffectInstances(prev => 
-      prev.map(instance => 
-        instance.id === id ? { ...instance, enabled } : instance
-      )
-    );
-    updateEffectsAndProcess();
-  }, [updateEffectsAndProcess]);
-
-  // Add this function to prepare crop data before showing crop UI
-  const handleCropImage = useCallback(() => {
-    setShouldGenerateCropData(true);
-    setTimeout(() => {
-      processImage();
-      setIsCropping(true);
-    }, 0);
-  }, [processImage]);
-
-  // Add a helper function to get settings for an instance
-  const getInstanceSettings = (instance: EffectInstance) => {
-    // If instance-specific settings exist, use them
-    if (instanceSettings[instance.id]) {
-      return instanceSettings[instance.id];
+    } catch (error) {
+      console.error(`Error applying effect ${effectType}:`, error);
+      // If an effect fails, we can at least keep the current state of the canvas
+      // rather than showing nothing at all
     }
+  };
+  
+  // Clear cache when effect instances change
+  useEffect(() => {
+    effectResultsCache.current = {
+      effects: {},
+      lastWidth: effectResultsCache.current.lastWidth,
+      lastHeight: effectResultsCache.current.lastHeight
+    };
+  }, [effectInstances.length]);
+  
+  // Now define the animation hook handler, after processImage is defined
+  const handleAnimationFrame = useCallback((time: number, settings: EffectSettings) => {
+    if (!settings || !canvasRef.current || !sourceCanvasRef.current) return;
     
-    // Otherwise, fall back to global settings
-    switch (instance.type) {
-      case 'color':
-        return colorSettings;
-      case 'gradient':
-        return gradientMapSettings;
-      case 'threshold':
-        return thresholdSettings;
-      case 'halftone':
-        return halftoneSettings;
-      case 'grid':
-        return gridSettings;
-      case 'dither':
-        return ditherSettings;
-      case 'glitch':
-        return glitchSettings;
-      case 'blur':
-        return blur;
-      case 'mosaicShift':
-        return mosaicShiftSettings;
-      case 'sliceShift':
-        return sliceShiftSettings;
-      case 'blob':
-        return blobSettings;
-      case 'linocut':
-        return instanceSettings[instance.id];
-      case 'snake':
-        return instanceSettings[instance.id];
-      case 'shapegrid':
-        return {
-          enabled: true,
-          gridSize: 20,
-          threshold: 128,
-          colors: {
-            background: '#1a1a1a',
-            foreground: '#ffffff'
-          },
-          shapes: ['circle', 'square', 'triangle', 'cross', 'heart'],
-          mergeLevels: 3,
-          randomRotation: false
-        } as ShapeGridSettings;
-      case 'truchet':
-        return instanceSettings[instance.id];
-      default:
-        return {};
+    // For smoother animation playback, apply settings directly to the canvas
+    // instead of updating all React state
+    if (animationState?.isPlaying) {
+      // Get the canvas contexts
+      const ctx = canvasRef.current.getContext('2d', { willReadFrequently: true });
+      const sourceCtx = sourceCanvasRef.current.getContext('2d', { willReadFrequently: true });
+      
+      if (ctx && sourceCtx && originalImageDataRef) {
+        // Clear canvases
+        ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+        sourceCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+        
+        const processWithImage = async (img: HTMLImageElement) => {
+          // Draw image on source canvas using drawCoverImage to maintain aspect ratio
+          drawCoverImage(sourceCtx, canvasWidth, canvasHeight, img);
+          
+          // Apply effects based on the effectInstances from settings
+          if (settings.effectInstances) {
+            const activeEffects = settings.effectInstances.filter(instance => instance.enabled);
+            
+            // Apply effects sequentially
+            for (const instance of activeEffects) {
+              // Get instance-specific settings
+              const effectSettings = settings.instanceSettings?.[instance.id] || {};
+              
+              try {
+                // Apply effect directly
+                await applyEffectDirectly(instance.type, sourceCtx, sourceCanvasRef.current!, sourceCanvasRef.current!, effectSettings);
+              } catch (error) {
+                console.error(`Error applying effect ${instance.type}:`, error);
+              }
+            }
+          }
+          
+          // Copy final result to main canvas
+          ctx.drawImage(sourceCanvasRef.current!, 0, 0);
+        };
+        
+        // Use the cached image if possible, otherwise create and cache a new one
+        if (imageInstanceRef.current && originalImageDataRef === imageInstanceRef.current.src) {
+          // Use the cached image
+          processWithImage(imageInstanceRef.current);
+        } else {
+          // Create a new image and cache it
+          const img = new Image();
+          img.onload = () => {
+            imageInstanceRef.current = img;
+            processWithImage(img);
+          };
+          img.src = originalImageDataRef;
+        }
+      }
+    } else {
+      // If not playing, update React state for UI controls
+      if (settings.ditherSettings) {
+        setDitherSettings(settings.ditherSettings);
+      }
+      if (settings.halftoneSettings) {
+        setHalftoneSettings(settings.halftoneSettings);
+      }
+      if (settings.colorSettings) {
+        setColorSettings(settings.colorSettings);
+      }
+      if (settings.thresholdSettings) {
+        setThresholdSettings(settings.thresholdSettings);
+      }
+      if (settings.glitchSettings) {
+        setGlitchSettings(settings.glitchSettings);
+      }
+      if (settings.gradientMapSettings) {
+        setGradientMapSettings(settings.gradientMapSettings);
+      }
+      if (settings.gridSettings) {
+        setGridSettings(settings.gridSettings);
+      }
+      if (settings.mosaicShiftSettings) {
+        setMosaicShiftSettings(settings.mosaicShiftSettings);
+      }
+      if (settings.sliceShiftSettings) {
+        setSliceShiftSettings(settings.sliceShiftSettings);
+      }
+      if (settings.posterizeSettings) {
+        setPosterizeSettings(settings.posterizeSettings);
+      }
+      if (settings.findEdgesSettings) {
+        setFindEdgesSettings(settings.findEdgesSettings);
+      }
+      if (settings.blur) {
+        onBlurChange(settings.blur);
+      }
+      
+      // Load instance-specific settings if available
+      if (settings.instanceSettings) {
+        setInstanceSettings(settings.instanceSettings);
+      }
+      
+      // Load effect instances if available, otherwise create default ones
+      if (settings.effectInstances && settings.effectInstances.length > 0) {
+        setEffectInstances(settings.effectInstances);
+      } else {
+        // Create default instances if none exist in the loaded settings
+        setEffectInstances([
+          { id: 'color-1', type: 'color', enabled: false },
+          { id: 'blur-1', type: 'blur', enabled: false },
+          { id: 'gradient-1', type: 'gradient', enabled: false },
+          { id: 'threshold-1', type: 'threshold', enabled: false },
+          { id: 'dither-1', type: 'dither', enabled: false },
+          { id: 'halftone-1', type: 'halftone', enabled: false },
+          { id: 'glitch-1', type: 'glitch', enabled: false },
+          { id: 'grid-1', type: 'grid', enabled: false },
+          { id: 'mosaicShift-1', type: 'mosaicShift', enabled: false },
+          { id: 'sliceShift-1', type: 'sliceShift', enabled: false },
+          { id: 'blob-1', type: 'blob', enabled: false },
+          { id: 'shapegrid-1', type: 'shapegrid', enabled: false },
+        ]);
+      }
+      
+      // Process the image with the new settings
+      processImage();
+    }
+  }, [canvasWidth, canvasHeight, originalImageDataRef]);
+  
+  // Initialize the animation state
+  const [animationState, animationControls] = useAnimation(
+    animationDuration, 
+    handleAnimationFrame,
+    keyframes
+  );
+  
+  // Update animation duration when it changes
+  useEffect(() => {
+    if (animationState && animationState.duration !== animationDuration) {
+      // Stop animation if it's playing
+      if (animationState.isPlaying) {
+        animationControls.stop();
+      }
+      
+      // Need to create a new animation state
+      const currentTime = Math.min(animationState.currentTime, animationDuration);
+      animationControls.setTime(currentTime);
+    }
+  }, [animationDuration, animationState, animationControls]);
+
+  // Save settings function
+  const handleSaveSettings = (e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    const settings: EffectSettings = {
+      ditherSettings,
+      halftoneSettings,
+      colorSettings,
+      thresholdSettings,
+      glitchSettings,
+      gradientMapSettings,
+      gridSettings,
+      effectInstances,
+      blur,
+      mosaicShiftSettings,
+      sliceShiftSettings,
+      posterizeSettings,
+      findEdgesSettings,
+      instanceSettings
+    };
+    saveEffectSettings(settings);
+  };
+
+  // Load settings function
+  const handleLoadSettings = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      try {
+        const text = await file.text();
+        const settings = JSON.parse(text);
+        handleSettingsLoaded(settings);
+      } catch (error) {
+        console.error('Error processing image:', error);
+        alert('Error loading settings: ' + (error as Error).message);
+      }
     }
   };
 
+  // Helper function to get default 3D settings
+  function getDefaultThreeDSettings(): ThreeDEffectSettings {
+    return {
+      enabled: true,
+      rotationX: 0,
+      rotationY: 0,
+      rotationZ: 0,
+      scale: 1,
+      backgroundColor: '#000000',
+      perspective: 45,
+      distance: 500
+    };
+  }
+
+  // Add text effect settings state
+  const [textEffectSettings, setTextEffectSettings] = useState<TextEffectSettings>({
+    enabled: true,
+    text: 'Hello World',
+    fontSize: 24,
+    fontWeight: 'normal',
+    lineHeight: 1.2,
+    letterSpacing: 0,
+    color: '#000000',
+    x: 0.5,
+    y: 0.5,
+    align: 'center'
+  });
+
+  // Add Snake effect settings state
+  const [snakeEffectSettings, setSnakeEffectSettings] = useState<SnakeEffectSettings>({
+    enabled: false,
+    gridSize: 20,
+    colorCount: 8,
+    cornerRadius: 5,
+    colorMode: 'grayscale',
+    padding: 4,
+    backgroundColor: '#ffffff',
+    outlineStyle: 'pixel',
+    shape: 'row'
+  });
+
+  // Export-related state
   const [exportScale, setExportScale] = useState(100);
   const [exporting, setExporting] = useState(false);
 
@@ -2299,371 +2369,55 @@ export default function AdvancedEditor({
       alert(`Export size too large for your browser/GPU. Max allowed: ${maxTextureSize}x${maxTextureSize}px. Exported at maximum possible size: ${finalWidth}x${finalHeight}px.`);
     }
   };
+
   // Export SVG with scale
   const handleExportSvg = () => {
     if (!canvasRef.current) return;
     exportCanvasAsSvg(canvasRef.current, exportScale / 100);
   };
 
-  // Add PolarPixel settings
-  const [polarPixelSettings, setPolarPixelSettings] = useState<PolarPixelSettings>({
-    enabled: false,
-    rings: 24,
-    segments: 48,
-    centerX: 0.5,
-    centerY: 0.5
-  });
-
-  // Add Pixel settings
-  const [pixelSettings, setPixelSettings] = useState<PixelEffectSettings>({
-    enabled: false,
-    mode: 'grid',
-    cellSize: 16,
-    rings: 24,
-    segments: 48,
-    centerX: 0.5,
-    centerY: 0.5,
-    variant: 'classic',
-    posterizeLevels: 4,
-    grayscaleLevels: 2
-  });
-
-  // Add this after the main component definition
-  function asciiArtFromImage(sourceCanvas: HTMLCanvasElement, width: number, height: number, settings: AsciiEffectSettings): string {
-    const { cellSize, charset } = settings;
-    const chars = charset.split("");
-    const charLen = chars.length;
-    const sourceCtx = sourceCanvas.getContext('2d');
-    if (!sourceCtx) return '';
-    const imageData = sourceCtx.getImageData(0, 0, width, height);
-    const data = imageData.data;
-    let lines: string[] = [];
-    for (let y = 0; y < height; y += cellSize) {
-      let line = '';
-      for (let x = 0; x < width; x += cellSize) {
-        let total = 0, count = 0;
-        for (let dy = 0; dy < cellSize; dy++) {
-          for (let dx = 0; dx < cellSize; dx++) {
-            const px = (x + dx) + (y + dy) * width;
-            if (px * 4 + 2 < data.length) {
-              const r = data[px * 4];
-              const g = data[px * 4 + 1];
-              const b = data[px * 4 + 2];
-              total += (r + g + b) / 3;
-              count++;
-            }
-          }
-        }
-        const avg = count > 0 ? total / count : 0;
-        const charIdx = Math.floor((avg / 255) * (charLen - 1));
-        const char = chars[charLen - 1 - charIdx] || ' ';
-        line += char;
+  // Helper function to manually trigger processing when effects change
+  const updateEffectsAndProcess = useCallback(() => {
+    // Use timeout to ensure state updates are complete before processing
+    setTimeout(() => {
+      if (image) {
+        processImage();
       }
-      lines.push(line);
-    }
-    return lines.join('\n');
-  }
+    }, 0);
+  }, [image, processImage]);
 
-  useEffect(() => {
-    function handleExportAsciiText() {
-      // Find the first enabled ascii effect instance
-      const asciiInstance = effectInstances.find(inst => inst.enabled && inst.type === 'ascii');
-      if (!asciiInstance) return;
-      const settings = instanceSettings[asciiInstance.id] as AsciiEffectSettings;
-      if (!canvasRef.current || !sourceCanvasRef.current) return;
-      const asciiText = asciiArtFromImage(sourceCanvasRef.current, canvasWidth, canvasHeight, settings);
-      const blob = new Blob([asciiText], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'ascii-art.txt';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }
-    window.addEventListener('export-ascii-text', handleExportAsciiText);
-    return () => window.removeEventListener('export-ascii-text', handleExportAsciiText);
-  }, [effectInstances, instanceSettings, canvasWidth, canvasHeight]);
+  // Update instance settings with processing
+  const updateInstanceSettingsWithProcess = useCallback((id: string, settings: any) => {
+    setInstanceSettings(prev => ({
+      ...prev,
+      [id]: {
+        ...prev[id],
+        ...settings
+      }
+    }));
+    updateEffectsAndProcess();
+  }, [updateEffectsAndProcess]);
 
-  const [textEffectSettings, setTextEffectSettings] = useState<TextEffectSettings>({
-    enabled: true, // Changed from false to true
-    text: 'Hello World', // Added default text
-    fontSize: 24,
-    fontWeight: 'normal',
-    lineHeight: 1.2,
-    letterSpacing: 0,
-    color: '#000000',
-    x: 0.5,
-    y: 0.5,
-    align: 'center'
-  });
+  // Function to toggle effect enabled state with processing
+  const toggleEffectEnabledWithProcess = useCallback((id: string, enabled: boolean) => {
+    setEffectInstances(prev => 
+      prev.map(instance => 
+        instance.id === id ? { ...instance, enabled } : instance
+      )
+    );
+    updateEffectsAndProcess();
+  }, [updateEffectsAndProcess]);
 
-  const getDefaultSettings = (type: string) => {
-    let defaultSettings: any = {};
-    switch (type) {
-      case 'color':
-        defaultSettings = {
-          enabled: true,
-          hueShift: 0,
-          saturation: 100,
-          brightness: 100,
-          contrast: 100,
-          posterize: 0,
-          invert: false,
-          glitchIntensity: 0,
-          glitchSeed: Math.random(),
-          blendMode: 'normal' as BlendMode
-        };
-        break;
-      case 'halftone':
-        defaultSettings = { ...halftoneSettings, enabled: true };
-        break;
-      case 'gradient':
-        defaultSettings = { ...gradientMapSettings, enabled: true };
-        break;
-      case 'threshold':
-        defaultSettings = { ...thresholdSettings, enabled: true };
-        break;
-      case 'grid':
-        defaultSettings = { ...gridSettings, enabled: true };
-        break;
-      case 'glitch':
-        defaultSettings = { ...glitchSettings, enabled: true };
-        break;
-      case 'blur':
-        defaultSettings = { ...blur, enabled: true };
-        break;
-      case 'mosaicShift':
-        defaultSettings = { 
-          ...mosaicShiftSettings, 
-          enabled: true,
-          seed: Math.random() * 1000 // Generate a new random seed for each new effect
-        };
-        break;
-      case 'sliceShift':
-        defaultSettings = { 
-          ...sliceShiftSettings, 
-          enabled: true,
-          seed: Math.random() * 1000 // Generate a new random seed for each new effect
-        };
-        break;
-      case 'posterize':
-        defaultSettings = { 
-          ...posterizeSettings, 
-          enabled: true
-        };
-        break;
-      case 'findEdges':
-        defaultSettings = { 
-          ...findEdgesSettings, 
-          enabled: true
-        };
-        break;
-      case 'blob':
-        defaultSettings = { 
-          ...blobSettings, 
-          enabled: true 
-        };
-        break;
-      case 'glow':
-        defaultSettings = {
-          enabled: true,
-          color: '#ffffff',
-          intensity: 50,
-          threshold: 128,
-          softness: 5,
-          blendMode: 'normal'
-        };
-        break;
-      case 'polarPixel':
-        defaultSettings = {
-          enabled: true,
-          rings: 24,
-          segments: 48,
-          centerX: 0.5,
-          centerY: 0.5
-        };
-        break;
-      case 'pixel':
-        defaultSettings = {
-          enabled: true,
-          mode: 'grid',
-          cellSize: 16,
-          rings: 24,
-          segments: 48,
-          centerX: 0.5,
-          centerY: 0.5
-        };
-        break;
-      case 'noise':
-        defaultSettings = {
-          enabled: true,
-          type: 'perlin',
-          intensity: 0.5,
-          scale: 0.1,
-          seed: 0,
-          blendMode: 'normal',
-        };
-        break;
-      case 'linocut':
-        defaultSettings = {
-          enabled: true,
-          scale: 12,
-          noiseScale: 0.06,
-          centerX: 0.5,
-          centerY: 0.5,
-          invert: false,
-          orientation: 'horizontal',
-          threshold: 0.5
-        };
-        break;
-      case 'levels':
-        defaultSettings = {
-          enabled: true,
-          black: 0,
-          gamma: 1.0,
-          white: 255
-        };
-        break;
-      case 'ascii':
-        defaultSettings = {
-          enabled: true,
-          cellSize: 8,
-          fontSize: 12,
-          charset: '@%#*+=-:. ',
-          backgroundColor: '#000000',
-          monochrome: true,
-          jitter: 0,
-          preset: 'Dense',
-          textColor: '#ffffff',
-          rotationMax: 0,
-          rotationMode: 'none'
-        };
-        break;
-      case 'text':
-        defaultSettings = {
-          enabled: true,
-          text: 'Hello World',
-          fontSize: 24,
-          fontWeight: 'normal',
-          lineHeight: 1.2,
-          letterSpacing: 0,
-          color: '#000000',
-          x: 0.5,
-          y: 0.5,
-          align: 'center'
-        };
-        break;
-      case 'lcd':
-        defaultSettings = {
-          enabled: true,
-          cellWidth: 3,
-          cellHeight: 3,
-          intensity: 1
-        };
-        break;
-      case 'snake':
-        defaultSettings = {
-          enabled: true,
-          gridSize: 20,
-          colorCount: 8,
-          cornerRadius: 5,
-          colorMode: 'grayscale',
-          padding: 4,
-          backgroundColor: '#ffffff',
-          outlineStyle: 'pixel',
-          shape: 'row'
-        };
-        break;
-      case 'threeD':
-        defaultSettings = {
-          enabled: true,
-          rotationX: 0,
-          rotationY: 0,
-          rotationZ: 0,
-          scale: 1,
-          backgroundColor: '#000000',
-          perspective: 45,
-          distance: 500
-        } as ThreeDEffectSettings;
-        break;
-      case 'shapegrid':
-        defaultSettings = {
-          enabled: true,
-          gridSize: 20,
-          threshold: 128,
-          colors: {
-            background: '#1a1a1a',
-            foreground: '#ffffff'
-          },
-          shapes: ['circle', 'square', 'triangle', 'cross', 'heart'],
-          mergeLevels: 3,
-          randomRotation: false
-        } as ShapeGridSettings;
-        break;
-      case 'truchet':
-        defaultSettings = {
-          enabled: true,
-          tileSize: 30,
-          tileTypes: ['quarter-circles', 'diagonal'],
-          colors: {
-            background: '#1a1a1a',
-            foreground: '#ffffff'
-          },
-          threshold: 128,  // Mid-point brightness threshold
-          patternDensity: 80,
-          lineWidth: 2
-        };
-        break;
-      default:
-        break;
-    }
-    return defaultSettings;
-  };
-
-  // Add Snake effect settings state
-  const [snakeEffectSettings, setSnakeEffectSettings] = useState<SnakeEffectSettings>({
-    enabled: false,
-    gridSize: 20,
-    colorCount: 8,
-    cornerRadius: 5,
-    colorMode: 'grayscale',
-    padding: 4,
-    backgroundColor: '#ffffff',
-    outlineStyle: 'pixel',
-    shape: 'row'
-  });
-
-  // Helper: get full default 3D settings
-  function getDefaultThreeDSettings(): ThreeDEffectSettings {
-    return {
-      enabled: true,
-      rotationX: 0,
-      rotationY: 0,
-      rotationZ: 0,
-      scale: 1,
-      backgroundColor: '#000000',
-      perspective: 45,
-      distance: 500
-    };
-  }
-
-  const defaultTruchetSettings: TruchetSettings = {
-    enabled: false,
-    tileSize: 30,
-    tileTypes: ['quarter-circles', 'diagonal'],
-    colors: {
-      background: '#1a1a1a',
-      foreground: '#ffffff'
-    },
-    threshold: 128,  // Mid-point brightness threshold
-    patternDensity: 80,
-    lineWidth: 2
-  };
-
-  // Truchet settings
-  const [truchetSettings, setTruchetSettings] = useState<TruchetSettings>(defaultTruchetSettings);
+  // Add this function to prepare crop data before showing crop UI
+  const handleCropImage = useCallback(() => {
+    if (!image || !originalImageDataRef) return;
+    setShouldGenerateCropData(true);
+    setShowCropEditor(true);
+    setTimeout(() => {
+      processImage();
+      setIsCropping(true);
+    }, 0);
+  }, [image, originalImageDataRef, processImage, setShouldGenerateCropData, setShowCropEditor, setIsCropping]);
 
   return (
     <div className="flex flex-col lg:flex-row gap-6">
@@ -2936,12 +2690,16 @@ export default function AdvancedEditor({
         </div>
       </div>
 
-      {isCropping && originalImageDataRef && canvasRef.current && (
+      {/* Show crop editor when active */}
+      {(showCropEditor || isCropping) && image && originalImageDataRef && (
         <CropEditor
           imageUrl={originalImageDataRef}
-          modifiedImageUrl={canvasRef.current.toDataURL()}
+          modifiedImageUrl={isCropping && canvasRef.current ? canvasRef.current.toDataURL() : image}
           onCropComplete={handleCropComplete}
-          onCancel={() => setIsCropping(false)}
+          onCancel={() => {
+            setShowCropEditor(false);
+            setIsCropping(false);
+          }}
         />
       )}
     </div>

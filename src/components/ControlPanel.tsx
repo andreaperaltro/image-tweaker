@@ -4,6 +4,7 @@ import React from 'react';
 import { ImageParams } from './ImageEditor';
 import { HalftoneArrangement, HalftoneShape } from '@/utils/imageUtils';
 import Slider from './Slider';
+import { DistortEffect } from './DistortEffect';
 
 interface ControlPanelProps {
   params: ImageParams;
@@ -297,6 +298,29 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ params, onChange }) => {
               ]}
             />
           </>
+        )}
+      </div>
+
+      {/* Distort Controls */}
+      <div className="p-4 bg-gray-50 rounded-lg">
+        <h3 className="text-lg font-semibold mb-4">Distort Effect</h3>
+        <Checkbox
+          label="Enable Distort"
+          checked={params.distortSettings.enabled}
+          onChange={(value) => 
+            onChange({ 
+              distortSettings: { 
+                ...params.distortSettings, 
+                enabled: value 
+              } 
+            })
+          }
+        />
+        {params.distortSettings.enabled && (
+          <DistortEffect
+            settings={params.distortSettings}
+            onChange={(settings) => onChange({ distortSettings: settings })}
+          />
         )}
       </div>
 
