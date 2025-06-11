@@ -14,7 +14,7 @@ import CropEditor from './CropEditor'
 import { GradientMapSettings, applyGradientMap, GradientMapBlendMode, GradientStop } from './GradientMapUtils'
 import { saveAs } from 'file-saver'
 import MobileControls from './MobileControls'
-import { BlurSettings } from '../types'
+import { BlurSettings, DistortSettings } from '../types'
 import { applyBlur } from './BlurUtils'
 import { EffectSettings, saveEffectSettings } from '../utils/EffectSettingsUtils'
 import { FiUpload, FiShuffle, FiTrash, FiRefreshCw, FiSave, FiFolder, FiImage, FiFileText, FiDownload, FiCrop } from 'react-icons/fi'
@@ -343,6 +343,14 @@ export default function AdvancedEditor({
     ditherAmount: 50
   });
 
+  // Add distort settings state
+  const [distortSettings, setDistortSettings] = useState<DistortSettings>({
+    enabled: false,
+    xAmount: 0,
+    yAmount: 0,
+    displacementMap: null
+  });
+
   // Find Edges settings
   const [findEdgesSettings, setFindEdgesSettings] = useState<FindEdgesSettings>({
     enabled: false,
@@ -663,6 +671,8 @@ export default function AdvancedEditor({
         return instanceSettings[instance.id];
       case 'snake':
         return instanceSettings[instance.id];
+      case 'distort':
+        return distortSettings;
       case 'shapegrid':
         return {
           enabled: true,
@@ -794,7 +804,7 @@ export default function AdvancedEditor({
           xAmount: 0,
           yAmount: 0,
           displacementMap: null
-        };
+        } as DistortSettings;
         break;
       case 'color':
         defaultSettings = {
