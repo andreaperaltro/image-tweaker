@@ -35,6 +35,11 @@ import { TruchetControls } from './TruchetControls';
 import { TruchetSettings } from './TruchetEffect';
 import { GiGearStickPattern } from 'react-icons/gi';
 import { MdWaves } from 'react-icons/md';
+import { MdApps } from 'react-icons/md';
+import { MdViewComfy } from 'react-icons/md';
+import { MdContentCut } from 'react-icons/md';
+import { MdPalette } from 'react-icons/md';
+import { MdRadar } from 'react-icons/md';
 // Add import for useDragAndDrop
 // import { useDragAndDrop } from 'react-use-dnd';
 
@@ -3441,7 +3446,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
     blur: <MdBlurOn />,
     color: <MdOutlineColorLens />,
     dither: <MdGrain />,
-    distort: <MdWaves />,  // Add distort icon
+    distort: <MdWaves />,
     findEdges: <MdFingerprint />,
     glitch: <MdSnowing />,
     glow: <FaRegSun />,
@@ -3454,9 +3459,16 @@ const MobileControls: React.FC<MobileControlsProps> = ({
     ascii: <MdEmojiSymbols />,
     lcd: <FiTv />,
     snake: <SnakeIcon />,
+    text: <MdOutlineTextFields />,
     threeD: <Md3dRotation />,
     shapegrid: <MdInterests />,
     truchet: <GiGearStickPattern />,
+    noise: <MdGrain />,
+    pixel: <MdApps />,
+    mosaicShift: <MdViewComfy />,
+    sliceShift: <MdContentCut />,
+    posterize: <MdPalette />,
+    polarPixel: <MdRadar />
   };
 
   return (
@@ -3485,10 +3497,12 @@ const MobileControls: React.FC<MobileControlsProps> = ({
             { label: 'LCD', type: 'lcd', desc: 'Simulate LCD/CRT subpixel patterns for a digital or retro display look.' },
             { label: 'Levels', type: 'levels', desc: 'Fine-tune image brightness, contrast, and color levels.' },
             { label: 'Linocut', type: 'linocut', desc: 'Create a linocut or woodcut print effect.' },
+            { label: 'Mosaic Shift', type: 'mosaicShift', desc: 'Create mosaic patterns with shifting tiles.' },
             { label: 'Noise', type: 'noise', desc: 'Add various types of noise patterns to your image.' },
             { label: 'Pixel', type: 'pixel', desc: 'Create pixel art effects with customizable grid sizes.' },
             { label: 'Shape Grid', type: 'shapegrid', desc: 'Fill a grid with various shapes based on image brightness.' },
             { label: 'Snake', type: 'snake', desc: 'Create a snake-like pattern that follows image contours.' },
+            { label: 'Text', type: 'text', desc: 'Add customizable text overlays with various fonts and styles.' },
             { label: 'Truchet', type: 'truchet', desc: 'Generate Truchet tile patterns based on your image.' }
           ].map(effect => (
             <button
