@@ -78,8 +78,11 @@ export type MosaicShiftSettings = {
   useBackgroundColor: boolean;
 };
 
-export interface DistortSettings {
+export interface BaseEffectSettings {
   enabled: boolean;
+}
+
+export interface DistortSettings extends BaseEffectSettings {
   xAmount: number;  // -500 to 500
   yAmount: number;  // -500 to 500
   displacementMap: string | null;  // Base64 string of the image or null
@@ -87,6 +90,11 @@ export interface DistortSettings {
   scale: number;  // Scale factor for the displacement map (0.1 to 2.0)
   offsetX: number;  // X position offset (-100 to 100)
   offsetY: number;  // Y position offset (-100 to 100)
+}
+
+export interface Effects {
+  distort: DistortSettings;
+  [key: string]: BaseEffectSettings;  // Allow other effects with at least the base settings
 }
 
 export interface EffectSettings {

@@ -49,6 +49,7 @@ import { applyThreeDEffect } from './ThreeDEffect';
 import { ThreeDEffectSettings } from '../types';
 import { applyShapeGridEffect, ShapeGridSettings } from './ShapeGridEffect';
 import { useTruchetEffect, TruchetSettings } from './TruchetEffect';
+import { Effects } from '../types';
 
 // Define types
 type AspectRatioPreset = '1:1' | '4:3' | '16:9' | '3:2' | '5:4' | '2:1' | '3:4' | '9:16' | '2:3' | '4:5' | '1:2' | 'custom';
@@ -348,7 +349,11 @@ export default function AdvancedEditor({
     enabled: false,
     xAmount: 0,
     yAmount: 0,
-    displacementMap: null
+    displacementMap: null,
+    preserveAspectRatio: true,
+    scale: 1.0,
+    offsetX: 0,
+    offsetY: 0
   });
 
   // Find Edges settings
@@ -2522,22 +2527,41 @@ export default function AdvancedEditor({
   }, [image, originalImageDataRef, processImage, setShouldGenerateCropData, setShowCropEditor, setIsCropping]);
 
   const resetEffect = (effectType: keyof Effects) => {
-    setEffects(prev => ({
-      ...prev,
-      [effectType]: effectType === 'distort' ? {
-        enabled: false,
-        xAmount: 0,
-        yAmount: 0,
-        displacementMap: null,
-        preserveAspectRatio: true,
-        scale: 1.0,
-        offsetX: 0,
-        offsetY: 0
-      } : {
-        enabled: false
+    setEffects((prev: Effects) => {
+      const newEffects = { ...prev };
+      if (effectType === 'distort') {
+        newEffects[effectType] = {
+          enabled: false,
+          xAmount: 0,
+          yAmount: 0,
+          displacementMap: null,
+          preserveAspectRatio: true,
+          scale: 1.0,
+          offsetX: 0,
+          offsetY: 0
+        };
+      } else {
+        newEffects[effectType] = {
+          enabled: false
+        };
       }
-    }));
+      return newEffects;
+    });
   };
+
+  const [effects, setEffects] = useState<Effects>({
+    distort: {
+      enabled: false,
+      xAmount: 0,
+      yAmount: 0,
+      displacementMap: null,
+      preserveAspectRatio: true,
+      scale: 1.0,
+      offsetX: 0,
+      offsetY: 0
+    },
+    // ... other effects
+  });
 
   return (
     <div className="flex flex-col lg:flex-row gap-6">
