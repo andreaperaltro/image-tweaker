@@ -5,35 +5,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.6.1] - 2025-06-06
+## [0.6.1] - 2024-05-16
 
 ### Added
-- Enhanced Distort effect with new displacement map controls:
-  - Added aspect ratio preservation toggle
-  - Added scale control (0.1x to 2.0x)
-  - Added X and Y position controls for precise placement
-  - Added masking feature that shows original image with distorted overlay
-  - Improved mobile interface with all new displacement map controls
+- Reset functionality to all sliders, allowing users to return to the initial value of each control
+- Reset button (↺) added to slider UI with hover effects
 
 ### Changed
-- Improved displacement map handling with better aspect ratio control
-- Enhanced distortion visualization with original image visible in background
-- Updated mobile controls to match desktop functionality
+- Enhanced slider component to remember and restore initial values
+- Improved slider UI with better button placement and styling
 
-## [0.6.0] - 2025-06-01
+## [0.6.0] - Initial Release
 
-### Fixed
-- Fixed 3D effect not showing the transformed image
-- Improved 3D transformation stability and reliability
-- Added robust error handling for edge cases in 3D transformations
-- Fixed perspective transform initialization and point mapping
-- Added safeguards against invalid transformation values
-
-### Changed
-- Enhanced 3D effect with better value clamping for more stable transformations
-- Improved perspective projection with proper focal length calculations
-- Added fallback to show original image if transformation fails
-- Better handling of extreme rotation and perspective values
+### Added
+- Multiple image effects including:
+  - Color adjustments
+  - Posterize
+  - Find Edges
+  - Dithering
+  - Halftone
+  - Linocut
+  - Glitch
+  - Threshold
+  - Gradient Map
+  - Grid
+  - Mosaic Shift
+  - Slice Shift
+  - Blur
+  - Blob Effect
+  - 3D Transform
+  - ASCII Art
+  - Text Effect
+- Export options (PNG, SVG, Video)
+- Animation support
+- User-friendly interface
+- Dark/light theme support
 
 ## [0.5.9] - 2025-05-31
 

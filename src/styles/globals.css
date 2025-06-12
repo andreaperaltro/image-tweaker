@@ -1,0 +1,15 @@
+.reset-button {
+  font-size: 1rem;
+  line-height: 1;
+  padding: 2px 4px;
+  border-radius: 4px;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  opacity: 0.7;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.reset-button:hover {
+  opacity: 1;
+} 
