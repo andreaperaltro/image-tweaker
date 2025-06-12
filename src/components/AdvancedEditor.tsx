@@ -50,6 +50,7 @@ import { ThreeDEffectSettings } from '../types';
 import { applyShapeGridEffect, ShapeGridSettings } from './ShapeGridEffect';
 import { useTruchetEffect, TruchetSettings } from './TruchetEffect';
 import { Effects } from '../types';
+import { addPngMetadata } from '../utils/PngMetadata';
 
 // Define types
 type AspectRatioPreset = '1:1' | '4:3' | '16:9' | '3:2' | '5:4' | '2:1' | '3:4' | '9:16' | '2:3' | '4:5' | '1:2' | 'custom';
@@ -130,7 +131,7 @@ export default function AdvancedEditor({
 }: AdvancedEditorProps) {
   // Canvas and image states
   const [image, setImage] = useState<string | null>(null);
-  const [originalImageDataRef, setOriginalImageDataRef] = useState<string | null>(null);
+  const originalImageDataRef = useRef<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [processing, setProcessing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -433,7 +434,7 @@ export default function AdvancedEditor({
   
   // Preload image when originalImageDataRef changes
   useEffect(() => {
-    if (!originalImageDataRef) return;
+    if (!originalImageDataRef.current) return;
     
     setImageLoading(true);
     
@@ -447,12 +448,12 @@ export default function AdvancedEditor({
         processImage();
       });
     };
-    img.src = originalImageDataRef;
+    img.src = originalImageDataRef.current;
   }, [originalImageDataRef]);
   
   // Define processImage
   const processImage = useCallback(async () => {
-    if (!canvasRef.current || !sourceCanvasRef.current || !originalImageDataRef || isProcessingRef.current) {
+    if (!canvasRef.current || !sourceCanvasRef.current || !originalImageDataRef.current || isProcessingRef.current) {
       return;
     }
     
@@ -488,7 +489,7 @@ export default function AdvancedEditor({
         await new Promise((resolve, reject) => {
           img.onload = resolve;
           img.onerror = reject;
-          img.src = originalImageDataRef || image || '';
+          img.src = originalImageDataRef.current || image || '';
         });
 
         // Draw original image to source canvas
@@ -1106,7 +1107,7 @@ export default function AdvancedEditor({
       setCanvasHeight(img.height);
       
       // Set the new original image (without effects)
-      setOriginalImageDataRef(croppedOriginal);
+      originalImageDataRef.current = croppedOriginal;
       
       // Set the new image (this will trigger processImage)
       setImage(croppedOriginal);
@@ -1114,7 +1115,7 @@ export default function AdvancedEditor({
       setShowCropEditor(false);
     };
     img.src = croppedModified; // Use modified image dimensions
-  }, [setCanvasWidth, setCanvasHeight, setOriginalImageDataRef, setImage, setIsCropping, setShowCropEditor]);
+  }, [setCanvasWidth, setCanvasHeight, setImage, setIsCropping, setShowCropEditor]);
 
   const resetAllEffects = () => {
     // Reset all effect settings to default
@@ -1397,7 +1398,7 @@ export default function AdvancedEditor({
               setAspectRatio('custom');
               
               // Set the original image data
-              setOriginalImageDataRef(imageData);
+              originalImageDataRef.current = imageData;
               
               // Set the image which will trigger processing
               setImage(imageData);
@@ -1464,7 +1465,7 @@ export default function AdvancedEditor({
             currentImageUrlRef.current = null;
             
             // Set the original image data
-            setOriginalImageDataRef(imageData);
+            originalImageDataRef.current = imageData;
             
             // Set the image which will trigger processing
             setImage(imageData);
@@ -1827,7 +1828,7 @@ export default function AdvancedEditor({
               const activeEffects = settings.effectInstances.filter(instance => instance.enabled);
               
               // Reset canvas first
-              if (originalImageDataRef && canvasRef.current) {
+              if (originalImageDataRef.current && canvasRef.current) {
                 const ctx = canvasRef.current.getContext('2d');
                 const sourceCtx = sourceCanvasRef.current?.getContext('2d');
                 
@@ -1854,7 +1855,11 @@ export default function AdvancedEditor({
                       ctx.drawImage(sourceCanvasRef.current!, 0, 0);
                       resolve();
                     };
-                    img.src = originalImageDataRef;
+                    if (originalImageDataRef.current) { // Add this check
+                      img.src = originalImageDataRef.current;
+                    } else {
+                      resolve(); // Resolve if no image data to prevent infinite loading
+                    }
                   });
                 }
               }
@@ -2193,7 +2198,7 @@ export default function AdvancedEditor({
       const ctx = canvasRef.current.getContext('2d', { willReadFrequently: true });
       const sourceCtx = sourceCanvasRef.current.getContext('2d', { willReadFrequently: true });
       
-      if (ctx && sourceCtx && originalImageDataRef) {
+      if (ctx && sourceCtx && originalImageDataRef.current) {
         // Clear canvases
         ctx.clearRect(0, 0, canvasWidth, canvasHeight);
         sourceCtx.clearRect(0, 0, canvasWidth, canvasHeight);
@@ -2225,7 +2230,7 @@ export default function AdvancedEditor({
         };
         
         // Use the cached image if possible, otherwise create and cache a new one
-        if (imageInstanceRef.current && originalImageDataRef === imageInstanceRef.current.src) {
+        if (imageInstanceRef.current && originalImageDataRef.current === imageInstanceRef.current.src) {
           // Use the cached image
           processWithImage(imageInstanceRef.current);
         } else {
@@ -2235,7 +2240,7 @@ export default function AdvancedEditor({
             imageInstanceRef.current = img;
             processWithImage(img);
           };
-          img.src = originalImageDataRef;
+          img.src = originalImageDataRef.current;
         }
       }
     } else {
@@ -2427,53 +2432,178 @@ export default function AdvancedEditor({
   const finalHeight = Math.round(canvasHeight * finalScale);
   const isClamped = finalScale < requestedScale;
 
-  // Export PNG with scale
+  // New helper function to apply effects to a canvas at original image resolution for export
+  const applyEffectsToCanvasForExport = useCallback(async (
+    imageDataUrl: string,
+    effectInstances: EffectInstance[],
+    getInstanceSettings: (instance: EffectInstance) => any,
+    applyEffectDirectly: (
+      effectType: string,
+      ctx: CanvasRenderingContext2D,
+      targetCanvas: HTMLCanvasElement,
+      sourceCanvas: HTMLCanvasElement,
+      settings: any
+    ) => Promise<void>
+  ): Promise<HTMLCanvasElement> => {
+    const originalImage = new Image();
+    await new Promise<void>((resolve, reject) => {
+      originalImage.onload = () => resolve();
+      originalImage.onerror = reject;
+      originalImage.src = imageDataUrl;
+    });
+
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = originalImage.naturalWidth;
+    tempCanvas.height = originalImage.naturalHeight;
+    const ctx = tempCanvas.getContext('2d', { willReadFrequently: true });
+
+    if (!ctx) {
+      throw new Error('Could not get canvas context for export');
+    }
+
+    const offscreenSourceCanvas = document.createElement('canvas');
+    offscreenSourceCanvas.width = originalImage.naturalWidth;
+    offscreenSourceCanvas.height = originalImage.naturalHeight;
+    const offscreenSourceCtx = offscreenSourceCanvas.getContext('2d', { willReadFrequently: true });
+
+    if (!offscreenSourceCtx) {
+      throw new Error('Could not get offscreen canvas context for export');
+    }
+
+    offscreenSourceCtx.drawImage(originalImage, 0, 0, originalImage.naturalWidth, originalImage.naturalHeight);
+
+    const enabledEffects = effectInstances.filter(instance => instance.enabled);
+
+    if (enabledEffects.length === 0) {
+      ctx.drawImage(originalImage, 0, 0);
+      return tempCanvas;
+    }
+
+    const MAX_EFFECTS = 10;
+    const effectsToProcess = enabledEffects.slice(0, MAX_EFFECTS);
+
+    if (effectsToProcess.length === 1) {
+      const instance = effectsToProcess[0];
+      const settings = getInstanceSettings(instance);
+      await applyEffectDirectly(instance.type, offscreenSourceCtx, offscreenSourceCanvas, offscreenSourceCanvas, settings);
+      ctx.drawImage(offscreenSourceCanvas, 0, 0);
+    } else {
+      const tempCanvas1 = document.createElement('canvas');
+      tempCanvas1.width = originalImage.naturalWidth;
+      tempCanvas1.height = originalImage.naturalHeight;
+      const tempCtx1 = tempCanvas1.getContext('2d', { willReadFrequently: true });
+
+      const tempCanvas2 = document.createElement('canvas');
+      tempCanvas2.width = originalImage.naturalWidth;
+      tempCanvas2.height = originalImage.naturalHeight;
+      const tempCtx2 = tempCanvas2.getContext('2d', { willReadFrequently: true });
+
+      if (!tempCtx1 || !tempCtx2) {
+        ctx.drawImage(offscreenSourceCanvas, 0, 0);
+      } else {
+        tempCtx1.drawImage(offscreenSourceCanvas, 0, 0);
+
+        for (const instance of effectsToProcess) {
+          const settings = getInstanceSettings(instance);
+          const isLast = instance === effectsToProcess[effectsToProcess.length - 1];
+
+          const srcCanvas = effectsToProcess.indexOf(instance) % 2 === 0 ? tempCanvas1 : tempCanvas2;
+          const destCanvas = effectsToProcess.indexOf(instance) % 2 === 0 ? tempCanvas2 : tempCanvas1;
+          const destCtx = effectsToProcess.indexOf(instance) % 2 === 0 ? tempCtx2 : tempCtx1;
+
+          if (!isLast) {
+            destCtx.clearRect(0, 0, originalImage.naturalWidth, originalImage.naturalHeight);
+            destCtx.drawImage(srcCanvas, 0, 0);
+            try {
+              await applyEffectDirectly(instance.type, destCtx, destCanvas, srcCanvas, settings);
+            } catch (err) {
+              console.error(`Error processing effect ${instance.type} for export:`, err);
+              destCtx.clearRect(0, 0, originalImage.naturalWidth, originalImage.naturalHeight);
+              destCtx.drawImage(srcCanvas, 0, 0);
+            }
+          } else {
+            ctx.clearRect(0, 0, originalImage.naturalWidth, originalImage.naturalHeight);
+            ctx.drawImage(srcCanvas, 0, 0);
+            try {
+              await applyEffectDirectly(instance.type, ctx, tempCanvas, srcCanvas, settings);
+            } catch (err) {
+              console.error(`Error processing final effect ${instance.type} for export:`, err);
+              ctx.clearRect(0, 0, originalImage.naturalWidth, originalImage.naturalHeight);
+              ctx.drawImage(srcCanvas, 0, 0);
+            }
+          }
+        }
+      }
+    }
+    return tempCanvas;
+  }, [effectInstances, getInstanceSettings, applyEffectDirectly]);
+
   const handleExportPng = async () => {
-    if (!canvasRef.current) return;
+    if (!originalImageDataRef.current) {
+      alert('Please upload an image first.');
+      return;
+    }
     setExporting(true);
-    const scale = finalScale;
     const now = new Date();
     const timestamp = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}-${String(now.getMinutes()).padStart(2, '0')}-${String(now.getSeconds()).padStart(2, '0')}`;
     const filename = `imagetweaker-${timestamp}.png`;
 
-    let outputCanvas = canvasRef.current;
+    let finalExportCanvas: HTMLCanvasElement;
 
-    if (scale !== 1) {
-      const targetWidth = Math.round(canvasWidth * scale);
-      const targetHeight = Math.round(canvasHeight * scale);
-      const tempCanvas = document.createElement('canvas');
-      tempCanvas.width = targetWidth;
-      tempCanvas.height = targetHeight;
-      const ctx = tempCanvas.getContext('2d');
-      if (ctx) {
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
-        ctx.drawImage(canvasRef.current, 0, 0, tempCanvas.width, tempCanvas.height);
-      }
-      outputCanvas = tempCanvas;
-    } else {
-      // 1x, just use the original canvas
-      const tempCanvas = document.createElement('canvas');
-      tempCanvas.width = canvasWidth;
-      tempCanvas.height = canvasHeight;
-      const ctx = tempCanvas.getContext('2d');
-      if (ctx) {
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
-        ctx.drawImage(canvasRef.current, 0, 0, tempCanvas.width, tempCanvas.height);
-      }
-      outputCanvas = tempCanvas;
-    }
+    try {
+      // Generate the high-resolution canvas with all effects applied
+      const processedHighResCanvas = await applyEffectsToCanvasForExport(
+        originalImageDataRef.current,
+        effectInstances,
+        getInstanceSettings,
+        applyEffectDirectly
+      );
 
-    outputCanvas.toBlob((blob) => {
-      if (blob) {
-        saveAs(blob, filename);
+      // Apply final scaling if needed
+      if (finalScale !== 1) {
+        const targetWidth = Math.round(processedHighResCanvas.width * finalScale);
+        const targetHeight = Math.round(processedHighResCanvas.height * finalScale);
+        const scaledCanvas = document.createElement('canvas');
+        scaledCanvas.width = targetWidth;
+        scaledCanvas.height = targetHeight;
+        const ctx = scaledCanvas.getContext('2d');
+        if (ctx) {
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(processedHighResCanvas, 0, 0, targetWidth, targetHeight);
+        }
+        finalExportCanvas = scaledCanvas;
+      } else {
+        // No scaling needed, use the processed high-res canvas directly
+        finalExportCanvas = processedHighResCanvas;
       }
+
+      finalExportCanvas.toBlob(async (blob) => {
+        if (blob) {
+          // Add metadata to the PNG using the existing utility
+          const metadata = {
+            'Software': 'ImageTweaker v0.2.0',
+            'Author': 'ImageTweaker realized by andreaperato.com',
+            'Website': 'https://image-tweaker.vercel.app/'
+          };
+          try {
+            const metaBlob = await addPngMetadata(blob, metadata);
+            saveAs(metaBlob, filename);
+          } catch (metaError) {
+            console.error('Error adding metadata during export:', metaError);
+            saveAs(blob, filename); // Fallback to saving without metadata
+          }
+        }
+        setExporting(false);
+      }, 'image/png');
+
+      if (isClamped) {
+        alert(`Export size too large for your browser/GPU. Max allowed: ${maxTextureSize}x${maxTextureSize}px. Exported at maximum possible size.`);
+      }
+    } catch (error) {
+      console.error('Error during PNG export:', error);
       setExporting(false);
-    }, 'image/png');
-    
-    if (isClamped) {
-      alert(`Export size too large for your browser/GPU. Max allowed: ${maxTextureSize}x${maxTextureSize}px. Exported at maximum possible size: ${finalWidth}x${finalHeight}px.`);
+      alert('Failed to export image. Please check the console for details.');
     }
   };
 
@@ -2517,14 +2647,14 @@ export default function AdvancedEditor({
 
   // Add this function to prepare crop data before showing crop UI
   const handleCropImage = useCallback(() => {
-    if (!image || !originalImageDataRef) return;
+    if (!image || !originalImageDataRef.current) return;
     setShouldGenerateCropData(true);
     setShowCropEditor(true);
     setTimeout(() => {
       processImage();
       setIsCropping(true);
     }, 0);
-  }, [image, originalImageDataRef, processImage, setShouldGenerateCropData, setShowCropEditor, setIsCropping]);
+  }, [image, processImage, setShouldGenerateCropData, setShowCropEditor, setIsCropping]);
 
   const resetEffect = (effectType: keyof Effects) => {
     setEffects((prev: Effects) => {
@@ -2597,8 +2727,7 @@ export default function AdvancedEditor({
                 <button
                   onClick={() => {
                     setImage(null);
-                    setOriginalImageDataRef(null);
-                    currentImageUrlRef.current = null; // Reset the URL reference
+                    originalImageDataRef.current = null; // Reset the URL reference
                   }}
                   className="px-2 py-1 bg-[var(--topbar-bg)] text-[var(--text-primary)] text-xs rounded hover:bg-[var(--secondary-bg)] transition-colors pp-mondwest-font flex items-center gap-1 min-w-fit"
                 >
@@ -2721,8 +2850,7 @@ export default function AdvancedEditor({
             removeEffect={removeEffect}
             onResetImage={() => {
               setImage(null);
-              setOriginalImageDataRef(null);
-              currentImageUrlRef.current = null;
+              originalImageDataRef.current = null;
             }}
             onExportPng={() => canvasRef.current && exportCanvasAsPng(canvasRef.current)}
             onExportSvg={() => canvasRef.current && exportCanvasAsSvg(canvasRef.current)}
@@ -2835,9 +2963,9 @@ export default function AdvancedEditor({
       </div>
 
       {/* Show crop editor when active */}
-      {(showCropEditor || isCropping) && image && originalImageDataRef && (
+      {(showCropEditor || isCropping) && image && originalImageDataRef.current && (
         <CropEditor
-          imageUrl={originalImageDataRef}
+          imageUrl={originalImageDataRef.current}
           modifiedImageUrl={isCropping && canvasRef.current ? canvasRef.current.toDataURL() : image}
           onCropComplete={handleCropComplete}
           onCancel={() => {
