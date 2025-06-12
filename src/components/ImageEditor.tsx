@@ -7,6 +7,7 @@ import ControlPanel from './ControlPanel';
 import ImageCanvas from './ImageCanvas';
 import { HalftoneArrangement, HalftoneShape } from '@/utils/imageUtils';
 import { exportCanvasAsSvg } from './ExportUtils';
+import { DistortSettings } from '../types';
 
 // Default parameters for image manipulation, derived from the original code
 const defaultParams = {
@@ -55,8 +56,12 @@ const defaultParams = {
     enabled: false,
     xAmount: 0,
     yAmount: 0,
-    displacementMap: null
-  },
+    displacementMap: null,
+    preserveAspectRatio: true,
+    scale: 1.0,
+    offsetX: 0,
+    offsetY: 0
+  } as DistortSettings,
   
   // Halftone options
   halftoneEnabled: false,

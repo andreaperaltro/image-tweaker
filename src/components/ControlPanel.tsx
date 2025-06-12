@@ -5,13 +5,16 @@ import { ImageParams } from './ImageEditor';
 import { HalftoneArrangement, HalftoneShape } from '@/utils/imageUtils';
 import Slider from './Slider';
 import { DistortEffect } from './DistortEffect';
+import { DistortSettings } from '../types';
 
 interface ControlPanelProps {
   params: ImageParams;
   onChange: (newParams: Partial<ImageParams>) => void;
 }
 
-const ControlPanel: React.FC<ControlPanelProps> = ({ params, onChange }) => {
+const ControlPanel: React.FC<ControlPanelProps> = (props) => {
+  const { params, onChange } = props;
+
   // Helper function to create a color picker control
   const ColorPicker = ({
     label,
