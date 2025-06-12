@@ -521,7 +521,11 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                       reader.onload = () => {
                         updateInstanceSettings(instance.id, {
                           ...settings,
-                          displacementMap: reader.result
+                          displacementMap: reader.result as string,
+                          preserveAspectRatio: true,
+                          scale: 1.0,
+                          offsetX: 0,
+                          offsetY: 0
                         });
                       };
                       reader.readAsDataURL(file);
@@ -530,38 +534,96 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 />
               </div>
             </div>
-            <div className="mobile-control-group">
-              <Slider
-                label="X Distortion"
-                value={settings.xAmount || 0}
-                onChange={(value) => {
-                  updateInstanceSettings(instance.id, {
+
+            <Slider
+              label="X Distortion"
+              value={settings.xAmount || 0}
+              onChange={(value) => {
+                updateInstanceSettings(instance.id, {
+                  ...settings,
+                  xAmount: value
+                });
+              }}
+              min={-500}
+              max={500}
+              step={1}
+              showValue={true}
+            />
+
+            <Slider
+              label="Y Distortion"
+              value={settings.yAmount || 0}
+              onChange={(value) => {
+                updateInstanceSettings(instance.id, {
+                  ...settings,
+                  yAmount: value
+                });
+              }}
+              min={-500}
+              max={500}
+              step={1}
+              showValue={true}
+            />
+
+            {settings.displacementMap && (
+              <>
+                <div className="border-t border-[var(--border-color)] my-2"></div>
+                
+                <div className="mobile-control-group">
+                  <label className="mobile-control-label">Preserve Aspect Ratio</label>
+                  <label className="mobile-effect-toggle">
+                    <input 
+                      type="checkbox" 
+                      checked={settings.preserveAspectRatio}
+                      onChange={(e) => updateInstanceSettings(instance.id, {
+                        ...settings,
+                        preserveAspectRatio: e.target.checked
+                      })}
+                    />
+                    <span className="mobile-effect-toggle-slider"></span>
+                  </label>
+                </div>
+
+                <Slider
+                  label="Scale"
+                  value={settings.scale}
+                  onChange={(value) => updateInstanceSettings(instance.id, {
                     ...settings,
-                    xAmount: value
-                  });
-                }}
-                min={-500}
-                max={500}
-                step={1}
-                showValue={true}
-              />
-            </div>
-            <div className="mobile-control-group">
-              <Slider
-                label="Y Distortion"
-                value={settings.yAmount || 0}
-                onChange={(value) => {
-                  updateInstanceSettings(instance.id, {
+                    scale: value
+                  })}
+                  min={0.1}
+                  max={2.0}
+                  step={0.1}
+                  showValue={true}
+                />
+
+                <Slider
+                  label="X Position"
+                  value={settings.offsetX}
+                  onChange={(value) => updateInstanceSettings(instance.id, {
                     ...settings,
-                    yAmount: value
-                  });
-                }}
-                min={-500}
-                max={500}
-                step={1}
-                showValue={true}
-              />
-            </div>
+                    offsetX: value
+                  })}
+                  min={-100}
+                  max={100}
+                  step={1}
+                  showValue={true}
+                />
+
+                <Slider
+                  label="Y Position"
+                  value={settings.offsetY}
+                  onChange={(value) => updateInstanceSettings(instance.id, {
+                    ...settings,
+                    offsetY: value
+                  })}
+                  min={-100}
+                  max={100}
+                  step={1}
+                  showValue={true}
+                />
+              </>
+            )}
           </div>
         );
       
@@ -3132,7 +3194,12 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                       const reader = new FileReader();
                       reader.onload = () => {
                         updateInstanceSettings(instance.id, {
-                          displacementMap: reader.result as string
+                          ...settings,
+                          displacementMap: reader.result as string,
+                          preserveAspectRatio: true,
+                          scale: 1.0,
+                          offsetX: 0,
+                          offsetY: 0
                         });
                       };
                       reader.readAsDataURL(file);
@@ -3171,6 +3238,66 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               step={1}
               showValue={true}
             />
+
+            {settings.displacementMap && (
+              <>
+                <div className="border-t border-[var(--border-color)] my-2"></div>
+                
+                <div className="mobile-control-group">
+                  <label className="mobile-control-label">Preserve Aspect Ratio</label>
+                  <label className="mobile-effect-toggle">
+                    <input 
+                      type="checkbox" 
+                      checked={settings.preserveAspectRatio}
+                      onChange={(e) => updateInstanceSettings(instance.id, {
+                        ...settings,
+                        preserveAspectRatio: e.target.checked
+                      })}
+                    />
+                    <span className="mobile-effect-toggle-slider"></span>
+                  </label>
+                </div>
+
+                <Slider
+                  label="Scale"
+                  value={settings.scale}
+                  onChange={(value) => updateInstanceSettings(instance.id, {
+                    ...settings,
+                    scale: value
+                  })}
+                  min={0.1}
+                  max={2.0}
+                  step={0.1}
+                  showValue={true}
+                />
+
+                <Slider
+                  label="X Position"
+                  value={settings.offsetX}
+                  onChange={(value) => updateInstanceSettings(instance.id, {
+                    ...settings,
+                    offsetX: value
+                  })}
+                  min={-100}
+                  max={100}
+                  step={1}
+                  showValue={true}
+                />
+
+                <Slider
+                  label="Y Position"
+                  value={settings.offsetY}
+                  onChange={(value) => updateInstanceSettings(instance.id, {
+                    ...settings,
+                    offsetY: value
+                  })}
+                  min={-100}
+                  max={100}
+                  step={1}
+                  showValue={true}
+                />
+              </>
+            )}
           </div>
         );
 

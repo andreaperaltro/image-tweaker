@@ -2,6 +2,7 @@ import React, { useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import Slider from './Slider';
 import { DistortSettings } from '../types';
+import Checkbox from './Checkbox';
 
 interface DistortEffectProps {
   settings: DistortSettings;
@@ -17,7 +18,11 @@ export const DistortEffect: React.FC<DistortEffectProps> = ({ settings, onChange
       reader.onload = () => {
         onChange({
           ...settings,
-          displacementMap: null
+          displacementMap: reader.result as string,
+          preserveAspectRatio: true, // Default to preserving aspect ratio
+          scale: 1.0, // Default scale
+          offsetX: 0, // Default X offset
+          offsetY: 0  // Default Y offset
         });
       };
       
@@ -81,6 +86,48 @@ export const DistortEffect: React.FC<DistortEffectProps> = ({ settings, onChange
           step={1}
           showValue={true}
         />
+
+        {settings.displacementMap && (
+          <>
+            <div className="border-t border-[var(--border-color)] my-2"></div>
+            
+            <Checkbox
+              label="Preserve Aspect Ratio"
+              checked={settings.preserveAspectRatio}
+              onChange={(value) => onChange({ ...settings, preserveAspectRatio: value })}
+            />
+
+            <Slider
+              label="Scale"
+              value={settings.scale}
+              onChange={(value) => onChange({ ...settings, scale: value })}
+              min={0.1}
+              max={2.0}
+              step={0.1}
+              showValue={true}
+            />
+
+            <Slider
+              label="X Position"
+              value={settings.offsetX}
+              onChange={(value) => onChange({ ...settings, offsetX: value })}
+              min={-100}
+              max={100}
+              step={1}
+              showValue={true}
+            />
+
+            <Slider
+              label="Y Position"
+              value={settings.offsetY}
+              onChange={(value) => onChange({ ...settings, offsetY: value })}
+              min={-100}
+              max={100}
+              step={1}
+              showValue={true}
+            />
+          </>
+        )}
       </div>
     </div>
   );

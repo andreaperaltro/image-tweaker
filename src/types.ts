@@ -82,7 +82,11 @@ export interface DistortSettings {
   enabled: boolean;
   xAmount: number;  // -500 to 500
   yAmount: number;  // -500 to 500
-  displacementMap: null;  // Changed from string | null to just null to match the expected type
+  displacementMap: string | null;  // Base64 string of the image or null
+  preserveAspectRatio: boolean;  // Whether to preserve aspect ratio or stretch
+  scale: number;  // Scale factor for the displacement map (0.1 to 2.0)
+  offsetX: number;  // X position offset (-100 to 100)
+  offsetY: number;  // Y position offset (-100 to 100)
 }
 
 export interface EffectSettings {

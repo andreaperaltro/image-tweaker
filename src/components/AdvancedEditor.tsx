@@ -1927,46 +1927,105 @@ export default function AdvancedEditor({
               const tempCtx = tempCanvas.getContext('2d');
               
               if (tempCtx) {
-                // Draw and process the displacement map
-                tempCtx.drawImage(displacementImage, 0, 0, targetCanvas.width, targetCanvas.height);
+                // Clear the temporary canvas
+                tempCtx.clearRect(0, 0, targetCanvas.width, targetCanvas.height);
+
+                let drawWidth, drawHeight, x, y;
+
+                if (settings.preserveAspectRatio) {
+                  // Calculate dimensions to maintain aspect ratio
+                  const aspectRatio = displacementImage.width / displacementImage.height;
+                  drawWidth = targetCanvas.width * settings.scale;
+                  drawHeight = drawWidth / aspectRatio;
+
+                  // Adjust if height is too big
+                  if (drawHeight > targetCanvas.height * settings.scale) {
+                    drawHeight = targetCanvas.height * settings.scale;
+                    drawWidth = drawHeight * aspectRatio;
+                  }
+                } else {
+                  // Stretch to fill, considering scale
+                  drawWidth = targetCanvas.width * settings.scale;
+                  drawHeight = targetCanvas.height * settings.scale;
+                }
+
+                // Calculate base centered position
+                x = (targetCanvas.width - drawWidth) / 2;
+                y = (targetCanvas.height - drawHeight) / 2;
+
+                // Apply offset (convert from -100/100 range to actual pixels)
+                x += (settings.offsetX / 100) * targetCanvas.width;
+                y += (settings.offsetY / 100) * targetCanvas.height;
+                
+                // Draw the displacement map with all transformations
+                tempCtx.drawImage(displacementImage, x, y, drawWidth, drawHeight);
+                
                 const displacementData = tempCtx.getImageData(0, 0, targetCanvas.width, targetCanvas.height).data;
                 
                 // Get the source image data
                 const imageData = ctx.getImageData(0, 0, targetCanvas.width, targetCanvas.height);
                 const data = imageData.data;
                 const newData = new Uint8ClampedArray(data.length);
-                
-                // Apply displacement
-                for (let y = 0; y < targetCanvas.height; y++) {
-                  for (let x = 0; x < targetCanvas.width; x++) {
-                    const i = (y * targetCanvas.width + x) * 4;
-                    
-                    // Get displacement values from red and green channels
-                    const dx = (displacementData[i] / 255 - 0.5) * (settings.xAmount * 5); // Scale up by 5x to match -500/500 range
-                    const dy = (displacementData[i + 1] / 255 - 0.5) * (settings.yAmount * 5); // Scale up by 5x to match -500/500 range
-                    
-                    // Calculate source position
-                    const sx = Math.round(x + dx);
-                    const sy = Math.round(y + dy);
-                    
-                    // Check bounds
-                    if (sx >= 0 && sx < targetCanvas.width && sy >= 0 && sy < targetCanvas.height) {
-                      const srcI = (sy * targetCanvas.width + sx) * 4;
-                      newData[i] = data[srcI];
-                      newData[i + 1] = data[srcI + 1];
-                      newData[i + 2] = data[srcI + 2];
-                      newData[i + 3] = data[srcI + 3];
+
+                // First, copy the original image data
+                for (let i = 0; i < data.length; i++) {
+                  newData[i] = data[i];
+                }
+
+                // Create a temporary canvas for the displaced pixels
+                const overlayCanvas = document.createElement('canvas');
+                overlayCanvas.width = targetCanvas.width;
+                overlayCanvas.height = targetCanvas.height;
+                const overlayCtx = overlayCanvas.getContext('2d');
+
+                if (overlayCtx) {
+                  const overlayData = new Uint8ClampedArray(data.length);
+
+                  // Process each pixel for the overlay
+                  for (let i = 0; i < data.length; i += 4) {
+                    const x = (i / 4) % targetCanvas.width;
+                    const y = Math.floor((i / 4) / targetCanvas.width);
+
+                    // Get displacement values from red and green channels (normalized to -1 to 1)
+                    const dx = ((displacementData[i] / 255) * 2 - 1) * settings.xAmount;
+                    const dy = ((displacementData[i + 1] / 255) * 2 - 1) * settings.yAmount;
+
+                    // Calculate displacement intensity (0 to 1) based on grayscale value
+                    const intensity = (displacementData[i] + displacementData[i + 1] + displacementData[i + 2]) / (255 * 3);
+
+                    // Calculate source position with displacement
+                    const sourceX = Math.round(x + dx);
+                    const sourceY = Math.round(y + dy);
+
+                    // Get source pixel index
+                    const sourceIndex = (sourceY * targetCanvas.width + sourceX) * 4;
+
+                    // Only copy displaced pixels if there's significant displacement
+                    if (intensity > 0.05) { // Threshold to determine what's considered "non-zero"
+                      // Copy the displaced pixel to overlay
+                      overlayData[i] = data[sourceIndex] || data[i];
+                      overlayData[i + 1] = data[sourceIndex + 1] || data[i + 1];
+                      overlayData[i + 2] = data[sourceIndex + 2] || data[i + 2];
+                      overlayData[i + 3] = Math.min(255, intensity * 255 * 2); // Make the overlay semi-transparent based on intensity
                     } else {
-                      // Use original pixel if out of bounds
-                      newData[i] = data[i];
-                      newData[i + 1] = data[i + 1];
-                      newData[i + 2] = data[i + 2];
-                      newData[i + 3] = data[i + 3];
+                      // For areas with no displacement, make them transparent
+                      overlayData[i] = 0;
+                      overlayData[i + 1] = 0;
+                      overlayData[i + 2] = 0;
+                      overlayData[i + 3] = 0;
                     }
                   }
+
+                  // Put the overlay on its canvas
+                  overlayCtx.putImageData(new ImageData(overlayData, targetCanvas.width, targetCanvas.height), 0, 0);
+
+                  // Draw original image first
+                  ctx.putImageData(imageData, 0, 0);
+                  
+                  // Then draw the overlay on top with 'source-over' blending
+                  ctx.globalCompositeOperation = 'source-over';
+                  ctx.drawImage(overlayCanvas, 0, 0);
                 }
-                
-                ctx.putImageData(new ImageData(newData, targetCanvas.width, targetCanvas.height), 0, 0);
               }
             }
           };
@@ -2461,6 +2520,24 @@ export default function AdvancedEditor({
       setIsCropping(true);
     }, 0);
   }, [image, originalImageDataRef, processImage, setShouldGenerateCropData, setShowCropEditor, setIsCropping]);
+
+  const resetEffect = (effectType: keyof Effects) => {
+    setEffects(prev => ({
+      ...prev,
+      [effectType]: effectType === 'distort' ? {
+        enabled: false,
+        xAmount: 0,
+        yAmount: 0,
+        displacementMap: null,
+        preserveAspectRatio: true,
+        scale: 1.0,
+        offsetX: 0,
+        offsetY: 0
+      } : {
+        enabled: false
+      }
+    }));
+  };
 
   return (
     <div className="flex flex-col lg:flex-row gap-6">

@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.1] - 2025-06-06
+
+### Added
+- Enhanced Distort effect with new displacement map controls:
+  - Added aspect ratio preservation toggle
+  - Added scale control (0.1x to 2.0x)
+  - Added X and Y position controls for precise placement
+  - Added masking feature that shows original image with distorted overlay
+  - Improved mobile interface with all new displacement map controls
+
+### Changed
+- Improved displacement map handling with better aspect ratio control
+- Enhanced distortion visualization with original image visible in background
+- Updated mobile controls to match desktop functionality
+
 ## [0.6.0] - 2025-06-01
 
 ### Fixed
