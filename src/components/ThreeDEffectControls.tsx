@@ -26,6 +26,7 @@ export const ThreeDEffectControls: React.FC<ThreeDEffectControlsProps> = ({ sett
           step={1}
           unit="°"
           onChange={(value: number) => handleChange('rotationX', value)}
+          defaultValue={0}
         />
       </div>
       <div className="mobile-control-group">
@@ -37,6 +38,7 @@ export const ThreeDEffectControls: React.FC<ThreeDEffectControlsProps> = ({ sett
           step={1}
           unit="°"
           onChange={(value: number) => handleChange('rotationY', value)}
+          defaultValue={0}
         />
       </div>
       <div className="mobile-control-group">
@@ -48,6 +50,7 @@ export const ThreeDEffectControls: React.FC<ThreeDEffectControlsProps> = ({ sett
           step={1}
           unit="°"
           onChange={(value: number) => handleChange('rotationZ', value)}
+          defaultValue={0}
         />
       </div>
       <div className="mobile-control-group">
@@ -59,6 +62,7 @@ export const ThreeDEffectControls: React.FC<ThreeDEffectControlsProps> = ({ sett
           step={0.01}
           unit="x"
           onChange={(value: number) => handleChange('scale', value)}
+          defaultValue={1}
         />
       </div>
       <div className="mobile-control-group">
@@ -70,6 +74,7 @@ export const ThreeDEffectControls: React.FC<ThreeDEffectControlsProps> = ({ sett
           step={1}
           unit="°"
           onChange={(value: number) => handleChange('perspective', value)}
+          defaultValue={45}
         />
       </div>
       <div className="mobile-control-group">
@@ -81,6 +86,7 @@ export const ThreeDEffectControls: React.FC<ThreeDEffectControlsProps> = ({ sett
           step={10}
           unit=""
           onChange={(value: number) => handleChange('distance', value)}
+          defaultValue={500}
         />
       </div>
       <div className="mobile-control-group">

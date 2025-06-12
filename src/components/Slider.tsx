@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef } from 'react';
 
 interface SliderProps {
   label: string;
@@ -10,6 +10,7 @@ interface SliderProps {
   unit?: string;
   showValue?: boolean;
   hideLabelContainer?: boolean;
+  defaultValue?: number;
 }
 
 const Slider: React.FC<SliderProps> = ({
@@ -21,17 +22,11 @@ const Slider: React.FC<SliderProps> = ({
   step = 1,
   unit = '',
   showValue = true,
-  hideLabelContainer = false
+  hideLabelContainer = false,
+  defaultValue
 }) => {
-  // Store the initial value when the component mounts
-  const initialValueRef = useRef<number>(value);
-
-  // Update the initial value if it changes (this usually won't happen)
-  useEffect(() => {
-    if (initialValueRef.current === undefined) {
-      initialValueRef.current = value;
-    }
-  }, []);
+  // Store the initial value when the component mounts, or use defaultValue if provided
+  const initialValueRef = useRef<number>(defaultValue ?? value ?? min);
 
   // Use a safe value for calculations
   const safeValue = value === undefined || value === null ? min : value;
