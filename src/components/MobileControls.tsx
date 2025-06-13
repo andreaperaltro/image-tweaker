@@ -702,40 +702,143 @@ const MobileControls: React.FC<MobileControlsProps> = ({
             <div className="mobile-control-group">
               <label className="mobile-control-label">Blur Type</label>
               <select
-                className="mobile-select-box"
-                value={settings.blurType}
-                onChange={(e) => updateInstanceSettings(instance.id, { blurType: e.target.value })}
+                className="mobile-select"
+                value={settings.type}
+                onChange={(e) => updateInstanceSettings(instance.id, { type: e.target.value })}
               >
                 <option value="gaussian">Gaussian</option>
                 <option value="box">Box</option>
-                <option value="zoom">Zoom</option>
+                <option value="radial">Radial</option>
                 <option value="motion">Motion</option>
-                <option value="average">Average</option>
+                <option value="tiltshift">Tilt Shift</option>
+                <option value="spin">Spin</option>
               </select>
             </div>
-            {settings.blurType !== 'average' && (
+            {settings.type !== 'tiltshift' && (
               <Slider
-                label="Amount"
-                value={settings.amount}
-                onChange={(value) => updateInstanceSettings(instance.id, { amount: value })}
+                label="Radius"
+                value={settings.radius}
+                onChange={(value) => updateInstanceSettings(instance.id, { radius: value })}
                 min={0}
-                max={settings.blurType === 'motion' ? 360 : 50}
-                step={settings.blurType === 'motion' ? 1 : 0.1}
+                max={settings.type === 'motion' ? 360 : 50}
+                step={settings.type === 'motion' ? 1 : 0.1}
                 showValue={true}
-                defaultValue={0} // Default value for Amount
+                defaultValue={0}
               />
             )}
-            {settings.blurType === 'motion' && (
+            {(settings.type === 'radial' || settings.type === 'spin') && (
+              <>
+                <Slider
+                  label="Center X"
+                  value={settings.centerX || 50}
+                  onChange={(value) => updateInstanceSettings(instance.id, { centerX: value })}
+                  min={0}
+                  max={100}
+                  step={1}
+                  showValue={true}
+                  defaultValue={50}
+                />
+                <Slider
+                  label="Center Y"
+                  value={settings.centerY || 50}
+                  onChange={(value) => updateInstanceSettings(instance.id, { centerY: value })}
+                  min={0}
+                  max={100}
+                  step={1}
+                  showValue={true}
+                  defaultValue={50}
+                />
+              </>
+            )}
+            {settings.type === 'spin' && (
+              <>
+                <Slider
+                  label="Center Radius"
+                  value={settings.centerRadius || 0}
+                  onChange={(value) => updateInstanceSettings(instance.id, { centerRadius: value })}
+                  min={0}
+                  max={100}
+                  step={1}
+                  showValue={true}
+                  defaultValue={0}
+                />
+                <Slider
+                  label="Center Gradient"
+                  value={settings.centerGradient || 0}
+                  onChange={(value) => updateInstanceSettings(instance.id, { centerGradient: value })}
+                  min={0}
+                  max={100}
+                  step={1}
+                  showValue={true}
+                  defaultValue={0}
+                />
+              </>
+            )}
+            {settings.type === 'motion' && (
               <Slider
                 label="Angle"
-                value={settings.angle}
+                value={settings.angle || 0}
                 onChange={(value) => updateInstanceSettings(instance.id, { angle: value })}
                 min={0}
                 max={360}
                 step={1}
                 showValue={true}
-                defaultValue={0} // Default value for Angle
+                defaultValue={0}
               />
+            )}
+            {settings.type === 'tiltshift' && (
+              <>
+                <Slider
+                  label="Radius"
+                  value={settings.radius}
+                  onChange={(value) => updateInstanceSettings(instance.id, { radius: value })}
+                  min={0}
+                  max={50}
+                  step={0.1}
+                  showValue={true}
+                  defaultValue={0}
+                />
+                <Slider
+                  label="Focus Position"
+                  value={settings.focusPosition || 50}
+                  onChange={(value) => updateInstanceSettings(instance.id, { focusPosition: value })}
+                  min={0}
+                  max={100}
+                  step={1}
+                  showValue={true}
+                  defaultValue={50}
+                />
+                <Slider
+                  label="Focus Width"
+                  value={settings.focusWidth || 25}
+                  onChange={(value) => updateInstanceSettings(instance.id, { focusWidth: value })}
+                  min={0}
+                  max={100}
+                  step={1}
+                  showValue={true}
+                  defaultValue={25}
+                />
+                <Slider
+                  label="Gradient"
+                  value={settings.gradient || 12.5}
+                  onChange={(value) => updateInstanceSettings(instance.id, { gradient: value })}
+                  min={0}
+                  max={100}
+                  step={0.5}
+                  showValue={true}
+                  defaultValue={12.5}
+                />
+                <Slider
+                  label="Angle"
+                  value={settings.angle || 0}
+                  onChange={(value) => updateInstanceSettings(instance.id, { angle: value })}
+                  min={0}
+                  max={360}
+                  step={1}
+                  showValue={true}
+                  defaultValue={0}
+                />
+              </>
             )}
           </div>
         );

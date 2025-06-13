@@ -1038,6 +1038,21 @@ export default function AdvancedEditor({
           lightColor: '#FFFFFF'
         };
         break;
+      case 'blur':
+        defaultSettings = {
+          enabled: true,
+          type: 'gaussian',
+          radius: 5,
+          angle: 0,
+          centerX: 50,
+          centerY: 50,
+          centerRadius: 0,
+          centerGradient: 0,
+          focusPosition: 50,
+          focusWidth: 25,
+          gradient: 12.5
+        };
+        break;
       default:
         break;
     }
