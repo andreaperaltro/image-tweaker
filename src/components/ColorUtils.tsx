@@ -154,11 +154,25 @@ export function applyColorAdjustments(
     h = (h + settings.hueShift) % 360;
     if (h < 0) h += 360;
     
-    // Apply saturation adjustment
-    s = Math.min(100, Math.max(0, s * (settings.saturation / 100)));
+    // Apply saturation adjustment (100 is neutral)
+    if (settings.saturation !== 100) {
+      const saturationFactor = settings.saturation / 100;
+      // Make the effect more dramatic by using a non-linear scale
+      const adjustedSaturation = saturationFactor < 1 
+        ? s * saturationFactor 
+        : s + (100 - s) * ((saturationFactor - 1) / 2);
+      s = Math.min(100, Math.max(0, adjustedSaturation));
+    }
     
-    // Apply brightness adjustment
-    l = Math.min(100, Math.max(0, l * (settings.brightness / 100)));
+    // Apply brightness adjustment (100 is neutral)
+    if (settings.brightness !== 100) {
+      const brightnessFactor = settings.brightness / 100;
+      // Make the effect more dramatic by using a non-linear scale
+      const adjustedBrightness = brightnessFactor < 1
+        ? l * brightnessFactor
+        : l + (100 - l) * ((brightnessFactor - 1) / 2);
+      l = Math.min(100, Math.max(0, adjustedBrightness));
+    }
     
     // Convert back to RGB
     const rgb = hslToRgb(h, s, l);
@@ -166,11 +180,18 @@ export function applyColorAdjustments(
     g = rgb.g;
     b = rgb.b;
     
-    // Apply contrast adjustment
-    const factor = (259 * (settings.contrast + 255)) / (255 * (259 - settings.contrast));
-    r = Math.min(255, Math.max(0, Math.round(factor * (r - 128) + 128)));
-    g = Math.min(255, Math.max(0, Math.round(factor * (g - 128) + 128)));
-    b = Math.min(255, Math.max(0, Math.round(factor * (b - 128) + 128)));
+    // Apply contrast adjustment (100 is neutral)
+    if (settings.contrast !== 100) {
+      // Normalize contrast to -1 to 1 range for more dramatic effect
+      const normalizedContrast = (settings.contrast - 100) / 100;
+      const factor = normalizedContrast >= 0
+        ? (1 + normalizedContrast * 3) // More dramatic increase
+        : 1 / (1 - normalizedContrast); // More dramatic decrease
+      
+      r = Math.min(255, Math.max(0, Math.round(128 + (r - 128) * factor)));
+      g = Math.min(255, Math.max(0, Math.round(128 + (g - 128) * factor)));
+      b = Math.min(255, Math.max(0, Math.round(128 + (b - 128) * factor)));
+    }
     
     // Apply posterization (color quantization)
     if (settings.posterize > 0) {

@@ -814,11 +814,16 @@ export default function AdvancedEditor({
         break;
       case 'color':
         defaultSettings = {
+          enabled: true,
           brightness: 100,
           contrast: 100,
           saturation: 100,
           hueShift: 0,
-          invert: false
+          invert: false,
+          posterize: 0,
+          glitchIntensity: 0,
+          glitchSeed: Math.random(),
+          blendMode: 'normal'
         };
         break;
       case 'halftone':
@@ -2047,14 +2052,14 @@ export default function AdvancedEditor({
           if (settings.enabled) {
             const colorSettings: ColorSettings = {
               enabled: true,
-              hueShift: Number(settings.hueShift) || 0,
-              saturation: Number(settings.saturation) || 100,
-              brightness: Number(settings.brightness) || 100,
-              contrast: Number(settings.contrast) || 100,
-              posterize: Number(settings.posterize) || 0,
+              hueShift: settings.hueShift !== undefined ? Number(settings.hueShift) : 0,
+              saturation: settings.saturation !== undefined ? Number(settings.saturation) : 100,
+              brightness: settings.brightness !== undefined ? Number(settings.brightness) : 100,
+              contrast: settings.contrast !== undefined ? Number(settings.contrast) : 100,
+              posterize: settings.posterize !== undefined ? Number(settings.posterize) : 0,
               invert: Boolean(settings.invert),
-              glitchIntensity: Number(settings.glitchIntensity) || 0,
-              glitchSeed: settings.glitchSeed || Math.random(),
+              glitchIntensity: settings.glitchIntensity !== undefined ? Number(settings.glitchIntensity) : 0,
+              glitchSeed: settings.glitchSeed !== undefined ? Number(settings.glitchSeed) : Math.random(),
               blendMode: settings.blendMode || 'normal'
             };
             applyColorAdjustments(ctx, targetCanvas.width, targetCanvas.height, colorSettings);

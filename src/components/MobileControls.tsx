@@ -646,7 +646,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               value={settings.brightness}
               onChange={(value) => updateInstanceSettings(instance.id, { brightness: value })}
               min={0}
-              max={200}
+              max={300}
               step={1}
               unit="%"
               defaultValue={100} // Default value for Brightness
@@ -656,7 +656,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               value={settings.contrast}
               onChange={(value) => updateInstanceSettings(instance.id, { contrast: value })}
               min={0}
-              max={200}
+              max={300}
               step={1}
               unit="%"
               defaultValue={100} // Default value for Contrast
@@ -666,7 +666,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               value={settings.saturation}
               onChange={(value) => updateInstanceSettings(instance.id, { saturation: value })}
               min={0}
-              max={200}
+              max={300}
               step={1}
               unit="%"
               defaultValue={100} // Default value for Saturation
