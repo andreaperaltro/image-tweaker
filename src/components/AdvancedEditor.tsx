@@ -226,14 +226,22 @@ export default function AdvancedEditor({
     enabled: false,
     mode: 'solid',
     threshold: 128,
-    // Solid colors
     darkColor: '#000000',
     lightColor: '#FFFFFF',
-    // Gradient colors
     darkColorStart: '#000000',
-    darkColorEnd: '#000066',
-    lightColorStart: '#FFFFFF',
-    lightColorEnd: '#FFFF66'
+    darkColorEnd: '#404040',
+    lightColorStart: '#BFBFBF',
+    lightColorEnd: '#FFFFFF',
+    darkStops: [
+      { position: 0, color: '#000000' },
+      { position: 100, color: '#404040' }
+    ],
+    lightStops: [
+      { position: 0, color: '#BFBFBF' },
+      { position: 100, color: '#FFFFFF' }
+    ],
+    darkGradientAngle: 0,
+    lightGradientAngle: 0
   });
 
   // Gradient map settings
@@ -931,9 +939,11 @@ export default function AdvancedEditor({
       case 'levels':
         defaultSettings = {
           enabled: true,
-          black: 0,
+          inputBlack: 0,
+          inputWhite: 255,
           gamma: 1.0,
-          white: 255
+          outputBlack: 0,
+          outputWhite: 255
         };
         break;
       case 'ascii':
@@ -1216,9 +1226,19 @@ export default function AdvancedEditor({
       darkColor: '#000000',
       lightColor: '#FFFFFF',
       darkColorStart: '#000000',
-      darkColorEnd: '#000066',
-      lightColorStart: '#FFFFFF',
-      lightColorEnd: '#FFFF66'
+      darkColorEnd: '#404040',
+      lightColorStart: '#BFBFBF',
+      lightColorEnd: '#FFFFFF',
+      darkStops: [
+        { position: 0, color: '#000000' },
+        { position: 100, color: '#404040' }
+      ],
+      lightStops: [
+        { position: 0, color: '#BFBFBF' },
+        { position: 100, color: '#FFFFFF' }
+      ],
+      darkGradientAngle: 0,
+      lightGradientAngle: 0
     });
     
     setGradientMapSettings({

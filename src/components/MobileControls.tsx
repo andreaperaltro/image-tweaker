@@ -6,7 +6,7 @@ import './MobileControls.css'
 import { DitherSettings, DitherColorMode, DitherType } from './DitherUtils'
 import { HalftoneSettings, HalftoneShape, HalftoneArrangement } from './Halftone'
 import { ColorSettings } from './ColorUtils'
-import { ThresholdSettings } from './ThresholdUtils'
+import { ThresholdSettings, ThresholdStop } from './ThresholdUtils'
 import { GlitchSettings } from './GlitchUtils'
 import { GradientMapSettings, GradientMapBlendMode, GradientStop } from './GradientMapUtils'
 import { GridSettings } from './Grid'
@@ -105,7 +105,7 @@ const useDebounce = (callback: (...args: any[]) => void, delay: number) => {
 };
 
 // Helper function to create CSS gradient from stops
-const getGradientPreviewStyle = (stops: GradientStop[]) => {
+const getGradientPreviewStyle = (stops: GradientStop[] | ThresholdStop[]): string => {
   if (!stops || stops.length < 2) return 'linear-gradient(to right, #000000, #ffffff)';
   
   const sortedStops = [...stops].sort((a, b) => a.position - b.position);
@@ -999,6 +999,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 <option value="gradient">Gradient</option>
               </select>
             </div>
+
             <Slider
               label="Threshold"
               value={settings.threshold}
@@ -1006,10 +1007,10 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               min={0}
               max={255}
               step={1}
-              defaultValue={128} // Default value for Threshold
+              defaultValue={128}
             />
-            
-            {settings.mode === 'solid' && (
+
+            {settings.mode === 'solid' ? (
               <>
                 <div className="mobile-control-group">
                   <label className="mobile-control-label">Dark Color</label>
@@ -1031,48 +1032,204 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                   />
                 </div>
               </>
-            )}
-            
-            {settings.mode === 'gradient' && (
+            ) : (
               <>
-                <div className="mobile-control-group">
-                  <label className="mobile-control-label">Dark Color Start</label>
-                  <input 
-                    type="color" 
-                    className="mobile-color-picker"
-                    value={settings.darkColorStart}
-                    onChange={(e) => updateInstanceSettings(instance.id, { darkColorStart: e.target.value })}
-                  />
+                {/* Dark Area Gradient */}
+                <div className="mobile-control-group mb-2">
+                  <label className="mobile-control-label">Dark Area Gradient</label>
+                  <div 
+                    className="w-full h-12 rounded border border-[var(--border-color)] mt-1 shadow-inner" 
+                    style={{
+                      background: getGradientPreviewStyle(settings.darkStops)
+                    }}
+                  ></div>
                 </div>
+
+                <Slider
+                  label="Dark Gradient Angle"
+                  value={settings.darkGradientAngle}
+                  onChange={(value) => updateInstanceSettings(instance.id, { darkGradientAngle: value })}
+                  min={0}
+                  max={360}
+                  step={1}
+                  defaultValue={0}
+                  unit="°"
+                />
                 
-                <div className="mobile-control-group">
-                  <label className="mobile-control-label">Dark Color End</label>
-                  <input 
-                    type="color" 
-                    className="mobile-color-picker"
-                    value={settings.darkColorEnd}
-                    onChange={(e) => updateInstanceSettings(instance.id, { darkColorEnd: e.target.value })}
-                  />
+                {/* Render dark gradient stops */}
+                {settings.darkStops.map((stop: ThresholdStop, index: number) => (
+                  <div key={`dark-stop-${index}`} className="mobile-control-group">
+                    <div className="flex items-center gap-2 w-full">
+                      <input 
+                        type="color" 
+                        className="mobile-color-picker"
+                        style={{ width: '32px', minWidth: '32px', height: '32px' }}
+                        value={stop.color}
+                        onChange={(e) => {
+                          const newStops = [...settings.darkStops];
+                          newStops[index] = { ...stop, color: e.target.value };
+                          updateInstanceSettings(instance.id, { darkStops: newStops });
+                        }}
+                      />
+                      <input
+                        type="range"
+                        className="flex-grow"
+                        min="0"
+                        max="100"
+                        value={stop.position}
+                        onChange={(e) => {
+                          const newPosition = parseInt(e.target.value);
+                          const newStops = [...settings.darkStops];
+                          newStops[index] = { ...stop, position: newPosition };
+                          updateInstanceSettings(instance.id, { darkStops: newStops });
+                        }}
+                      />
+                      <span className="text-xs text-[var(--text-secondary)] w-10 text-right">{stop.position}%</span>
+                      {settings.darkStops.length > 2 && (
+                        <button 
+                          className="slider-button"
+                          onClick={() => {
+                            const newStops = settings.darkStops.filter((_: ThresholdStop, i: number) => i !== index);
+                            updateInstanceSettings(instance.id, { darkStops: newStops });
+                          }}
+                          aria-label="Remove color stop"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+
+                {/* Add new dark stop button */}
+                <div className="mobile-control-group mt-3">
+                  <button 
+                    className="mobile-action-button w-full"
+                    onClick={() => {
+                      const sortedStops = [...settings.darkStops].sort((a, b) => a.position - b.position);
+                      let newPosition = 50;
+                      
+                      if (sortedStops.length >= 2) {
+                        let maxGap = 0;
+                        let gapPosition = 0;
+                        
+                        for (let i = 0; i < sortedStops.length - 1; i++) {
+                          const gap = sortedStops[i + 1].position - sortedStops[i].position;
+                          if (gap > maxGap) {
+                            maxGap = gap;
+                            gapPosition = sortedStops[i].position + gap / 2;
+                          }
+                        }
+                        
+                        newPosition = Math.round(gapPosition);
+                      }
+                      
+                      const randomColor = `#${Math.floor(Math.random()*16777215).toString(16).padStart(6, '0')}`;
+                      const newStops = [...settings.darkStops, { position: newPosition, color: randomColor }];
+                      updateInstanceSettings(instance.id, { darkStops: newStops });
+                    }}
+                  >
+                    + Add Dark Color Stop
+                  </button>
                 </div>
-                
-                <div className="mobile-control-group">
-                  <label className="mobile-control-label">Light Color Start</label>
-                  <input 
-                    type="color" 
-                    className="mobile-color-picker"
-                    value={settings.lightColorStart}
-                    onChange={(e) => updateInstanceSettings(instance.id, { lightColorStart: e.target.value })}
-                  />
+
+                {/* Light Area Gradient */}
+                <div className="mobile-control-group mb-2 mt-6">
+                  <label className="mobile-control-label">Light Area Gradient</label>
+                  <div 
+                    className="w-full h-12 rounded border border-[var(--border-color)] mt-1 shadow-inner" 
+                    style={{
+                      background: getGradientPreviewStyle(settings.lightStops)
+                    }}
+                  ></div>
                 </div>
+
+                <Slider
+                  label="Light Gradient Angle"
+                  value={settings.lightGradientAngle}
+                  onChange={(value) => updateInstanceSettings(instance.id, { lightGradientAngle: value })}
+                  min={0}
+                  max={360}
+                  step={1}
+                  defaultValue={0}
+                  unit="°"
+                />
                 
-                <div className="mobile-control-group">
-                  <label className="mobile-control-label">Light Color End</label>
-                  <input 
-                    type="color" 
-                    className="mobile-color-picker"
-                    value={settings.lightColorEnd}
-                    onChange={(e) => updateInstanceSettings(instance.id, { lightColorEnd: e.target.value })}
-                  />
+                {/* Render light gradient stops */}
+                {settings.lightStops.map((stop: ThresholdStop, index: number) => (
+                  <div key={`light-stop-${index}`} className="mobile-control-group">
+                    <div className="flex items-center gap-2 w-full">
+                      <input 
+                        type="color" 
+                        className="mobile-color-picker"
+                        style={{ width: '32px', minWidth: '32px', height: '32px' }}
+                        value={stop.color}
+                        onChange={(e) => {
+                          const newStops = [...settings.lightStops];
+                          newStops[index] = { ...stop, color: e.target.value };
+                          updateInstanceSettings(instance.id, { lightStops: newStops });
+                        }}
+                      />
+                      <input
+                        type="range"
+                        className="flex-grow"
+                        min="0"
+                        max="100"
+                        value={stop.position}
+                        onChange={(e) => {
+                          const newPosition = parseInt(e.target.value);
+                          const newStops = [...settings.lightStops];
+                          newStops[index] = { ...stop, position: newPosition };
+                          updateInstanceSettings(instance.id, { lightStops: newStops });
+                        }}
+                      />
+                      <span className="text-xs text-[var(--text-secondary)] w-10 text-right">{stop.position}%</span>
+                      {settings.lightStops.length > 2 && (
+                        <button 
+                          className="slider-button"
+                          onClick={() => {
+                            const newStops = settings.lightStops.filter((_: ThresholdStop, i: number) => i !== index);
+                            updateInstanceSettings(instance.id, { lightStops: newStops });
+                          }}
+                          aria-label="Remove color stop"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+
+                {/* Add new light stop button */}
+                <div className="mobile-control-group mt-3">
+                  <button 
+                    className="mobile-action-button w-full"
+                    onClick={() => {
+                      const sortedStops = [...settings.lightStops].sort((a, b) => a.position - b.position);
+                      let newPosition = 50;
+                      
+                      if (sortedStops.length >= 2) {
+                        let maxGap = 0;
+                        let gapPosition = 0;
+                        
+                        for (let i = 0; i < sortedStops.length - 1; i++) {
+                          const gap = sortedStops[i + 1].position - sortedStops[i].position;
+                          if (gap > maxGap) {
+                            maxGap = gap;
+                            gapPosition = sortedStops[i].position + gap / 2;
+                          }
+                        }
+                        
+                        newPosition = Math.round(gapPosition);
+                      }
+                      
+                      const randomColor = `#${Math.floor(Math.random()*16777215).toString(16).padStart(6, '0')}`;
+                      const newStops = [...settings.lightStops, { position: newPosition, color: randomColor }];
+                      updateInstanceSettings(instance.id, { lightStops: newStops });
+                    }}
+                  >
+                    + Add Light Color Stop
+                  </button>
                 </div>
               </>
             )}
@@ -2008,30 +2165,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
       case 'sliceShift':
         return (
           <div className={`mobile-effect-content ${openSection === instance.id ? 'open' : ''}`}>
-            {/* Slice Shift controls */}
-            <Slider
-              label="Number of Slices"
-              value={settings.slices}
-              onChange={(value) => updateInstanceSettings(instance.id, { slices: value })}
-              min={5}
-              max={100}
-              step={1}
-              defaultValue={10} // Default value for Number of Slices
-            />
-            
-            <div className="mobile-control-group">
-              <label className="mobile-control-label">Direction</label>
-              <select 
-                className="mobile-select"
-                value={settings.direction}
-                onChange={(e) => updateInstanceSettings(instance.id, { direction: e.target.value })}
-              >
-                <option value="vertical">Vertical Slices</option>
-                <option value="horizontal">Horizontal Slices</option>
-                <option value="both">Both Directions</option>
-              </select>
-            </div>
-            
+            {/* Primary Controls - Always visible */}
             <div className="mobile-control-group">
               <label className="mobile-control-label">Effect Mode</label>
               <select 
@@ -2046,7 +2180,58 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 <option value="repeat">Repeat Slices</option>
               </select>
             </div>
+
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Direction</label>
+              <select 
+                className="mobile-select"
+                value={settings.direction}
+                onChange={(e) => updateInstanceSettings(instance.id, { direction: e.target.value })}
+              >
+                <option value="vertical">Vertical Slices</option>
+                <option value="horizontal">Horizontal Slices</option>
+                <option value="both">Both Directions</option>
+              </select>
+            </div>
             
+            <Slider
+              label="Number of Slices"
+              value={settings.slices}
+              onChange={(value) => updateInstanceSettings(instance.id, { slices: value })}
+              min={2}
+              max={100}
+              step={1}
+              defaultValue={10}
+            />
+
+            {/* Mode-specific controls */}
+            {settings.mode !== 'rearrange' && settings.mode !== 'repeat' && (
+              <>
+                <Slider
+                  label="Max Offset"
+                  value={settings.maxOffset}
+                  onChange={(value) => updateInstanceSettings(instance.id, { maxOffset: value })}
+                  min={0}
+                  max={200}
+                  step={1}
+                  unit="px"
+                  defaultValue={20}
+                />
+
+                <Slider
+                  label="Intensity"
+                  value={settings.intensity}
+                  onChange={(value) => updateInstanceSettings(instance.id, { intensity: value })}
+                  min={0}
+                  max={100}
+                  step={1}
+                  unit="%"
+                  defaultValue={50}
+                />
+              </>
+            )}
+
+            {/* Rearrange mode specific controls */}
             {settings.mode === 'rearrange' && (
               <div className="mobile-control-group">
                 <label className="mobile-control-label">Rearrange Pattern</label>
@@ -2057,64 +2242,13 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 >
                   <option value="random">Random</option>
                   <option value="reverse">Reverse</option>
-                  <option value="alternate">Alternate (even/odd)</option>
+                  <option value="alternate">Alternate</option>
                   <option value="shuffle">Shuffle</option>
                 </select>
               </div>
             )}
-            
-            {(settings.mode === 'random' || settings.mode === 'alternating' || settings.mode === 'wave') && (
-              <Slider
-                label="Max Offset"
-                value={settings.maxOffset}
-                onChange={(value) => updateInstanceSettings(instance.id, { maxOffset: value })}
-                min={0}
-                max={100}
-                step={1}
-                unit="px"
-                defaultValue={10} // Default value for Max Offset
-              />
-            )}
-            
-            {/* Only show intensity slider for modes where it applies */}
-            {(settings.mode === 'random' || settings.mode === 'alternating' || settings.mode === 'wave') && (
-              <Slider
-                label="Intensity"
-                value={settings.intensity}
-                onChange={(value) => updateInstanceSettings(instance.id, { intensity: value })}
-                min={0}
-                max={100}
-                step={1}
-                unit="%"
-                defaultValue={50} // Default value for Intensity
-              />
-            )}
-            
-            <div className="mobile-control-group">
-              <label className="mobile-control-label">Edge Feathering</label>
-              <label className="mobile-effect-toggle">
-                <input 
-                  type="checkbox" 
-                  checked={settings.feathering}
-                  onChange={(e) => updateInstanceSettings(instance.id, { feathering: e.target.checked })}
-                />
-                <span className="mobile-effect-toggle-slider"></span>
-              </label>
-            </div>
-            
-            {settings.feathering && (
-              <Slider
-                label="Feather Amount"
-                value={settings.featherAmount}
-                onChange={(value) => updateInstanceSettings(instance.id, { featherAmount: value })}
-                min={0}
-                max={100}
-                step={1}
-                unit="%"
-                defaultValue={0} // Default value for Feather Amount
-              />
-            )}
-            
+
+            {/* Background settings */}
             <div className="mobile-control-group">
               <label className="mobile-control-label">Use Background Color</label>
               <label className="mobile-effect-toggle">
@@ -2126,27 +2260,20 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 <span className="mobile-effect-toggle-slider"></span>
               </label>
             </div>
-            
+
             {settings.useBackgroundColor && (
               <div className="mobile-control-group">
                 <label className="mobile-control-label">Background Color</label>
-                <input 
-                  type="color" 
-                  className="mobile-color-picker"
-                  value={settings.backgroundColor || '#000000'}
+                <input
+                  type="color"
+                  value={settings.backgroundColor}
                   onChange={(e) => updateInstanceSettings(instance.id, { backgroundColor: e.target.value })}
+                  className="mobile-color-picker"
                 />
               </div>
             )}
-            
-            <div className="mobile-control-group">
-              <button 
-                className="mobile-action-button w-full"
-                onClick={() => updateInstanceSettings(instance.id, { seed: Math.random() * 1000 })}
-              >
-                Randomize
-              </button>
-            </div>
+
+            {/* Removed feathering controls since they're not working properly */}
           </div>
         );
 
@@ -2710,51 +2837,55 @@ const MobileControls: React.FC<MobileControlsProps> = ({
       case 'levels':
         return (
           <div className={`mobile-effect-content ${openSection === instance.id ? 'open' : ''}`}>
-            <Slider
-              label="Input Black"
-              value={settings.inputBlack}
-              onChange={(value) => updateInstanceSettings(instance.id, { inputBlack: value })}
-              min={0}
-              max={255}
-              step={1}
-              defaultValue={0} // Default value for Input Black
-            />
-            <Slider
-              label="Input White"
-              value={settings.inputWhite}
-              onChange={(value) => updateInstanceSettings(instance.id, { inputWhite: value })}
-              min={0}
-              max={255}
-              step={1}
-              defaultValue={255} // Default value for Input White
-            />
-            <Slider
-              label="Gamma"
-              value={settings.gamma}
-              onChange={(value) => updateInstanceSettings(instance.id, { gamma: value })}
-              min={0.1}
-              max={10}
-              step={0.01}
-              defaultValue={1} // Default value for Gamma
-            />
-            <Slider
-              label="Output Black"
-              value={settings.outputBlack}
-              onChange={(value) => updateInstanceSettings(instance.id, { outputBlack: value })}
-              min={0}
-              max={255}
-              step={1}
-              defaultValue={0} // Default value for Output Black
-            />
-            <Slider
-              label="Output White"
-              value={settings.outputWhite}
-              onChange={(value) => updateInstanceSettings(instance.id, { outputWhite: value })}
-              min={0}
-              max={255}
-              step={1}
-              defaultValue={255} // Default value for Output White
-            />
+            {/* Main RGB Controls */}
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Levels</label>
+              <Slider
+                label="Input Black"
+                value={settings.inputBlack}
+                onChange={(value) => updateInstanceSettings(instance.id, { inputBlack: value })}
+                min={0}
+                max={255}
+                step={1}
+                defaultValue={0}
+              />
+              <Slider
+                label="Input White"
+                value={settings.inputWhite}
+                onChange={(value) => updateInstanceSettings(instance.id, { inputWhite: value })}
+                min={0}
+                max={255}
+                step={1}
+                defaultValue={255}
+              />
+              <Slider
+                label="Gamma"
+                value={settings.gamma}
+                onChange={(value) => updateInstanceSettings(instance.id, { gamma: value })}
+                min={0.1}
+                max={10}
+                step={0.1}
+                defaultValue={1}
+              />
+              <Slider
+                label="Output Black"
+                value={settings.outputBlack}
+                onChange={(value) => updateInstanceSettings(instance.id, { outputBlack: value })}
+                min={0}
+                max={255}
+                step={1}
+                defaultValue={0}
+              />
+              <Slider
+                label="Output White"
+                value={settings.outputWhite}
+                onChange={(value) => updateInstanceSettings(instance.id, { outputWhite: value })}
+                min={0}
+                max={255}
+                step={1}
+                defaultValue={255}
+              />
+            </div>
           </div>
         );
 
@@ -3490,8 +3621,10 @@ const MobileControls: React.FC<MobileControlsProps> = ({
             { label: 'Noise', type: 'noise', desc: 'Add various types of noise patterns to your image.' },
             { label: 'Pixel', type: 'pixel', desc: 'Create pixel art effects with customizable grid sizes.' },
             { label: 'Shape Grid', type: 'shapegrid', desc: 'Fill a grid with various shapes based on image brightness.' },
+            { label: 'Slice', type: 'sliceShift', desc: 'Create sliced and shifted patterns with various effects.' },
             { label: 'Snake', type: 'snake', desc: 'Create a snake-like pattern that follows image contours.' },
             { label: 'Text', type: 'text', desc: 'Add customizable text overlays with various fonts and styles.' },
+            { label: 'Threshold', type: 'threshold', desc: 'Convert your image to black and white using a threshold value.' },
             { label: 'Truchet', type: 'truchet', desc: 'Generate Truchet tile patterns based on your image.' }
           ].map(effect => (
             <button
