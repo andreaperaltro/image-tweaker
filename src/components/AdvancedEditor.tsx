@@ -228,10 +228,6 @@ export default function AdvancedEditor({
     threshold: 128,
     darkColor: '#000000',
     lightColor: '#FFFFFF',
-    darkColorStart: '#000000',
-    darkColorEnd: '#404040',
-    lightColorStart: '#BFBFBF',
-    lightColorEnd: '#FFFFFF',
     darkStops: [
       { position: 0, color: '#000000' },
       { position: 100, color: '#404040' }
@@ -1228,10 +1224,6 @@ export default function AdvancedEditor({
       threshold: 128,
       darkColor: '#000000',
       lightColor: '#FFFFFF',
-      darkColorStart: '#000000',
-      darkColorEnd: '#404040',
-      lightColorStart: '#BFBFBF',
-      lightColorEnd: '#FFFFFF',
       darkStops: [
         { position: 0, color: '#000000' },
         { position: 100, color: '#404040' }
@@ -2107,7 +2099,7 @@ export default function AdvancedEditor({
           applyGradientMap(ctx, targetCanvas, targetCanvas.width, targetCanvas.height, { ...settings, enabled: true });
           break;
         case 'threshold':
-          applyThreshold(ctx, targetCanvas.width, targetCanvas.height, { ...settings, enabled: true });
+          applyThreshold(ctx, targetCanvas.width, targetCanvas.height, { ...settings, enabled: true } as ThresholdSettings);
           break;
         case 'halftone':
           applyHalftone(ctx, targetCanvas, targetCanvas.width, targetCanvas.height, { ...settings, enabled: true });
