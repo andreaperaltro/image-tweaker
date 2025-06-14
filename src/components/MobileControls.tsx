@@ -4,6 +4,104 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react'
 import './MobileControls.css'
 import { DitherSettings, DitherColorMode, DitherType } from './DitherUtils'
+
+// Font Family Selector Component
+interface FontFamilySelectorProps {
+  value: string;
+  onChange: (value: string) => void;
+}
+
+const FontFamilySelector: React.FC<FontFamilySelectorProps> = ({ value, onChange }) => {
+  const [systemFonts, setSystemFonts] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasSystemFonts, setHasSystemFonts] = useState(false);
+
+  useEffect(() => {
+    const loadFonts = async () => {
+      setIsLoading(true);
+      try {
+        const hasAccess = isSystemFontsAvailable();
+        setHasSystemFonts(hasAccess);
+        const fonts = await getSystemFonts();
+        setSystemFonts(fonts);
+      } catch (error) {
+        console.error('Error loading fonts:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadFonts();
+  }, []);
+
+  return (
+    <div className="mobile-control-group">
+      <label className="mobile-control-label">
+        Font Family
+        {isLoading && <span className="ml-2 text-sm opacity-70">(Loading...)</span>}
+      </label>
+      <select
+        className="mobile-select"
+        value={value}
+        onChange={e => onChange(e.target.value)}
+      >
+        {hasSystemFonts && <optgroup label="System Fonts">
+          {systemFonts.map(font => (
+            <option key={font} value={font} style={{ fontFamily: font }}>
+              {font}
+            </option>
+          ))}
+        </optgroup>}
+        <optgroup label="Web Fonts">
+          <option value="Arial">Arial</option>
+          <option value="Helvetica">Helvetica</option>
+          <option value="Times New Roman">Times New Roman</option>
+          <option value="Courier New">Courier New</option>
+          <option value="Georgia">Georgia</option>
+          <option value="Verdana">Verdana</option>
+          <option value="Trebuchet MS">Trebuchet MS</option>
+          <option value="Impact">Impact</option>
+          <option value="Comic Sans MS">Comic Sans MS</option>
+        </optgroup>
+        <optgroup label="Custom">
+          <option value="Custom">Upload Custom Font</option>
+        </optgroup>
+      </select>
+      
+      {value === 'Custom' && (
+        <div className="mt-2">
+          <label className="mobile-action-button" style={{ display: 'inline-block', cursor: 'pointer', padding: '6px 12px', borderRadius: '6px', background: 'var(--accent-bg)', color: 'var(--text-primary)', border: '1px solid var(--border-color)', fontWeight: 500 }}>
+            <input
+              type="file"
+              accept=".ttf,.otf,.woff,.woff2"
+              style={{ display: 'none' }}
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  const fontName = `custom-${file.name.replace(/\W/g, '')}`;
+                  const reader = new FileReader();
+                  reader.onload = async (event) => {
+                    if (event.target && event.target.result) {
+                      const dataUrl = event.target.result;
+                      if (typeof dataUrl === 'string') {
+                        const font = new FontFace(fontName, `url(${dataUrl})`);
+                        await font.load();
+                        document.fonts.add(font);
+                        onChange(fontName);
+                      }
+                    }
+                  };
+                  reader.readAsDataURL(file);
+                }
+              }}
+            />
+            Upload Custom Font
+          </label>
+        </div>
+      )}
+    </div>
+  );
+};
 import { HalftoneSettings, HalftoneShape, HalftoneArrangement } from './Halftone'
 import { ColorSettings } from './ColorUtils'
 import { ThresholdSettings, ThresholdStop } from './ThresholdUtils'
@@ -42,6 +140,7 @@ import { MdPalette } from 'react-icons/md';
 import { MdRadar } from 'react-icons/md';
 // Add import for useDragAndDrop
 // import { useDragAndDrop } from 'react-use-dnd';
+import { getSystemFonts, isSystemFontsAvailable } from '../utils/FontUtils';
 
 // Add interface for gradient stop
 interface GradientStopType {
@@ -1416,57 +1515,11 @@ const MobileControls: React.FC<MobileControlsProps> = ({
         return (
           <div className={`mobile-effect-content ${openSection === instance.id ? 'open' : ''}`}>
             {/* Font Family */}
-            <div className="mobile-control-group">
-              <label className="mobile-control-label">Font Family</label>
-              <select
-                className="mobile-select"
-                value={settings.fontFamily || 'Arial'}
-                onChange={e => updateInstanceSettings(instance.id, { fontFamily: e.target.value })}
-              >
-                <option value="Arial">Arial</option>
-                <option value="Helvetica">Helvetica</option>
-                <option value="Times New Roman">Times New Roman</option>
-                <option value="Courier New">Courier New</option>
-                <option value="Georgia">Georgia</option>
-                <option value="Verdana">Verdana</option>
-                <option value="Trebuchet MS">Trebuchet MS</option>
-                <option value="Impact">Impact</option>
-                <option value="Comic Sans MS">Comic Sans MS</option>
-                <option value="Custom">Custom Uploaded</option>
-              </select>
-            </div>
-            {(settings.fontFamily === 'Custom' || settings.fontFamily?.startsWith('custom-')) && (
-              <div className="mobile-control-group">
-                <label className="mobile-control-label">Upload Font</label>
-                <label className="mobile-action-button" style={{ display: 'inline-block', cursor: 'pointer', padding: '6px 12px', borderRadius: '6px', background: 'var(--accent-bg)', color: 'var(--text-primary)', border: '1px solid var(--border-color)', fontWeight: 500 }}>
-                  <input
-                    type="file"
-                    accept=".ttf,.otf,.woff,.woff2"
-                    style={{ display: 'none' }}
-                    onChange={async (e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        const fontName = `custom-${file.name.replace(/\W/g, '')}`;
-                        const reader = new FileReader();
-                        reader.onload = async (event) => {
-                          if (event.target && event.target.result) {
-                            const dataUrl = event.target.result;
-                            if (typeof dataUrl === 'string') {
-                              const font = new FontFace(fontName, `url(${dataUrl})`);
-                              await font.load();
-                              document.fonts.add(font);
-                              updateInstanceSettings(instance.id, { fontFamily: fontName });
-                            }
-                          }
-                        };
-                        reader.readAsDataURL(file);
-                      }
-                    }}
-                  />
-                  Upload Custom Font
-                </label>
-              </div>
-            )}
+            <FontFamilySelector
+              value={settings.fontFamily || 'Arial'}
+              onChange={value => updateInstanceSettings(instance.id, { fontFamily: value })}
+            />
+            
             {/* Text */}
             <div className="mobile-control-group">
               <label className="mobile-control-label">Text</label>
@@ -1479,6 +1532,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 rows={3}
               />
             </div>
+
             {/* Font Size */}
             <Slider
               label="Font Size"
@@ -1488,8 +1542,9 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               max={400}
               step={1}
               unit="px"
-              defaultValue={50} // Default value for Font Size
+              defaultValue={50}
             />
+
             {/* Font Weight */}
             <div className="mobile-control-group">
               <label className="mobile-control-label">Font Weight</label>
