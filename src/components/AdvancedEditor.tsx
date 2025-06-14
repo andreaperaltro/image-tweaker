@@ -972,7 +972,10 @@ export default function AdvancedEditor({
           color: '#000000',
           x: 0.5,
           y: 0.5,
-          align: 'center'
+          align: 'center',
+          textStyle: 'fill',
+          strokeWeight: 1,
+          blendMode: 'source-over'
         };
         break;
       case 'lcd':
@@ -2437,7 +2440,10 @@ export default function AdvancedEditor({
     color: '#000000',
     x: 0.5,
     y: 0.5,
-    align: 'center'
+    align: 'center',
+    textStyle: 'fill',
+    strokeWeight: 1,
+    blendMode: 'source-over'
   });
 
   // Add Snake effect settings state

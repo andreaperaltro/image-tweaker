@@ -1,107 +1,9 @@
 'use client'
 
-
 import React, { useState, useRef, useCallback, useEffect } from 'react'
 import './MobileControls.css'
 import { DitherSettings, DitherColorMode, DitherType } from './DitherUtils'
-
-// Font Family Selector Component
-interface FontFamilySelectorProps {
-  value: string;
-  onChange: (value: string) => void;
-}
-
-const FontFamilySelector: React.FC<FontFamilySelectorProps> = ({ value, onChange }) => {
-  const [systemFonts, setSystemFonts] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasSystemFonts, setHasSystemFonts] = useState(false);
-
-  useEffect(() => {
-    const loadFonts = async () => {
-      setIsLoading(true);
-      try {
-        const hasAccess = isSystemFontsAvailable();
-        setHasSystemFonts(hasAccess);
-        const fonts = await getSystemFonts();
-        setSystemFonts(fonts);
-      } catch (error) {
-        console.error('Error loading fonts:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadFonts();
-  }, []);
-
-  return (
-    <div className="mobile-control-group">
-      <label className="mobile-control-label">
-        Font Family
-        {isLoading && <span className="ml-2 text-sm opacity-70">(Loading...)</span>}
-      </label>
-      <select
-        className="mobile-select"
-        value={value}
-        onChange={e => onChange(e.target.value)}
-      >
-        {hasSystemFonts && <optgroup label="System Fonts">
-          {systemFonts.map(font => (
-            <option key={font} value={font} style={{ fontFamily: font }}>
-              {font}
-            </option>
-          ))}
-        </optgroup>}
-        <optgroup label="Web Fonts">
-          <option value="Arial">Arial</option>
-          <option value="Helvetica">Helvetica</option>
-          <option value="Times New Roman">Times New Roman</option>
-          <option value="Courier New">Courier New</option>
-          <option value="Georgia">Georgia</option>
-          <option value="Verdana">Verdana</option>
-          <option value="Trebuchet MS">Trebuchet MS</option>
-          <option value="Impact">Impact</option>
-          <option value="Comic Sans MS">Comic Sans MS</option>
-        </optgroup>
-        <optgroup label="Custom">
-          <option value="Custom">Upload Custom Font</option>
-        </optgroup>
-      </select>
-      
-      {value === 'Custom' && (
-        <div className="mt-2">
-          <label className="mobile-action-button" style={{ display: 'inline-block', cursor: 'pointer', padding: '6px 12px', borderRadius: '6px', background: 'var(--accent-bg)', color: 'var(--text-primary)', border: '1px solid var(--border-color)', fontWeight: 500 }}>
-            <input
-              type="file"
-              accept=".ttf,.otf,.woff,.woff2"
-              style={{ display: 'none' }}
-              onChange={async (e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                  const fontName = `custom-${file.name.replace(/\W/g, '')}`;
-                  const reader = new FileReader();
-                  reader.onload = async (event) => {
-                    if (event.target && event.target.result) {
-                      const dataUrl = event.target.result;
-                      if (typeof dataUrl === 'string') {
-                        const font = new FontFace(fontName, `url(${dataUrl})`);
-                        await font.load();
-                        document.fonts.add(font);
-                        onChange(fontName);
-                      }
-                    }
-                  };
-                  reader.readAsDataURL(file);
-                }
-              }}
-            />
-            Upload Custom Font
-          </label>
-        </div>
-      )}
-    </div>
-  );
-};
+import { getSystemFonts, isSystemFontsAvailable, loadCustomFont, WEB_SAFE_FONTS, SystemFont } from '../utils/FontUtils'
 import { HalftoneSettings, HalftoneShape, HalftoneArrangement } from './Halftone'
 import { ColorSettings } from './ColorUtils'
 import { ThresholdSettings, ThresholdStop } from './ThresholdUtils'
@@ -112,11 +14,11 @@ import Slider from './Slider'
 import { BlurSettings, EffectInstance, TextEffectSettings, EffectType } from '../types'
 import { saveEffectSettings, loadEffectSettings, EffectSettings } from '../utils/EffectSettingsUtils'
 import { isVectorExportAvailable } from './ExportUtils'
-import { FiFileText, FiPlus, FiCopy, FiTrash2, FiArrowUp, FiArrowDown, FiGrid, FiDroplet, FiSliders, FiZap, FiEye, FiLayers, FiType, FiHash, FiImage, FiStar, FiAlignCenter, FiBarChart2, FiCpu, FiFilter, FiChevronRight, FiTv } from 'react-icons/fi';
-import { FaRegDotCircle, FaRegSquare, FaRegCircle, FaRegClone, FaRegObjectGroup, FaRegSmile, FaRegSun, FaRegMoon, FaRegSnowflake, FaRegChartBar, FaRegKeyboard, FaThLarge } from 'react-icons/fa';
-import { MdGradient, MdBlurOn, MdOutlineTextFields, MdOutlineNoiseControlOff, MdOutlineGridOn, MdOutlineColorLens, MdOutlineInvertColors, MdOutlineTextIncrease, MdOutlineTextRotateVertical, MdOutlineTextRotationNone, MdOutlineTextRotationAngleup, MdOutlineTextRotationAngledown, MdDragIndicator, MdExpandLess, MdExpandMore } from 'react-icons/md';
-import { MdFitbit, MdCompare, MdTexture, MdFingerprint, MdGrain, MdTonality, MdPattern, MdSnowing, MdTerminal, MdStream, MdOutlineWaves, Md3dRotation, MdInterests, MdEmojiSymbols } from 'react-icons/md';
-import { MdOutlineGrid4X4 } from 'react-icons/md';
+import { FiFileText, FiPlus, FiCopy, FiTrash2, FiArrowUp, FiArrowDown, FiGrid, FiDroplet, FiSliders, FiZap, FiEye, FiLayers, FiType, FiHash, FiImage, FiStar, FiAlignCenter, FiBarChart2, FiCpu, FiFilter, FiChevronRight, FiTv } from 'react-icons/fi'
+import { FaRegDotCircle, FaRegSquare, FaRegCircle, FaRegClone, FaRegObjectGroup, FaRegSmile, FaRegSun, FaRegMoon, FaRegSnowflake, FaRegChartBar, FaRegKeyboard, FaThLarge } from 'react-icons/fa'
+import { MdGradient, MdBlurOn, MdOutlineTextFields, MdOutlineNoiseControlOff, MdOutlineGridOn, MdOutlineColorLens, MdOutlineInvertColors, MdOutlineTextIncrease, MdOutlineTextRotateVertical, MdOutlineTextRotationNone, MdOutlineTextRotationAngleup, MdOutlineTextRotationAngledown, MdDragIndicator, MdExpandLess, MdExpandMore } from 'react-icons/md'
+import { MdFitbit, MdCompare, MdTexture, MdFingerprint, MdGrain, MdTonality, MdPattern, MdSnowing, MdTerminal, MdStream, MdOutlineWaves, Md3dRotation, MdInterests, MdEmojiSymbols } from 'react-icons/md'
+import { MdOutlineGrid4X4 } from 'react-icons/md'
 import { MosaicShiftSettings, ShiftPattern } from './MosaicShift'
 import { SliceShiftSettings } from './SliceShift'
 import { PosterizeSettings } from './Posterize'
@@ -129,18 +31,176 @@ import LCDEffect from './LCDEffect'
 import { SnakeEffectSettings, SnakeIcon } from './SnakeEffect'
 import { ThreeDEffectControls } from './ThreeDEffectControls'
 import { ShapeGridSettings } from './ShapeGridEffect'
-import { TruchetControls } from './TruchetControls';
-import { TruchetSettings } from './TruchetEffect';
-import { GiGearStickPattern } from 'react-icons/gi';
-import { MdWaves } from 'react-icons/md';
-import { MdApps } from 'react-icons/md';
-import { MdViewComfy } from 'react-icons/md';
-import { MdContentCut } from 'react-icons/md';
-import { MdPalette } from 'react-icons/md';
-import { MdRadar } from 'react-icons/md';
-// Add import for useDragAndDrop
-// import { useDragAndDrop } from 'react-use-dnd';
-import { getSystemFonts, isSystemFontsAvailable } from '../utils/FontUtils';
+import { TruchetControls } from './TruchetControls'
+import { TruchetSettings } from './TruchetEffect'
+import { GiGearStickPattern } from 'react-icons/gi'
+import { MdWaves, MdApps, MdViewComfy, MdContentCut, MdPalette, MdRadar } from 'react-icons/md'
+
+// Font Family Selector Component
+interface FontFamilySelectorProps {
+  value: string
+  onChange: (value: string) => void
+  onCustomFontLoad?: (font: { family: string, url: string }) => void
+  onVariableAxesChange?: (axes: { [key: string]: number }) => void
+}
+
+const FontFamilySelector: React.FC<FontFamilySelectorProps> = ({ 
+  value, 
+  onChange,
+  onCustomFontLoad,
+  onVariableAxesChange 
+}) => {
+  const [systemFonts, setSystemFonts] = useState<SystemFont[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [hasSystemFonts, setHasSystemFonts] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [selectedFont, setSelectedFont] = useState<SystemFont | null>(null)
+
+  useEffect(() => {
+    const loadFonts = async () => {
+      setIsLoading(true)
+      try {
+        // First check if we have access to system fonts
+        const available = await isSystemFontsAvailable()
+        setHasSystemFonts(available)
+        
+        if (available) {
+          // Get the system fonts
+          const fonts = await getSystemFonts()
+          console.log('Loaded fonts:', fonts)
+          setSystemFonts(fonts)
+          
+          // If current value is a system font, update selected font
+          if (value) {
+            const font = fonts.find(f => f.family === value)
+            if (font) {
+              setSelectedFont(font)
+              // Update variable axes if this is a variable font
+              if (font.variableAxes && font.variableAxes.length > 0 && onVariableAxesChange) {
+                const defaults = Object.fromEntries(
+                  font.variableAxes.map(axis => [axis.tag, axis.default])
+                )
+                onVariableAxesChange(defaults)
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error loading fonts:', error)
+        setHasSystemFonts(false)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadFonts()
+  }, [value, onVariableAxesChange])
+
+  const handleFontChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newValue = e.target.value
+    onChange(newValue)
+    const font = systemFonts.find(f => f.family === newValue)
+    setSelectedFont(font || null)
+    
+    // Reset variable axes to defaults if font changed
+    if (font?.variableAxes && onVariableAxesChange) {
+      const defaults = Object.fromEntries(
+        font.variableAxes.map(axis => [axis.tag, axis.default])
+      )
+      onVariableAxesChange(defaults)
+    }
+  }
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    try {
+      const font = await loadCustomFont(file)
+      onCustomFontLoad?.(font)
+      onChange(font.family)
+      setSelectedFont(null) // Clear variable font UI since custom fonts don't support it yet
+    } catch (error) {
+      console.error('Error loading custom font:', error)
+      alert('Failed to load custom font. Please try another file.')
+    }
+  }
+
+  return (
+    <>
+      <div className="mobile-control-group">
+        <label className="mobile-control-label">
+          Font Family
+          {isLoading && <span className="ml-2 text-sm opacity-70">(Loading...)</span>}
+        </label>
+        <select
+          className="mobile-select"
+          value={value}
+          onChange={handleFontChange}
+        >
+          <optgroup label="Web Fonts">
+            {WEB_SAFE_FONTS.map(font => (
+              <option key={font} value={font} style={{ fontFamily: font }}>
+                {font}
+              </option>
+            ))}
+          </optgroup>
+          
+          {hasSystemFonts && systemFonts.length > 0 && (
+            <optgroup label="System Fonts">
+              {systemFonts.map(font => (
+                <option key={font.family} value={font.family} style={{ fontFamily: font.family }}>
+                  {font.family} {font.variableAxes?.length ? '(Variable)' : ''}
+                </option>
+              ))}
+            </optgroup>
+          )}
+        </select>
+      </div>
+
+      {/* Custom Font Upload Button */}
+      <div className="mobile-control-group">
+        <button
+          className="mobile-select text-left"
+          onClick={() => fileInputRef.current?.click()}
+          style={{ cursor: 'pointer' }}
+        >
+          Upload Custom Font
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".ttf,.otf,.woff,.woff2"
+          style={{ display: 'none' }}
+          onChange={handleFileChange}
+        />
+      </div>
+
+      {/* Variable Font Controls */}
+      {selectedFont?.variableAxes && selectedFont.variableAxes.length > 0 && onVariableAxesChange && (
+        <div className="variable-font-controls">
+          <div className="mobile-control-group">
+            <label className="mobile-control-label">Variable Font Settings</label>
+          </div>
+          {selectedFont.variableAxes.map(axis => (
+            <Slider
+              key={axis.tag}
+              label={axis.name}
+              value={axis.default}
+              onChange={(value) => {
+                onVariableAxesChange({ [axis.tag]: value })
+              }}
+              min={axis.min}
+              max={axis.max}
+              step={(axis.max - axis.min) / 100}
+              defaultValue={axis.default}
+            />
+          ))}
+        </div>
+      )}
+    </>
+  )
+}
 
 // Add interface for gradient stop
 interface GradientStopType {
@@ -1518,6 +1578,13 @@ const MobileControls: React.FC<MobileControlsProps> = ({
             <FontFamilySelector
               value={settings.fontFamily || 'Arial'}
               onChange={value => updateInstanceSettings(instance.id, { fontFamily: value })}
+              onCustomFontLoad={font => updateInstanceSettings(instance.id, { 
+                fontFamily: font.family,
+                customFontUrl: font.url
+              })}
+              onVariableAxesChange={axes => updateInstanceSettings(instance.id, { 
+                variableSettings: axes
+              })}
             />
             
             {/* Text */}
@@ -1542,7 +1609,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               max={400}
               step={1}
               unit="px"
-              defaultValue={50}
+              defaultValue={24}
             />
 
             {/* Font Weight */}
@@ -1568,6 +1635,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 <option value="900">900</option>
               </select>
             </div>
+
             {/* Letter Spacing */}
             <Slider
               label="Letter Spacing"
@@ -1577,8 +1645,9 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               max={100}
               step={1}
               unit="px"
-              defaultValue={0} // Default value for Letter Spacing
+              defaultValue={0}
             />
+
             {/* Line Height */}
             <Slider
               label="Line Height"
@@ -1587,8 +1656,9 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               min={0.1}
               max={4}
               step={0.05}
-              defaultValue={1} // Default value for Line Height
+              defaultValue={1.2}
             />
+
             {/* Blend Mode */}
             <div className="mobile-control-group">
               <label className="mobile-control-label">Blend Mode</label>
@@ -1615,6 +1685,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 <option value="luminosity">Luminosity</option>
               </select>
             </div>
+
             {/* Text Style */}
             <div className="mobile-control-group">
               <label className="mobile-control-label">Text Style</label>
@@ -1627,6 +1698,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 <option value="stroke">Stroke</option>
               </select>
             </div>
+
             {settings.textStyle === 'stroke' && (
               <Slider
                 label="Stroke Weight"
@@ -1636,9 +1708,10 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 max={10}
                 step={0.1}
                 unit="px"
-                defaultValue={1} // Default value for Stroke Weight
+                defaultValue={1}
               />
             )}
+
             {/* Text Color */}
             <div className="mobile-control-group">
               <label className="mobile-control-label">Text Color</label>
@@ -1649,6 +1722,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 onChange={(e) => updateInstanceSettings(instance.id, { color: e.target.value })}
               />
             </div>
+
             {/* X Position */}
             <Slider
               label="X Position"
@@ -1657,8 +1731,9 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               min={0}
               max={1}
               step={0.01}
-              defaultValue={0} // Default value for X Position
+              defaultValue={0.5}
             />
+
             {/* Y Position */}
             <Slider
               label="Y Position"
@@ -1667,8 +1742,9 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               min={0}
               max={1}
               step={0.01}
-              defaultValue={0} // Default value for Y Position
+              defaultValue={0.5}
             />
+
             {/* Rotation */}
             <Slider
               label="Rotation"
@@ -1678,9 +1754,10 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               max={360}
               step={1}
               unit="°"
-              defaultValue={0} // Default value for Rotation
+              defaultValue={0}
             />
-            {/* Alignment (kept at the end for now) */}
+
+            {/* Alignment */}
             <div className="mobile-control-group">
               <label className="mobile-control-label">Alignment</label>
               <select

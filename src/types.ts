@@ -171,6 +171,8 @@ export interface TextEffectSettings {
   blendMode?: GlobalCompositeOperation; // e.g. 'normal', 'multiply', etc.
   textStyle?: 'fill' | 'stroke'; // new property for fill/stroke selection
   strokeWeight?: number; // stroke width in pixels
+  variableSettings?: { [key: string]: number }; // Variable font axis settings
+  customFontUrl?: string; // URL for custom uploaded font
 }
 
 export type EffectType =

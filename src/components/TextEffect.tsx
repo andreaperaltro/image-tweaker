@@ -7,18 +7,42 @@ export const applyTextEffect = (
 ) => {
   if (!settings.enabled || !settings.text) return;
 
-  const { text, fontSize, fontWeight, lineHeight, letterSpacing, color, x, y, align, rotation = 0, blendMode = 'source-over', textStyle = 'fill' } = settings;
+  const { 
+    text, 
+    fontSize, 
+    fontWeight, 
+    lineHeight, 
+    letterSpacing, 
+    color, 
+    x, 
+    y, 
+    align, 
+    rotation = 0, 
+    blendMode = 'source-over', 
+    textStyle = 'fill',
+    variableSettings = {}
+  } = settings;
   
   // Save current context state
   ctx.save();
   ctx.globalCompositeOperation = blendMode;
   
   // Set text properties
-  const fontFamily = settings.fontFamily || 'Arial, sans-serif';
-  ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
+  let fontFamily = settings.fontFamily || 'Arial, sans-serif';
+  
+  // Handle variable font settings if present
+  if (Object.keys(variableSettings).length > 0) {
+    const variations = Object.entries(variableSettings)
+      .map(([axis, value]) => `"${axis}" ${value}`)
+      .join(', ');
+    ctx.font = `${fontWeight} ${fontSize}px "${fontFamily}" ${variations}`;
+  } else {
+    ctx.font = `${fontWeight} ${fontSize}px "${fontFamily}"`;
+  }
+  
   ctx.fillStyle = color;
   ctx.strokeStyle = color;
-  ctx.lineWidth = settings.textStyle === 'stroke' ? (settings.strokeWeight || 1) : 0; // Use strokeWeight if stroke style is selected
+  ctx.lineWidth = settings.textStyle === 'stroke' ? (settings.strokeWeight || 1) : 0;
   ctx.textAlign = 'left'; // We'll handle alignment manually
   ctx.textBaseline = 'middle';
   
