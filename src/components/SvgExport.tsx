@@ -304,8 +304,34 @@ export function createHalftoneVectorSvg(
     let adjustedY = centerY;
     
     try {
-      if (arrangement === 'hexagonal' && y % 2 === 0) {
-        adjustedX += cellSize / 2;
+      if (arrangement === 'hexagonal') {
+        const rowOffset = settings.hexagonalRowOffset || 0.5;
+        
+        // Calculate base number of rows needed
+        const neededRows = Math.ceil(height / cellSize) + 2;
+        
+        // Calculate number of columns needed (add 1 for offset pattern)
+        const cols = Math.ceil(width / cellSize) + 1;
+        
+        // Calculate position for each row and column
+        for (let y = 0; y < neededRows; y++) {
+          // Position using cell size
+          const centerY = y * cellSize;
+          
+          for (let x = 0; x < cols; x++) {
+            let centerX = x * cellSize + cellSize / 2;
+            
+            // Apply horizontal offset on alternate rows
+            if (y % 2 === 0) {
+              centerX += cellSize * rowOffset;
+            }
+            
+            // Skip if beyond image bounds
+            if (centerX > width + cellSize || centerX < -cellSize) {
+              continue;
+            }
+          }
+        }
       } else if (arrangement === 'spiral') {
         // Calculate center point with offset
         const spiralCenterX = width / 2 + (settings.spiralCenterX || 0);

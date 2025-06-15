@@ -66,6 +66,7 @@ export type HalftoneSettings = {
   concentricCenterX: number;
   concentricCenterY: number;
   concentricRingSpacing: number;
+  hexagonalRowOffset: number;
   channels: {
     cyan: boolean;
     magenta: boolean;
@@ -147,8 +148,29 @@ export function applyHalftone(
       let centerY = initialCenterY;
       
       // Adjust position based on arrangement
-      if (settings.arrangement === 'hexagonal' && y % 2 === 0) {
-        centerX += cellSize / 2;
+      if (settings.arrangement === 'hexagonal') {
+        const rowOffset = settings.hexagonalRowOffset || 0.5;
+        
+        // Calculate base number of rows needed
+        const neededRows = Math.ceil(height / cellSize) + 2;
+        
+        // Skip if we're beyond the needed rows
+        if (y >= neededRows) {
+          continue;
+        }
+        
+        // Position using cell size
+        centerY = y * cellSize;
+        
+        // Apply horizontal offset on alternate rows
+        if (y % 2 === 0) {
+          centerX += cellSize * rowOffset;
+        }
+        
+        // Skip if we're beyond the image bounds
+        if (centerX > width + cellSize || centerX < -cellSize) {
+          continue;
+        }
       } else if (settings.arrangement === 'spiral') {
         // Calculate the center point with offset
         const spiralCenterX = width / 2 + settings.spiralCenterX;
@@ -349,15 +371,36 @@ function applyCMYKHalftone(
       for (let x = 0; x < cols; x++) {
         // Cell position
         const initialCenterX = x * cellSize + cellSize / 2;
-        const initialCenterY = y * cellSize + cellSize / 2;
+        let initialCenterY = y * cellSize + cellSize / 2;
         
         // Variables to hold the final position (may be adjusted based on arrangement)
         let centerX = initialCenterX;
         let centerY = initialCenterY;
         
         // Adjust position based on arrangement
-        if (settings.arrangement === 'hexagonal' && y % 2 === 0) {
-          centerX += cellSize / 2;
+        if (settings.arrangement === 'hexagonal') {
+          const rowOffset = settings.hexagonalRowOffset || 0.5;
+          
+          // Calculate base number of rows needed
+          const neededRows = Math.ceil(height / cellSize) + 2;
+          
+          // Skip if we're beyond the needed rows
+          if (y >= neededRows) {
+            continue;
+          }
+          
+          // Position using cell size
+          centerY = y * cellSize;
+          
+          // Apply horizontal offset on alternate rows
+          if (y % 2 === 0) {
+            centerX += cellSize * rowOffset;
+          }
+          
+          // Skip if we're beyond the image bounds
+          if (centerX > width + cellSize || centerX < -cellSize) {
+            continue;
+          }
         } else if (settings.arrangement === 'spiral') {
           // Calculate the center point with offset
           const spiralCenterX = width / 2 + settings.spiralCenterX;

@@ -1514,6 +1514,23 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 <option value="random">Random</option>
               </select>
             </div>
+
+            {/* Hexagonal Pattern Controls */}
+            {settings.arrangement === 'hexagonal' && (
+              <>
+                <div className="mobile-control-group">
+                  <Slider
+                    label="Row Offset"
+                    value={settings.hexagonalRowOffset || 0.5}
+                    onChange={(value) => updateInstanceSettings(instance.id, { hexagonalRowOffset: value })}
+                    min={0.1}
+                    max={1.0}
+                    step={0.01}
+                    defaultValue={0.5}
+                  />
+                </div>
+              </>
+            )}
             
             <Slider
               label="Cell Size"
