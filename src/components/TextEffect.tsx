@@ -59,13 +59,16 @@ export const applyTextEffect = (
   ctx.translate(xPos, yPos);
   ctx.rotate((rotation * Math.PI) / 180);
   
+  // Calculate the actual letter spacing in pixels based on font size
+  const actualLetterSpacing = letterSpacing * fontSize;
+  
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     // Measure total line width with letterSpacing
     let lineWidth = 0;
     for (let c = 0; c < line.length; c++) {
       lineWidth += ctx.measureText(line[c]).width;
-      if (c < line.length - 1) lineWidth += letterSpacing;
+      if (c < line.length - 1) lineWidth += actualLetterSpacing;
     }
     let startX;
     if (align === 'center') {
@@ -82,7 +85,7 @@ export const applyTextEffect = (
       } else {
         ctx.strokeText(line[c], charX, yOffset + i * fontSize * lineHeight);
       }
-      charX += ctx.measureText(line[c]).width + letterSpacing;
+      charX += ctx.measureText(line[c]).width + actualLetterSpacing;
     }
   }
   

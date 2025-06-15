@@ -38,17 +38,19 @@ import { MdWaves, MdApps, MdViewComfy, MdContentCut, MdPalette, MdRadar } from '
 
 // Font Family Selector Component
 interface FontFamilySelectorProps {
-  value: string
-  onChange: (value: string) => void
-  onCustomFontLoad?: (font: { family: string, url: string }) => void
-  onVariableAxesChange?: (axes: { [key: string]: number }) => void
+  value: string;
+  onChange: (value: string) => void;
+  onCustomFontLoad?: (font: { family: string, url: string }) => void;
+  settings?: { fontWeight?: string };
+  onFontWeightChange?: (weight: string) => void;
 }
 
 const FontFamilySelector: React.FC<FontFamilySelectorProps> = ({ 
   value, 
   onChange,
   onCustomFontLoad,
-  onVariableAxesChange 
+  settings,
+  onFontWeightChange
 }) => {
   const [systemFonts, setSystemFonts] = useState<SystemFont[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -67,7 +69,6 @@ const FontFamilySelector: React.FC<FontFamilySelectorProps> = ({
         if (available) {
           // Get the system fonts
           const fonts = await getSystemFonts()
-          console.log('Loaded fonts:', fonts)
           setSystemFonts(fonts)
           
           // If current value is a system font, update selected font
@@ -75,13 +76,6 @@ const FontFamilySelector: React.FC<FontFamilySelectorProps> = ({
             const font = fonts.find(f => f.family === value)
             if (font) {
               setSelectedFont(font)
-              // Update variable axes if this is a variable font
-              if (font.variableAxes && font.variableAxes.length > 0 && onVariableAxesChange) {
-                const defaults = Object.fromEntries(
-                  font.variableAxes.map(axis => [axis.tag, axis.default])
-                )
-                onVariableAxesChange(defaults)
-              }
             }
           }
         }
@@ -94,21 +88,13 @@ const FontFamilySelector: React.FC<FontFamilySelectorProps> = ({
     }
 
     loadFonts()
-  }, [value, onVariableAxesChange])
+  }, [value])
 
   const handleFontChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newValue = e.target.value
     onChange(newValue)
     const font = systemFonts.find(f => f.family === newValue)
     setSelectedFont(font || null)
-    
-    // Reset variable axes to defaults if font changed
-    if (font?.variableAxes && onVariableAxesChange) {
-      const defaults = Object.fromEntries(
-        font.variableAxes.map(axis => [axis.tag, axis.default])
-      )
-      onVariableAxesChange(defaults)
-    }
   }
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -119,11 +105,28 @@ const FontFamilySelector: React.FC<FontFamilySelectorProps> = ({
       const font = await loadCustomFont(file)
       onCustomFontLoad?.(font)
       onChange(font.family)
-      setSelectedFont(null) // Clear variable font UI since custom fonts don't support it yet
+      setSelectedFont(null)
     } catch (error) {
       console.error('Error loading custom font:', error)
       alert('Failed to load custom font. Please try another file.')
     }
+  }
+
+  // Get available weights for the current font
+  const getAvailableWeights = () => {
+    if (selectedFont?.weights.length) {
+      return selectedFont.weights;
+    }
+    // Default weights for web safe fonts
+    return [100, 200, 300, 400, 500, 600, 700, 800, 900].filter(weight => {
+      const testElement = document.createElement('span');
+      testElement.style.fontFamily = value;
+      testElement.style.fontWeight = weight.toString();
+      document.body.appendChild(testElement);
+      const isSupported = getComputedStyle(testElement).fontWeight === weight.toString();
+      document.body.removeChild(testElement);
+      return isSupported;
+    });
   }
 
   return (
@@ -150,7 +153,7 @@ const FontFamilySelector: React.FC<FontFamilySelectorProps> = ({
             <optgroup label="System Fonts">
               {systemFonts.map(font => (
                 <option key={font.family} value={font.family} style={{ fontFamily: font.family }}>
-                  {font.family} {font.variableAxes?.length ? '(Variable)' : ''}
+                  {font.family}
                 </option>
               ))}
             </optgroup>
@@ -176,28 +179,21 @@ const FontFamilySelector: React.FC<FontFamilySelectorProps> = ({
         />
       </div>
 
-      {/* Variable Font Controls */}
-      {selectedFont?.variableAxes && selectedFont.variableAxes.length > 0 && onVariableAxesChange && (
-        <div className="variable-font-controls">
-          <div className="mobile-control-group">
-            <label className="mobile-control-label">Variable Font Settings</label>
-          </div>
-          {selectedFont.variableAxes.map(axis => (
-            <Slider
-              key={axis.tag}
-              label={axis.name}
-              value={axis.default}
-              onChange={(value) => {
-                onVariableAxesChange({ [axis.tag]: value })
-              }}
-              min={axis.min}
-              max={axis.max}
-              step={(axis.max - axis.min) / 100}
-              defaultValue={axis.default}
-            />
+      {/* Font Weight Control */}
+      <div className="mobile-control-group">
+        <label className="mobile-control-label">Font Weight</label>
+        <select
+          className="mobile-select"
+          value={settings?.fontWeight || '400'}
+          onChange={(e) => onFontWeightChange?.(e.target.value)}
+        >
+          {getAvailableWeights().map(weight => (
+            <option key={weight} value={weight}>
+              {weight}
+            </option>
           ))}
-        </div>
-      )}
+        </select>
+      </div>
     </>
   )
 }
@@ -1599,9 +1595,8 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 fontFamily: font.family,
                 customFontUrl: font.url
               })}
-              onVariableAxesChange={axes => updateInstanceSettings(instance.id, { 
-                variableSettings: axes
-              })}
+              settings={settings}
+              onFontWeightChange={weight => updateInstanceSettings(instance.id, { fontWeight: weight })}
             />
             
             {/* Text */}
@@ -1655,13 +1650,12 @@ const MobileControls: React.FC<MobileControlsProps> = ({
 
             {/* Letter Spacing */}
             <Slider
-              label="Letter Spacing"
+              label="Letter Spacing (relative to font size)"
               value={settings.letterSpacing}
               onChange={(value) => updateInstanceSettings(instance.id, { letterSpacing: value })}
-              min={-10}
-              max={100}
-              step={1}
-              unit="px"
+              min={-0.2}
+              max={2}
+              step={0.01}
               defaultValue={0}
             />
 

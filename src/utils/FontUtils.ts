@@ -2,12 +2,30 @@
  * Font Utilities
  */
 
+interface FontVariableAxis {
+  tag: string;
+  name: string;
+  minValue: number;
+  maxValue: number;
+  defaultValue: number;
+}
+
+interface FontVariationSettings {
+  min: number;
+  max: number;
+  default: number;
+}
+
+interface ExtendedFontFace extends FontFace {
+  variations?: { [key: string]: FontVariationSettings };
+}
+
 export interface SystemFont {
   family: string;
   fullName: string;
   postscriptName?: string;
   style: string;
-  variableAxes?: VariableAxis[];
+  weights: number[];  // Available font weights
 }
 
 export interface VariableAxis {
@@ -25,14 +43,18 @@ export async function isSystemFontsAvailable(): Promise<boolean> {
   try {
     // Check if the API exists
     if (!('queryLocalFonts' in window)) {
-      console.warn('Local Font Access API not available');
+      console.error('Local Font Access API not available in this browser');
       return false;
     }
+
+    console.log('Local Font Access API is available, checking permissions...');
 
     // Check if we have permission
     const permissionStatus = await (navigator as any).permissions.query({
       name: 'local-fonts'
     });
+
+    console.log('Permission status:', permissionStatus.state);
 
     if (permissionStatus.state === 'granted') {
       return true;
@@ -41,17 +63,20 @@ export async function isSystemFontsAvailable(): Promise<boolean> {
     if (permissionStatus.state === 'prompt') {
       try {
         // This will trigger the permission prompt
+        console.log('Requesting permission for Local Font Access API...');
         await (window as any).queryLocalFonts();
+        console.log('Permission granted successfully');
         return true;
       } catch (error) {
-        console.warn('Permission denied for Local Font Access API');
+        console.error('Permission denied for Local Font Access API:', error);
         return false;
       }
     }
 
+    console.warn('Permission not granted for Local Font Access API');
     return false;
   } catch (error) {
-    console.warn('Error checking Local Font Access API availability:', error);
+    console.error('Error checking Local Font Access API availability:', error);
     return false;
   }
 }
@@ -64,60 +89,86 @@ export async function getSystemFonts(): Promise<SystemFont[]> {
     // First check if we have or can get access
     const hasAccess = await isSystemFontsAvailable();
     if (!hasAccess) {
-      console.warn('No access to system fonts');
+      console.error('No access to system fonts - API not available or permission denied');
       return [];
     }
 
     // Now we should have permission, try to query fonts
     const rawFonts = await (window as any).queryLocalFonts();
     if (!rawFonts || rawFonts.length === 0) {
-      console.warn('No system fonts found');
+      console.error('No system fonts found in query result');
       return [];
     }
     
     // Group fonts by family
     const fontMap = new Map<string, SystemFont>();
     
+    // Process fonts sequentially to handle async operations
     for (const font of rawFonts) {
-      // Basic font info
-      const fontInfo: SystemFont = {
-        family: font.family,
-        fullName: font.fullName,
-        postscriptName: font.postscriptName,
-        style: font.style,
-        variableAxes: []
-      };
-
-      // Handle variable font axes if present
-      if (font.tables && font.tables.fvar) {
-        const axes = font.tables.fvar.axes;
-        fontInfo.variableAxes = axes.map((axis: any) => ({
-          tag: axis.tag,
-          name: axis.name || axis.tag,
-          min: axis.minValue,
-          max: axis.maxValue,
-          default: axis.defaultValue
-        }));
-      }
-
-      // If this font family already exists, merge the axes
-      if (fontMap.has(font.family)) {
-        const existing = fontMap.get(font.family)!;
-        if (fontInfo.variableAxes && fontInfo.variableAxes.length > 0) {
-          existing.variableAxes = existing.variableAxes || [];
-          for (const axis of fontInfo.variableAxes) {
-            if (!existing.variableAxes.some(a => a.tag === axis.tag)) {
-              existing.variableAxes.push(axis);
+      try {
+        const fontFamily = font.family;
+        
+        // If this font family already exists in our map, update it
+        if (fontMap.has(fontFamily)) {
+          const existingFont = fontMap.get(fontFamily)!;
+          
+          // Try to extract weight from the font
+          let weight = 400; // Default weight
+          try {
+            // Load the font to get its properties
+            const blob = await font.blob();
+            const fontFace = new FontFace(fontFamily, blob);
+            await fontFace.load();
+            
+            // Try to get the weight from the font
+            if (fontFace.weight !== 'normal') {
+              weight = parseInt(fontFace.weight, 10);
             }
+          } catch (error) {
+            console.warn(`Could not get weight for font ${fontFamily}:`, error);
           }
+          
+          // Add the weight if it's not already in the list
+          if (!existingFont.weights.includes(weight)) {
+            existingFont.weights.push(weight);
+            existingFont.weights.sort((a, b) => a - b); // Keep weights sorted
+          }
+          
+        } else {
+          // Create new font entry
+          const fontInfo: SystemFont = {
+            family: fontFamily,
+            fullName: font.fullName,
+            postscriptName: font.postscriptName,
+            style: font.style,
+            weights: []
+          };
+          
+          // Try to get the weight
+          try {
+            const blob = await font.blob();
+            const fontFace = new FontFace(fontFamily, blob);
+            await fontFace.load();
+            
+            let weight = 400; // Default weight
+            if (fontFace.weight !== 'normal') {
+              weight = parseInt(fontFace.weight, 10);
+            }
+            fontInfo.weights.push(weight);
+          } catch (error) {
+            console.warn(`Could not get weight for font ${fontFamily}:`, error);
+            fontInfo.weights.push(400); // Add default weight
+          }
+          
+          fontMap.set(fontFamily, fontInfo);
         }
-      } else {
-        fontMap.set(font.family, fontInfo);
+      } catch (error) {
+        console.error(`Error processing font ${font.family}:`, error);
       }
     }
 
     const fonts = Array.from(fontMap.values());
-    console.log('Loaded system fonts:', fonts.length);
+    console.log('Successfully loaded system fonts:', fonts.length);
     return fonts;
   } catch (error) {
     console.error('Error getting system fonts:', error);
@@ -158,7 +209,7 @@ export async function loadCustomFont(file: File): Promise<{ family: string, url:
   });
 }
 
-// Common web-safe fonts
+// Common web-safe fonts with their typical weights
 export const WEB_SAFE_FONTS = [
   'Arial',
   'Helvetica',
@@ -169,4 +220,4 @@ export const WEB_SAFE_FONTS = [
   'Trebuchet MS',
   'Impact',
   'Comic Sans MS'
-]; 
+];
