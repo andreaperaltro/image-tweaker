@@ -182,6 +182,7 @@ export default function AdvancedEditor({
     concentricCenterX: 0,
     concentricCenterY: 0,
     concentricRingSpacing: 1.0,
+    hexagonalRowOffset: 0.5,
     channels: {
       cyan: true,
       magenta: true,
@@ -1181,6 +1182,7 @@ export default function AdvancedEditor({
       concentricCenterX: 0,
       concentricCenterY: 0,
       concentricRingSpacing: 1.0,
+      hexagonalRowOffset: 0.5,
       channels: {
         cyan: true,
         magenta: true,
