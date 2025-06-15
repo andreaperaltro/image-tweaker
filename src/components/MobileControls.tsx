@@ -1632,19 +1632,19 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 value={settings.fontWeight}
                 onChange={(e) => updateInstanceSettings(instance.id, { fontWeight: e.target.value })}
               >
-                <option value="normal">Normal</option>
-                <option value="bold">Bold</option>
-                <option value="lighter">Lighter</option>
-                <option value="bolder">Bolder</option>
-                <option value="100">100</option>
-                <option value="200">200</option>
-                <option value="300">300</option>
-                <option value="400">400</option>
-                <option value="500">500</option>
-                <option value="600">600</option>
-                <option value="700">700</option>
-                <option value="800">800</option>
-                <option value="900">900</option>
+                {[
+                  { value: "100", label: "Thin (100)" },
+                  { value: "200", label: "Extra Light (200)" },
+                  { value: "300", label: "Light (300)" },
+                  { value: "400", label: "Regular (400)" },
+                  { value: "500", label: "Medium (500)" },
+                  { value: "600", label: "Semi Bold (600)" },
+                  { value: "700", label: "Bold (700)" },
+                  { value: "800", label: "Extra Bold (800)" },
+                  { value: "900", label: "Black (900)" }
+                ].map(({ value, label }) => (
+                  <option key={value} value={value}>{label}</option>
+                ))}
               </select>
             </div>
 

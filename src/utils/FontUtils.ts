@@ -112,21 +112,16 @@ export async function getSystemFonts(): Promise<SystemFont[]> {
         if (fontMap.has(fontFamily)) {
           const existingFont = fontMap.get(fontFamily)!;
           
-          // Try to extract weight from the font
+          // Try to get weight from style name
           let weight = 400; // Default weight
-          try {
-            // Load the font to get its properties
-            const blob = await font.blob();
-            const fontFace = new FontFace(fontFamily, blob);
-            await fontFace.load();
-            
-            // Try to get the weight from the font
-            if (fontFace.weight !== 'normal') {
-              weight = parseInt(fontFace.weight, 10);
-            }
-          } catch (error) {
-            console.warn(`Could not get weight for font ${fontFamily}:`, error);
-          }
+          const style = font.style.toLowerCase();
+          
+          if (style.includes('bold')) weight = 700;
+          else if (style.includes('light')) weight = 300;
+          else if (style.includes('thin')) weight = 100;
+          else if (style.includes('medium')) weight = 500;
+          else if (style.includes('black')) weight = 900;
+          else if (style.includes('regular') || style.includes('normal')) weight = 400;
           
           // Add the weight if it's not already in the list
           if (!existingFont.weights.includes(weight)) {
@@ -144,22 +139,18 @@ export async function getSystemFonts(): Promise<SystemFont[]> {
             weights: []
           };
           
-          // Try to get the weight
-          try {
-            const blob = await font.blob();
-            const fontFace = new FontFace(fontFamily, blob);
-            await fontFace.load();
-            
-            let weight = 400; // Default weight
-            if (fontFace.weight !== 'normal') {
-              weight = parseInt(fontFace.weight, 10);
-            }
-            fontInfo.weights.push(weight);
-          } catch (error) {
-            console.warn(`Could not get weight for font ${fontFamily}:`, error);
-            fontInfo.weights.push(400); // Add default weight
-          }
+          // Get weight from style name
+          let weight = 400; // Default weight
+          const style = font.style.toLowerCase();
           
+          if (style.includes('bold')) weight = 700;
+          else if (style.includes('light')) weight = 300;
+          else if (style.includes('thin')) weight = 100;
+          else if (style.includes('medium')) weight = 500;
+          else if (style.includes('black')) weight = 900;
+          else if (style.includes('regular') || style.includes('normal')) weight = 400;
+          
+          fontInfo.weights.push(weight);
           fontMap.set(fontFamily, fontInfo);
         }
       } catch (error) {
