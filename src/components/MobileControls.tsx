@@ -754,10 +754,24 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                     scale: value
                   })}
                   min={0.1}
-                  max={2.0}
-                  step={0.1}
+                  max={20.0}
+                  step={0.5}
                   showValue={true}
                   defaultValue={1.0} // Default value for Scale
+                />
+
+                <Slider
+                  label="Smoothness"
+                  value={settings.smoothness}
+                  onChange={(value) => updateInstanceSettings(instance.id, {
+                    ...settings,
+                    smoothness: value
+                  })}
+                  min={0}
+                  max={200}
+                  step={5}
+                  showValue={true}
+                  defaultValue={0} // Default value for Smoothness
                 />
 
                 <Slider
@@ -3531,10 +3545,24 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                     scale: value
                   })}
                   min={0.1}
-                  max={2.0}
-                  step={0.1}
+                  max={20.0}
+                  step={0.5}
                   showValue={true}
                   defaultValue={1.0} // Default value for Scale
+                />
+
+                <Slider
+                  label="Smoothness"
+                  value={settings.smoothness}
+                  onChange={(value) => updateInstanceSettings(instance.id, {
+                    ...settings,
+                    smoothness: value
+                  })}
+                  min={0}
+                  max={200}
+                  step={5}
+                  showValue={true}
+                  defaultValue={0} // Default value for Smoothness
                 />
 
                 <Slider

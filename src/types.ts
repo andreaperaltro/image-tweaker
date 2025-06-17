@@ -87,7 +87,8 @@ export interface DistortSettings extends BaseEffectSettings {
   yAmount: number;  // -500 to 500
   displacementMap: string | null;  // Base64 string of the image or null
   preserveAspectRatio: boolean;  // Whether to preserve aspect ratio or stretch
-  scale: number;  // Scale factor for the displacement map (0.1 to 2.0)
+  scale: number;  // Scale factor for the displacement map (0.1 to 5.0)
+  smoothness: number;  // Controls how smooth the distortion appears (0 to 100)
   offsetX: number;  // X position offset (-100 to 100)
   offsetY: number;  // Y position offset (-100 to 100)
 }

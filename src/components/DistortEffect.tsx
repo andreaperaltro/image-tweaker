@@ -102,8 +102,18 @@ export const DistortEffect: React.FC<DistortEffectProps> = ({ settings, onChange
               value={settings.scale}
               onChange={(value) => onChange({ ...settings, scale: value })}
               min={0.1}
-              max={2.0}
-              step={0.1}
+              max={20.0}
+              step={0.5}
+              showValue={true}
+            />
+
+            <Slider
+              label="Smoothness"
+              value={settings.smoothness}
+              onChange={(value) => onChange({ ...settings, smoothness: value })}
+              min={0}
+              max={200}
+              step={5}
               showValue={true}
             />
 
