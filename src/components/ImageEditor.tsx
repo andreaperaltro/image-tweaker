@@ -60,7 +60,8 @@ const defaultParams = {
     preserveAspectRatio: true,
     scale: 1.0,
     offsetX: 0,
-    offsetY: 0
+    offsetY: 0,
+    smoothness: 0
   } as DistortSettings,
   
   // Halftone options

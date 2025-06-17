@@ -685,7 +685,8 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                           preserveAspectRatio: true,
                           scale: 1.0,
                           offsetX: 0,
-                          offsetY: 0
+                          offsetY: 0,
+                          smoothness: 0
                         });
                       };
                       reader.readAsDataURL(file);
@@ -3476,7 +3477,8 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                           preserveAspectRatio: true,
                           scale: 1.0,
                           offsetX: 0,
-                          offsetY: 0
+                          offsetY: 0,
+                          smoothness: 0
                         });
                       };
                       reader.readAsDataURL(file);

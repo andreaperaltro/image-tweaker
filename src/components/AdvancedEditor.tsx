@@ -359,7 +359,8 @@ export default function AdvancedEditor({
     preserveAspectRatio: true,
     scale: 1.0,
     offsetX: 0,
-    offsetY: 0
+    offsetY: 0,
+    smoothness: 0
   });
 
   // Find Edges settings
@@ -814,7 +815,12 @@ export default function AdvancedEditor({
           enabled: true,
           xAmount: 0,
           yAmount: 0,
-          displacementMap: null
+          displacementMap: null,
+          preserveAspectRatio: true,
+          scale: 1.0,
+          offsetX: 0,
+          offsetY: 0,
+          smoothness: 0
         } as DistortSettings;
         break;
       case 'color':
@@ -2708,7 +2714,8 @@ export default function AdvancedEditor({
           preserveAspectRatio: true,
           scale: 1.0,
           offsetX: 0,
-          offsetY: 0
+          offsetY: 0,
+          smoothness: 0
         };
       } else {
         newEffects[effectType] = {
@@ -2728,7 +2735,8 @@ export default function AdvancedEditor({
       preserveAspectRatio: true,
       scale: 1.0,
       offsetX: 0,
-      offsetY: 0
+      offsetY: 0,
+      smoothness: 0
     },
     // ... other effects
   });
