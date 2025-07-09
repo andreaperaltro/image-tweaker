@@ -2478,6 +2478,32 @@ export default function AdvancedEditor({
   const finalHeight = Math.round(canvasHeight * finalScale);
   const isClamped = finalScale < requestedScale;
 
+  // Helper: List of size-dependent fields for each effect type
+  const SIZE_DEPENDENT_FIELDS: Record<string, string[]> = {
+    text: ['fontSize', 'strokeWeight'], // Only scale absolute pixel values; letterSpacing is a multiplier
+    pixel: ['cellSize', 'offGridSize', 'minBlockSize', 'maxBlockSize', 'rings', 'segments', 'voronoiSeeds', 'ringCount'],
+    ascii: ['cellSize', 'fontSize'],
+    blob: ['cellSize', 'minDistance', 'maxDistance', 'angleOffset', 'sizeVariation', 'dotScaleFactor', 'connectionStrength'],
+    shapegrid: ['gridSize'],
+    halftone: ['cellSize', 'dotSize', 'lineWidth'],
+    grid: ['cellSize', 'lineWidth'],
+    linocut: ['lineSpacing', 'strokeWidth', 'minLine'],
+    lcd: ['cellWidth', 'cellHeight', 'padding'],
+    threeD: ['scale', 'perspective', 'distance'],
+    // Add more as needed
+  };
+
+  function scaleEffectSettingsForExport(effectType: string, settings: any, scale: number): any {
+    if (!SIZE_DEPENDENT_FIELDS[effectType]) return settings;
+    const scaled = { ...settings };
+    for (const key of SIZE_DEPENDENT_FIELDS[effectType]) {
+      if (typeof scaled[key] === 'number') {
+        scaled[key] = scaled[key] * scale;
+      }
+    }
+    return scaled;
+  }
+
   // New helper function to apply effects to a canvas at original image resolution for export
   const applyEffectsToCanvasForExport = useCallback(async (
     imageDataUrl: string,
@@ -2502,35 +2528,33 @@ export default function AdvancedEditor({
     tempCanvas.width = originalImage.naturalWidth;
     tempCanvas.height = originalImage.naturalHeight;
     const ctx = tempCanvas.getContext('2d', { willReadFrequently: true });
-
-    if (!ctx) {
-      throw new Error('Could not get canvas context for export');
-    }
+    if (!ctx) throw new Error('Could not get canvas context for export');
 
     const offscreenSourceCanvas = document.createElement('canvas');
     offscreenSourceCanvas.width = originalImage.naturalWidth;
     offscreenSourceCanvas.height = originalImage.naturalHeight;
     const offscreenSourceCtx = offscreenSourceCanvas.getContext('2d', { willReadFrequently: true });
-
-    if (!offscreenSourceCtx) {
-      throw new Error('Could not get offscreen canvas context for export');
-    }
+    if (!offscreenSourceCtx) throw new Error('Could not get offscreen canvas context for export');
 
     offscreenSourceCtx.drawImage(originalImage, 0, 0, originalImage.naturalWidth, originalImage.naturalHeight);
 
     const enabledEffects = effectInstances.filter(instance => instance.enabled);
-
     if (enabledEffects.length === 0) {
       ctx.drawImage(originalImage, 0, 0);
       return tempCanvas;
     }
+
+    // Compute scale factor between display and export
+    const displayWidth = canvasRef.current ? canvasRef.current.width : originalImage.naturalWidth;
+    const scale = originalImage.naturalWidth / displayWidth;
 
     const MAX_EFFECTS = 10;
     const effectsToProcess = enabledEffects.slice(0, MAX_EFFECTS);
 
     if (effectsToProcess.length === 1) {
       const instance = effectsToProcess[0];
-      const settings = getInstanceSettings(instance);
+      let settings = getInstanceSettings(instance);
+      settings = scaleEffectSettingsForExport(instance.type, settings, scale);
       await applyEffectDirectly(instance.type, offscreenSourceCtx, offscreenSourceCanvas, offscreenSourceCanvas, settings);
       ctx.drawImage(offscreenSourceCanvas, 0, 0);
     } else {
@@ -2550,7 +2574,8 @@ export default function AdvancedEditor({
         tempCtx1.drawImage(offscreenSourceCanvas, 0, 0);
 
         for (const instance of effectsToProcess) {
-          const settings = getInstanceSettings(instance);
+          let settings = getInstanceSettings(instance);
+          settings = scaleEffectSettingsForExport(instance.type, settings, scale);
           const isLast = instance === effectsToProcess[effectsToProcess.length - 1];
 
           const srcCanvas = effectsToProcess.indexOf(instance) % 2 === 0 ? tempCanvas1 : tempCanvas2;
