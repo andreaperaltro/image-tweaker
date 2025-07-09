@@ -2801,21 +2801,38 @@ export default function AdvancedEditor({
 
   // Handle create blank layer
   const handleCreateBlankLayer = () => {
-    // Create a flat PNG image of the chosen color and size
+    // 1. Generate a high-res PNG at the chosen resolution
+    const originalWidth = newLayerWidth;
+    const originalHeight = newLayerHeight;
     const canvas = document.createElement('canvas');
-    canvas.width = newLayerWidth;
-    canvas.height = newLayerHeight;
+    canvas.width = originalWidth;
+    canvas.height = originalHeight;
     const ctx = canvas.getContext('2d');
+    let dataUrl = '';
     if (ctx) {
       ctx.fillStyle = newLayerColor;
-      ctx.fillRect(0, 0, newLayerWidth, newLayerHeight);
-      const dataUrl = canvas.toDataURL('image/png');
-      setCanvasWidth(newLayerWidth);
-      setCanvasHeight(newLayerHeight);
-      setAspectRatio(newLayerRatio as AspectRatioPreset);
-      setImage(dataUrl);
-      originalImageDataRef.current = dataUrl;
+      ctx.fillRect(0, 0, originalWidth, originalHeight);
+      dataUrl = canvas.toDataURL('image/png');
     }
+    // 2. Store the high-res PNG as the original image
+    originalImageDataRef.current = dataUrl;
+
+    // 3. Calculate display size to fit viewport (like uploaded images)
+    const viewportWidth = window.innerWidth - 80;
+    const viewportHeight = window.innerHeight - 200;
+    let displayWidth = originalWidth;
+    let displayHeight = originalHeight;
+    if (originalWidth > viewportWidth || originalHeight > viewportHeight) {
+      const widthRatio = viewportWidth / originalWidth;
+      const heightRatio = viewportHeight / originalHeight;
+      const scaleFactor = Math.min(widthRatio, heightRatio);
+      displayWidth = Math.round(originalWidth * scaleFactor);
+      displayHeight = Math.round(originalHeight * scaleFactor);
+    }
+    setCanvasWidth(displayWidth);
+    setCanvasHeight(displayHeight);
+    setAspectRatio('custom');
+    setImage(dataUrl); // The display image is the same dataUrl, but canvas is scaled
     setShowNewLayerModal(false);
   };
 
@@ -3120,8 +3137,15 @@ export default function AdvancedEditor({
                   min={1}
                   max={4096}
                   value={newLayerWidth}
-                  onChange={e => setNewLayerWidth(Number(e.target.value))}
-                  className="w-20 px-2 py-1 rounded border text-xs font-mono"
+                  onChange={e => {
+                    const value = Number(e.target.value);
+                    setNewLayerWidth(value);
+                    if (newLayerLockRatio && newLayerRatio !== 'custom') {
+                      const [w, h] = newLayerRatio.split(':').map(Number);
+                      setNewLayerHeight(Math.round(value * h / w));
+                    }
+                  }}
+                  className="w-20 px-2 py-1 rounded border text-xs font-mono text-[var(--text-primary)] bg-[var(--input-bg)]"
                   placeholder="Width"
                 />
                 <span>x</span>
@@ -3130,8 +3154,15 @@ export default function AdvancedEditor({
                   min={1}
                   max={4096}
                   value={newLayerHeight}
-                  onChange={e => setNewLayerHeight(Number(e.target.value))}
-                  className="w-20 px-2 py-1 rounded border text-xs font-mono"
+                  onChange={e => {
+                    const value = Number(e.target.value);
+                    setNewLayerHeight(value);
+                    if (newLayerLockRatio && newLayerRatio !== 'custom') {
+                      const [w, h] = newLayerRatio.split(':').map(Number);
+                      setNewLayerWidth(Math.round(value * w / h));
+                    }
+                  }}
+                  className="w-20 px-2 py-1 rounded border text-xs font-mono text-[var(--text-primary)] bg-[var(--input-bg)]"
                   placeholder="Height"
                 />
                 <label className="flex items-center gap-1 text-xs">
@@ -3145,7 +3176,7 @@ export default function AdvancedEditor({
                 <select
                   value={newLayerRatio}
                   onChange={e => setNewLayerRatio(e.target.value)}
-                  className="px-1 py-1 rounded border text-xs font-mono"
+                  className="px-1 py-1 rounded border text-xs font-mono text-[var(--text-primary)] bg-[var(--input-bg)]"
                 >
                   <option value="custom">Custom</option>
                   <option value="1:1">1:1</option>
