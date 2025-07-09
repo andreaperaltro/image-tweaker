@@ -2445,7 +2445,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               min={2}
               max={256}
               step={1}
-              defaultValue={16} // Default value for Levels
+              defaultValue={2} // True default value for Levels
             />
             
             <div className="mobile-control-group">
@@ -2484,7 +2484,6 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 <span className="mobile-effect-toggle-slider"></span>
               </label>
             </div>
-
             {settings.dithering && (
               <Slider
                 label="Dither Amount"
@@ -2493,8 +2492,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 min={0}
                 max={100}
                 step={1}
-                unit="%"
-                defaultValue={0} // Default value for Dither Amount
+                defaultValue={50} // True default value for Dither Amount
               />
             )}
           </div>
@@ -2743,85 +2741,195 @@ const MobileControls: React.FC<MobileControlsProps> = ({
       case 'pixel':
         return (
           <div className={`mobile-effect-content ${openSection === instance.id ? 'open' : ''}`}>
-            <Slider
-              label="Cell Size"
-              value={settings.cellSize}
-              onChange={(value) => updateInstanceSettings(instance.id, { cellSize: value })}
-              min={1}
-              max={50}
-              step={1}
-              unit="px"
-              defaultValue={8} // Default value for Cell Size
-            />
-            <Slider
-              label="Pixel Size"
-              value={settings.pixelSize}
-              onChange={(value) => updateInstanceSettings(instance.id, { pixelSize: value })}
-              min={1}
-              max={10}
-              step={1}
-              unit="px"
-              defaultValue={1} // Default value for Pixel Size
-            />
+            {/* Mode Selector */}
             <div className="mobile-control-group">
               <label className="mobile-control-label">Mode</label>
               <select
                 className="mobile-select"
-                value={settings.mode}
+                value={settings.mode || 'grid'}
                 onChange={e => updateInstanceSettings(instance.id, { mode: e.target.value })}
               >
-                <option value="pixelated">Pixelated</option>
-                <option value="circles">Circles</option>
-                <option value="squares">Squares</option>
-                <option value="triangles">Triangles</option>
+                <option value="grid">Grid</option>
+                <option value="radial">Radial</option>
+                <option value="offgrid">Off Grid</option>
+                <option value="voronoi">Voronoi</option>
+                <option value="rings">Rings</option>
+                <option value="random">Random</option>
               </select>
             </div>
-            {settings.mode === 'circles' && (
+
+            {/* Variant Selector */}
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Variant</label>
+              <select
+                className="mobile-select"
+                value={settings.variant || 'classic'}
+                onChange={e => updateInstanceSettings(instance.id, { variant: e.target.value })}
+              >
+                <option value="classic">Classic</option>
+                <option value="posterized">Posterized</option>
+                <option value="grayscale">Grayscale</option>
+              </select>
+            </div>
+
+            {/* Mode-specific controls */}
+            {settings.mode === 'grid' && (
               <Slider
-                label="Circle Ratio"
-                value={settings.circleRatio}
-                onChange={value => updateInstanceSettings(instance.id, { circleRatio: value })}
-                min={0.1}
-                max={1}
-                step={0.01}
-                defaultValue={1} // Default value for Circle Ratio
+                label="Cell Size"
+                value={settings.cellSize || 16}
+                onChange={value => updateInstanceSettings(instance.id, { cellSize: value })}
+                min={2}
+                max={100}
+                step={1}
+                unit="px"
+                defaultValue={16}
               />
             )}
-            {settings.mode === 'triangles' && (
-              <div className="mobile-control-group">
-                <label className="mobile-control-label">Triangle Variant</label>
-                <select
-                  className="mobile-select"
-                  value={settings.triangleVariant}
-                  onChange={e => updateInstanceSettings(instance.id, { triangleVariant: e.target.value })}
-                >
-                  <option value="up">Up</option>
-                  <option value="down">Down</option>
-                  <option value="both">Both</option>
-                </select>
-              </div>
+            {settings.mode === 'radial' && (
+              <>
+                <Slider
+                  label="Rings"
+                  value={settings.rings || 24}
+                  onChange={value => updateInstanceSettings(instance.id, { rings: value })}
+                  min={2}
+                  max={100}
+                  step={1}
+                  defaultValue={24}
+                />
+                <Slider
+                  label="Segments"
+                  value={settings.segments || 48}
+                  onChange={value => updateInstanceSettings(instance.id, { segments: value })}
+                  min={2}
+                  max={180}
+                  step={1}
+                  defaultValue={48}
+                />
+                <Slider
+                  label="Center X"
+                  value={settings.centerX ?? 0.5}
+                  onChange={value => updateInstanceSettings(instance.id, { centerX: value })}
+                  min={0}
+                  max={1}
+                  step={0.01}
+                  defaultValue={0.5}
+                />
+                <Slider
+                  label="Center Y"
+                  value={settings.centerY ?? 0.5}
+                  onChange={value => updateInstanceSettings(instance.id, { centerY: value })}
+                  min={0}
+                  max={1}
+                  step={0.01}
+                  defaultValue={0.5}
+                />
+              </>
             )}
-            <div className="mobile-control-group">
-              <label className="mobile-control-label">Monochrome</label>
-              <label className="mobile-effect-toggle">
-                <input 
-                  type="checkbox" 
-                  checked={settings.monochrome}
-                  onChange={(e) => updateInstanceSettings(instance.id, { monochrome: e.target.checked })}
+            {settings.mode === 'offgrid' && (
+              <>
+                <Slider
+                  label="Block Size"
+                  value={settings.offGridSize || 16}
+                  onChange={value => updateInstanceSettings(instance.id, { offGridSize: value })}
+                  min={2}
+                  max={100}
+                  step={1}
+                  unit="px"
+                  defaultValue={16}
                 />
-                <span className="mobile-effect-toggle-slider"></span>
-              </label>
-            </div>
-            {settings.monochrome && (
-              <div className="mobile-control-group">
-                <label className="mobile-control-label">Monochrome Color</label>
-                <input 
-                  type="color" 
-                  className="mobile-color-picker"
-                  value={settings.monochromeColor || '#000000'}
-                  onChange={(e) => updateInstanceSettings(instance.id, { monochromeColor: e.target.value })}
+                <div className="mobile-control-group">
+                  <label className="mobile-control-label">Orientation</label>
+                  <select
+                    className="mobile-select"
+                    value={settings.offGridOrientation || 'horizontal'}
+                    onChange={e => updateInstanceSettings(instance.id, { offGridOrientation: e.target.value })}
+                  >
+                    <option value="horizontal">Horizontal</option>
+                    <option value="vertical">Vertical</option>
+                  </select>
+                </div>
+              </>
+            )}
+            {settings.mode === 'voronoi' && (
+              <>
+                <Slider
+                  label="Seeds"
+                  value={settings.voronoiSeeds || 32}
+                  onChange={value => updateInstanceSettings(instance.id, { voronoiSeeds: value })}
+                  min={2}
+                  max={256}
+                  step={1}
+                  defaultValue={32}
                 />
-              </div>
+                <Slider
+                  label="Jitter"
+                  value={settings.voronoiJitter || 0.2}
+                  onChange={value => updateInstanceSettings(instance.id, { voronoiJitter: value })}
+                  min={0}
+                  max={1}
+                  step={0.01}
+                  defaultValue={0.2}
+                />
+              </>
+            )}
+            {settings.mode === 'rings' && (
+              <Slider
+                label="Ring Count"
+                value={settings.ringCount || 24}
+                onChange={value => updateInstanceSettings(instance.id, { ringCount: value })}
+                min={2}
+                max={100}
+                step={1}
+                defaultValue={24}
+              />
+            )}
+            {settings.mode === 'random' && (
+              <>
+                <Slider
+                  label="Min Block Size"
+                  value={settings.minBlockSize || 8}
+                  onChange={value => updateInstanceSettings(instance.id, { minBlockSize: value })}
+                  min={2}
+                  max={100}
+                  step={1}
+                  unit="px"
+                  defaultValue={8}
+                />
+                <Slider
+                  label="Max Block Size"
+                  value={settings.maxBlockSize || 32}
+                  onChange={value => updateInstanceSettings(instance.id, { maxBlockSize: value })}
+                  min={2}
+                  max={100}
+                  step={1}
+                  unit="px"
+                  defaultValue={32}
+                />
+              </>
+            )}
+
+            {/* Variant-specific controls */}
+            {settings.variant === 'posterized' && (
+              <Slider
+                label="Posterize Levels"
+                value={settings.posterizeLevels || 4}
+                onChange={value => updateInstanceSettings(instance.id, { posterizeLevels: value })}
+                min={2}
+                max={8}
+                step={1}
+                defaultValue={4}
+              />
+            )}
+            {settings.variant === 'grayscale' && (
+              <Slider
+                label="Grayscale Levels"
+                value={settings.grayscaleLevels || 2}
+                onChange={value => updateInstanceSettings(instance.id, { grayscaleLevels: value })}
+                min={2}
+                max={256}
+                step={1}
+                defaultValue={2}
+              />
             )}
           </div>
         );
@@ -3793,6 +3901,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
             { label: 'Mosaic Shift', type: 'mosaicShift', desc: 'Create mosaic patterns with shifting tiles.' },
             { label: 'Noise', type: 'noise', desc: 'Add various types of noise patterns to your image.' },
             { label: 'Pixel', type: 'pixel', desc: 'Create pixel art effects with customizable grid sizes.' },
+            { label: 'Posterize', type: 'posterize', desc: 'Reduce the number of colors for a poster-like look.' },
             { label: 'Shape Grid', type: 'shapegrid', desc: 'Fill a grid with various shapes based on image brightness.' },
             { label: 'Slice', type: 'sliceShift', desc: 'Create sliced and shifted patterns with various effects.' },
             { label: 'Snake', type: 'snake', desc: 'Create a snake-like pattern that follows image contours.' },
