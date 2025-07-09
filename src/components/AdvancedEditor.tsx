@@ -17,7 +17,7 @@ import MobileControls from './MobileControls'
 import { BlurSettings, DistortSettings } from '../types'
 import { applyBlur } from './BlurUtils'
 import { EffectSettings, saveEffectSettings } from '../utils/EffectSettingsUtils'
-import { FiUpload, FiShuffle, FiTrash, FiRefreshCw, FiSave, FiFolder, FiImage, FiFileText, FiDownload, FiCrop } from 'react-icons/fi'
+import { FiUpload, FiShuffle, FiTrash, FiRefreshCw, FiSave, FiFolder, FiImage, FiFileText, FiDownload, FiCrop, FiLayers } from 'react-icons/fi'
 import { EffectInstance } from '../types'
 import { applyMosaicShift, MosaicShiftSettings } from './MosaicShift'
 import { applySliceShift, SliceShiftSettings } from './SliceShift'
@@ -2766,6 +2766,59 @@ export default function AdvancedEditor({
     // ... other effects
   });
 
+  // Add state for new layer modal and blank canvas
+  const [showNewLayerModal, setShowNewLayerModal] = useState(false);
+
+  // Preset dimensions and aspect ratios
+  const layerPresets = [
+    { label: '1024 x 768 (4:3)', width: 1024, height: 768, ratio: '4:3' },
+    { label: '1920 x 1080 (16:9)', width: 1920, height: 1080, ratio: '16:9' },
+    { label: '1080 x 1080 (1:1)', width: 1080, height: 1080, ratio: '1:1' },
+    { label: '800 x 1200 (2:3)', width: 800, height: 1200, ratio: '2:3' },
+  ];
+
+  // New layer modal state
+  const [newLayerWidth, setNewLayerWidth] = useState(1024);
+  const [newLayerHeight, setNewLayerHeight] = useState(768);
+  const [newLayerRatio, setNewLayerRatio] = useState('4:3');
+  const [newLayerLockRatio, setNewLayerLockRatio] = useState(true);
+  const [newLayerColor, setNewLayerColor] = useState('#ffffff');
+
+  // Handle ratio lock
+  useEffect(() => {
+    if (newLayerLockRatio && newLayerRatio !== 'custom') {
+      const [w, h] = newLayerRatio.split(':').map(Number);
+      setNewLayerHeight(Math.round(newLayerWidth * h / w));
+    }
+  }, [newLayerWidth, newLayerLockRatio, newLayerRatio]);
+
+  // Handle preset click
+  const handlePreset = (preset: typeof layerPresets[0]) => {
+    setNewLayerWidth(preset.width);
+    setNewLayerHeight(preset.height);
+    setNewLayerRatio(preset.ratio);
+  };
+
+  // Handle create blank layer
+  const handleCreateBlankLayer = () => {
+    // Create a flat PNG image of the chosen color and size
+    const canvas = document.createElement('canvas');
+    canvas.width = newLayerWidth;
+    canvas.height = newLayerHeight;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.fillStyle = newLayerColor;
+      ctx.fillRect(0, 0, newLayerWidth, newLayerHeight);
+      const dataUrl = canvas.toDataURL('image/png');
+      setCanvasWidth(newLayerWidth);
+      setCanvasHeight(newLayerHeight);
+      setAspectRatio(newLayerRatio as AspectRatioPreset);
+      setImage(dataUrl);
+      originalImageDataRef.current = dataUrl;
+    }
+    setShowNewLayerModal(false);
+  };
+
   return (
     <div className="flex flex-col lg:flex-row gap-6">
       {/* Canvas Container */}
@@ -2790,6 +2843,13 @@ export default function AdvancedEditor({
                     }}
                   />
                 </label>
+                <button
+                  onClick={() => setShowNewLayerModal(true)}
+                  className="px-2 py-1 bg-[var(--topbar-bg)] text-[var(--text-primary)] text-xs rounded hover:bg-[var(--secondary-bg)] transition-colors pp-mondwest-font flex items-center gap-1 min-w-fit"
+                >
+                  <FiLayers size={16} />
+                  <span className="hidden sm:inline">New Layer</span>
+                </button>
                 <button
                   onClick={loadRandomImage}
                   className="px-2 py-1 bg-[var(--topbar-bg)] text-[var(--text-primary)] text-xs rounded hover:bg-[var(--secondary-bg)] transition-colors pp-mondwest-font flex items-center gap-1 min-w-fit"
@@ -2861,37 +2921,27 @@ export default function AdvancedEditor({
           </div>
           
           <div className="relative">
-            <div
-              {...getRootProps()}
-              className={`border-2 border-dashed ${
-                isDragActive 
-                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/10' 
-                  : 'border-[var(--border-color)]'
-              } rounded-lg p-4 text-center cursor-pointer transition-colors bg-[var(--secondary-bg)]`}
-            >
-              <input {...getInputProps()} />
-              {image ? (
-                <div className="relative">
-                  <canvas
-                    ref={canvasRef}
-                    width={canvasWidth}
-                    height={canvasHeight}
-                    className="max-w-full h-auto mx-auto"
-                  />
-                  {(processing || imageLoading) && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
-                      <div className="w-10 h-10 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="py-12">
-                  <p className="text-[var(--text-secondary)] pp-mondwest-font">
-                    {isLoading ? 'Loading random image...' : 'Drag & drop an image here, or click to select'}
-                  </p>
-                </div>
-              )}
-            </div>
+            {image ? (
+              <div className="relative">
+                <canvas
+                  ref={canvasRef}
+                  width={canvasWidth}
+                  height={canvasHeight}
+                  className="max-w-full h-auto mx-auto"
+                />
+                {(processing || imageLoading) && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
+                    <div className="w-10 h-10 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="py-12">
+                <p className="text-[var(--text-secondary)] pp-mondwest-font">
+                  {isLoading ? 'Loading random image...' : 'Drag & drop an image here, or click to select'}
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -3046,6 +3096,90 @@ export default function AdvancedEditor({
             setIsCropping(false);
           }}
         />
+      )}
+
+      {showNewLayerModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="bg-[var(--accent-bg)] p-6 rounded-lg shadow-xl w-full max-w-md border border-[var(--border-color)]">
+            <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><FiLayers /> New Layer</h2>
+            <div className="mb-3">
+              <div className="flex flex-wrap gap-2 mb-2">
+                {layerPresets.map(preset => (
+                  <button
+                    key={preset.label}
+                    className={`px-2 py-1 rounded text-xs font-mono border ${newLayerWidth === preset.width && newLayerHeight === preset.height ? 'bg-[var(--accent-color)] text-[var(--accent-text)]' : 'bg-[var(--border-color)] text-[var(--text-primary)] hover:bg-[var(--border-color)]/80'}`}
+                    onClick={() => handlePreset(preset)}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+              <div className="flex gap-2 mb-2">
+                <input
+                  type="number"
+                  min={1}
+                  max={4096}
+                  value={newLayerWidth}
+                  onChange={e => setNewLayerWidth(Number(e.target.value))}
+                  className="w-20 px-2 py-1 rounded border text-xs font-mono"
+                  placeholder="Width"
+                />
+                <span>x</span>
+                <input
+                  type="number"
+                  min={1}
+                  max={4096}
+                  value={newLayerHeight}
+                  onChange={e => setNewLayerHeight(Number(e.target.value))}
+                  className="w-20 px-2 py-1 rounded border text-xs font-mono"
+                  placeholder="Height"
+                />
+                <label className="flex items-center gap-1 text-xs">
+                  <input
+                    type="checkbox"
+                    checked={newLayerLockRatio}
+                    onChange={e => setNewLayerLockRatio(e.target.checked)}
+                  />
+                  Lock Ratio
+                </label>
+                <select
+                  value={newLayerRatio}
+                  onChange={e => setNewLayerRatio(e.target.value)}
+                  className="px-1 py-1 rounded border text-xs font-mono"
+                >
+                  <option value="custom">Custom</option>
+                  <option value="1:1">1:1</option>
+                  <option value="4:3">4:3</option>
+                  <option value="16:9">16:9</option>
+                  <option value="2:3">2:3</option>
+                </select>
+              </div>
+              <div className="mb-2">
+                <label className="text-xs mr-2">Background Color:</label>
+                <input
+                  type="color"
+                  value={newLayerColor}
+                  onChange={e => setNewLayerColor(e.target.value)}
+                  className="w-8 h-8 p-0 border rounded"
+                />
+              </div>
+            </div>
+            <div className="flex gap-2 justify-end mt-4">
+              <button
+                className="px-3 py-1 rounded bg-gray-300 text-gray-800 hover:bg-gray-400 transition"
+                onClick={() => setShowNewLayerModal(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-3 py-1 rounded bg-emerald-600 text-white hover:bg-emerald-700 transition"
+                onClick={handleCreateBlankLayer}
+              >
+                Create
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
