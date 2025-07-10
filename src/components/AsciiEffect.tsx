@@ -15,6 +15,14 @@ export interface AsciiEffectSettings {
   rotationMode: 'none' | 'random' | 'flow';
 }
 
+// Preset ASCII character sets
+export const ASCII_CHARSETS: Record<string, string> = {
+  standard: '@%#*+=-:. ',
+  complex: "$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\\|()1{}[]?-_+~<>i!lI;:,\"^`'. ",
+  braille: '⣿⣷⣶⣤⣀ ',
+  blocks: '█▓▒░ ',
+};
+
 export const applyAsciiEffect = (
   sourceCanvas: HTMLCanvasElement,
   targetCanvas: HTMLCanvasElement,

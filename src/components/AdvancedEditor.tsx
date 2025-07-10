@@ -51,6 +51,7 @@ import { applyShapeGridEffect, ShapeGridSettings } from './ShapeGridEffect';
 import { useTruchetEffect, TruchetSettings } from './TruchetEffect';
 import { Effects } from '../types';
 import { addPngMetadata } from '../utils/PngMetadata';
+import { ASCII_CHARSETS } from './AsciiEffect';
 
 // Define types
 type AspectRatioPreset = '1:1' | '4:3' | '16:9' | '3:2' | '5:4' | '2:1' | '3:4' | '9:16' | '2:3' | '4:5' | '1:2' | 'custom';
@@ -954,7 +955,8 @@ export default function AdvancedEditor({
           enabled: true,
           cellSize: 8,
           fontSize: 12,
-          charset: '@%#*+=-:. ',
+          charset: ASCII_CHARSETS['standard'],
+          characterSet: 'standard',
           backgroundColor: '#000000',
           monochrome: true,
           jitter: 0,
@@ -1660,7 +1662,21 @@ export default function AdvancedEditor({
     
     // Load instance-specific settings if available
     if (settings.instanceSettings) {
-      setInstanceSettings(settings.instanceSettings);
+      const updatedInstanceSettings = { ...settings.instanceSettings };
+      Object.keys(updatedInstanceSettings).forEach(id => {
+        const inst = updatedInstanceSettings[id];
+        if (inst && inst.preset === 'ascii') {
+          if (!inst.characterSet && inst.charset) {
+            // Try to infer characterSet from charset string
+            const found = Object.entries(ASCII_CHARSETS).find(([, str]) => str === inst.charset);
+            inst.characterSet = found ? found[0] : 'custom';
+          }
+          if (!inst.charset && inst.characterSet) {
+            inst.charset = ASCII_CHARSETS[inst.characterSet] || '';
+          }
+        }
+      });
+      setInstanceSettings(updatedInstanceSettings);
     }
     
     // Load effect instances if available, otherwise create default ones
@@ -2953,10 +2969,22 @@ export default function AdvancedEditor({
                 )}
               </div>
             ) : (
-              <div className="py-12">
-                <p className="text-[var(--text-secondary)] pp-mondwest-font">
-                  {isLoading ? 'Loading random image...' : 'Drag & drop an image here, or click to select'}
-                </p>
+              <div
+                {...getRootProps()}
+                className={`border-2 border-dashed rounded-lg p-12 text-center cursor-pointer transition-colors ${
+                  isDragActive ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' : 'border-[var(--border-color)] hover:border-emerald-500/50'
+                }`}
+              >
+                <input {...getInputProps()} />
+                <div className="flex flex-col items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-400 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <p className="text-lg font-medium text-[var(--text-secondary)] pp-mondwest-font">
+                    {isLoading ? 'Loading random image...' : 'Drag & drop an image here'}
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1">or click to select a file</p>
+                </div>
               </div>
             )}
           </div>

@@ -35,6 +35,7 @@ import { TruchetControls } from './TruchetControls'
 import { TruchetSettings } from './TruchetEffect'
 import { GiGearStickPattern } from 'react-icons/gi'
 import { MdWaves, MdApps, MdViewComfy, MdContentCut, MdPalette, MdRadar } from 'react-icons/md'
+import { ASCII_CHARSETS } from './AsciiEffect'
 
 // Font Family Selector Component
 interface FontFamilySelectorProps {
@@ -3156,40 +3157,64 @@ const MobileControls: React.FC<MobileControlsProps> = ({
         );
 
       case 'ascii':
+        const fontSizeMin = Math.max(1, settings.cellSize * 0.5);
+        const fontSizeMax = settings.cellSize * 2;
         return (
           <div className={`mobile-effect-content ${openSection === instance.id ? 'open' : ''}`}>
+            <Slider
+              label="Grid Size"
+              value={settings.cellSize}
+              onChange={(value) => updateInstanceSettings(instance.id, { cellSize: value })}
+              min={2}
+              max={40}
+              step={1}
+              unit="px"
+              defaultValue={8}
+            />
             <Slider
               label="Font Size"
               value={settings.fontSize}
               onChange={(value) => updateInstanceSettings(instance.id, { fontSize: value })}
-              min={1}
-              max={20}
+              min={fontSizeMin}
+              max={fontSizeMax}
               step={1}
               unit="px"
-              defaultValue={10} // Default value for Font Size
-            />
-            <Slider
-              label="Brightness Threshold"
-              value={settings.brightnessThreshold}
-              onChange={(value) => updateInstanceSettings(instance.id, { brightnessThreshold: value })}
-              min={0}
-              max={255}
-              step={1}
-              defaultValue={128} // Default value for Brightness Threshold
+              defaultValue={Math.max(10, fontSizeMin)}
             />
             <div className="mobile-control-group">
               <label className="mobile-control-label">Character Set</label>
               <select
                 className="mobile-select"
-                value={settings.characterSet}
-                onChange={e => updateInstanceSettings(instance.id, { characterSet: e.target.value })}
+                value={settings.characterSet || 'standard'}
+                onChange={e => {
+                  const value = e.target.value;
+                  if (value === 'custom') {
+                    updateInstanceSettings(instance.id, { characterSet: 'custom', charset: settings.charset || '' });
+                  } else {
+                    updateInstanceSettings(instance.id, { characterSet: value, charset: ASCII_CHARSETS[value] });
+                  }
+                }}
               >
                 <option value="standard">Standard</option>
                 <option value="complex">Complex</option>
                 <option value="braille">Braille</option>
                 <option value="blocks">Blocks</option>
+                <option value="custom">Custom</option>
               </select>
             </div>
+            {settings.characterSet === 'custom' && (
+              <div className="mobile-control-group">
+                <label className="mobile-control-label">Custom Charset</label>
+                <input
+                  type="text"
+                  className="mobile-text-input border border-[var(--border-color)] rounded px-2 py-1"
+                  style={{ color: 'var(--text-primary)', background: 'var(--input-bg)', fontFamily: 'monospace', fontSize: '1rem' }}
+                  value={settings.charset || ''}
+                  onChange={e => updateInstanceSettings(instance.id, { charset: e.target.value })}
+                  placeholder="Enter characters to use"
+                />
+              </div>
+            )}
             <div className="mobile-control-group">
               <label className="mobile-control-label">Color Invert</label>
               <label className="mobile-effect-toggle">
@@ -3339,99 +3364,88 @@ const MobileControls: React.FC<MobileControlsProps> = ({
         return (
           <div className={`mobile-effect-content ${openSection === instance.id ? 'open' : ''}`}>
             <Slider
-              label="Segment Length"
-              value={settings.segmentLength}
-              onChange={(value) => updateInstanceSettings(instance.id, { segmentLength: value })}
-              min={1}
+              label="Grid Size"
+              value={settings.gridSize}
+              onChange={(value) => updateInstanceSettings(instance.id, { gridSize: value })}
+              min={2}
               max={50}
               step={1}
               unit="px"
-              defaultValue={10} // Default value for Segment Length
+              defaultValue={10}
             />
             <Slider
-              label="Segment Count"
-              value={settings.segmentCount}
-              onChange={(value) => updateInstanceSettings(instance.id, { segmentCount: value })}
-              min={1}
-              max={100}
+              label="Color Count"
+              value={settings.colorCount}
+              onChange={(value) => updateInstanceSettings(instance.id, { colorCount: value })}
+              min={2}
+              max={30}
               step={1}
-              defaultValue={20} // Default value for Segment Count
+              defaultValue={8}
             />
             <Slider
-              label="Opacity"
-              value={settings.opacity}
-              onChange={(value) => updateInstanceSettings(instance.id, { opacity: value })}
+              label="Corner Radius"
+              value={settings.cornerRadius}
+              onChange={(value) => updateInstanceSettings(instance.id, { cornerRadius: value })}
               min={0}
-              max={1}
-              step={0.01}
-              defaultValue={1} // Default value for Opacity
+              max={20}
+              step={1}
+              unit="px"
+              defaultValue={0}
+            />
+            <Slider
+              label="Padding"
+              value={settings.padding}
+              onChange={(value) => updateInstanceSettings(instance.id, { padding: value })}
+              min={0}
+              max={20}
+              step={1}
+              unit="px"
+              defaultValue={0}
             />
             <div className="mobile-control-group">
-              <label className="mobile-control-label">Color</label>
-              <input
-                type="color"
-                className="mobile-color-picker"
-                value={settings.color}
-                onChange={e => updateInstanceSettings(instance.id, { color: e.target.value })}
-              />
-            </div>
-            <div className="mobile-control-group">
-              <label className="mobile-control-label">Blend Mode</label>
+              <label className="mobile-control-label">Color Mode</label>
               <select
                 className="mobile-select"
-                value={settings.blendMode}
-                onChange={e => updateInstanceSettings(instance.id, { blendMode: e.target.value })}
+                value={settings.colorMode}
+                onChange={e => updateInstanceSettings(instance.id, { colorMode: e.target.value })}
               >
-                <option value="source-over">Normal</option>
-                <option value="multiply">Multiply</option>
-                <option value="screen">Screen</option>
-                <option value="overlay">Overlay</option>
-                <option value="darken">Darken</option>
-                <option value="lighten">Lighten</option>
+                <option value="grayscale">Grayscale</option>
+                <option value="dominant">Dominant</option>
               </select>
             </div>
             <div className="mobile-control-group">
-              <label className="mobile-control-label">Follow Brightness</label>
-              <label className="mobile-effect-toggle">
-                <input 
-                  type="checkbox" 
-                  checked={settings.followBrightness}
-                  onChange={(e) => updateInstanceSettings(instance.id, { followBrightness: e.target.checked })}
-                />
-                <span className="mobile-effect-toggle-slider"></span>
-              </label>
-            </div>
-            <Slider
-              label="Brightness Sensitivity"
-              value={settings.brightnessSensitivity}
-              onChange={(value) => updateInstanceSettings(instance.id, { brightnessSensitivity: value })}
-              min={0}
-              max={1}
-              step={0.01}
-              defaultValue={0.5} // Default value for Brightness Sensitivity
-            />
-            <div className="mobile-control-group">
-              <label className="mobile-control-label">Animate</label>
-              <label className="mobile-effect-toggle">
-                <input 
-                  type="checkbox" 
-                  checked={settings.animate}
-                  onChange={(e) => updateInstanceSettings(instance.id, { animate: e.target.checked })}
-                />
-                <span className="mobile-effect-toggle-slider"></span>
-              </label>
-            </div>
-            {settings.animate && (
-              <Slider
-                label="Animation Speed"
-                value={settings.animationSpeed}
-                onChange={(value) => updateInstanceSettings(instance.id, { animationSpeed: value })}
-                min={0.1}
-                max={10}
-                step={0.1}
-                defaultValue={1} // Default value for Animation Speed
+              <label className="mobile-control-label">Background Color</label>
+              <input
+                type="color"
+                className="mobile-color-picker"
+                value={settings.backgroundColor}
+                onChange={e => updateInstanceSettings(instance.id, { backgroundColor: e.target.value })}
               />
-            )}
+            </div>
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Outline Style</label>
+              <select
+                className="mobile-select"
+                value={settings.outlineStyle}
+                onChange={e => updateInstanceSettings(instance.id, { outlineStyle: e.target.value })}
+              >
+                <option value="pixel">Pixel</option>
+                <option value="smooth">Smooth</option>
+              </select>
+            </div>
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Shape</label>
+              <select
+                className="mobile-select"
+                value={settings.shape}
+                onChange={e => updateInstanceSettings(instance.id, { shape: e.target.value })}
+              >
+                <option value="row">Row</option>
+                <option value="column">Column</option>
+                <option value="diagonal">Diagonal</option>
+                <option value="diagonal2">Diagonal 2</option>
+              </select>
+            </div>
           </div>
         );
 
