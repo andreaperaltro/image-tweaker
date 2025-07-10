@@ -3181,6 +3181,16 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               unit="px"
               defaultValue={Math.max(10, fontSizeMin)}
             />
+            <Slider
+              label="Jitter"
+              value={settings.jitter || 0}
+              onChange={(value) => updateInstanceSettings(instance.id, { jitter: value })}
+              min={0}
+              max={settings.cellSize}
+              step={1}
+              unit="px"
+              defaultValue={0}
+            />
             <div className="mobile-control-group">
               <label className="mobile-control-label">Character Set</label>
               <select
@@ -3248,16 +3258,6 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 />
               </div>
             )}
-            <Slider
-              label="Random Jitter"
-              value={settings.jitter || 0}
-              onChange={value => updateInstanceSettings(instance.id, { jitter: value })}
-              min={0}
-              max={settings.cellSize}
-              step={1}
-              unit="px"
-              defaultValue={0} // Default value for Random Jitter
-            />
             <div className="mobile-control-group">
               <label className="mobile-control-label">Background Color</label>
               <input
