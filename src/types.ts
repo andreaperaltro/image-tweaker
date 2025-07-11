@@ -82,7 +82,8 @@ export interface BaseEffectSettings {
   enabled: boolean;
 }
 
-export interface DistortSettings extends BaseEffectSettings {
+export interface DistortSettings {
+  enabled: boolean;
   xAmount: number;  // -500 to 500
   yAmount: number;  // -500 to 500
   displacementMap: string | null;  // Base64 string of the image or null
@@ -91,6 +92,7 @@ export interface DistortSettings extends BaseEffectSettings {
   smoothness: number;  // Controls how smooth the distortion appears (0 to 100)
   offsetX: number;  // X position offset (-100 to 100)
   offsetY: number;  // Y position offset (-100 to 100)
+  displacementMapUpdatedAt?: number;
 }
 
 export interface Effects {
@@ -231,6 +233,4 @@ export interface ThreeDEffectSettings {
   backgroundColor: string; // hex color code
   perspective: number; // 0 to 100, controls field of view
   distance: number; // 100 to 1000, controls camera distance
-}
-
-// Remove the duplicate EffectSettings type at the end of the file 
+} 

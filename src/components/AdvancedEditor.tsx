@@ -15,7 +15,7 @@ import { GradientMapSettings, applyGradientMap, GradientMapBlendMode, GradientSt
 import { saveAs } from 'file-saver'
 import MobileControls from './MobileControls'
 import { BlurSettings, DistortSettings } from '../types'
-import { applyBlur } from './BlurUtils'
+import { applyBlur, applyGaussianBlur } from './BlurUtils'
 import { EffectSettings, saveEffectSettings } from '../utils/EffectSettingsUtils'
 import { FiUpload, FiShuffle, FiTrash, FiRefreshCw, FiSave, FiFolder, FiImage, FiFileText, FiDownload, FiCrop, FiLayers } from 'react-icons/fi'
 import { EffectInstance } from '../types'
@@ -685,7 +685,7 @@ export default function AdvancedEditor({
       case 'snake':
         return instanceSettings[instance.id];
       case 'distort':
-        return distortSettings;
+        return instanceSettings[instance.id]; // Always use instance-specific settings for distort
       case 'shapegrid':
         return {
           enabled: true,
@@ -2028,7 +2028,10 @@ export default function AdvancedEditor({
                 
                 // Draw the displacement map with all transformations
                 tempCtx.drawImage(displacementImage, x, y, drawWidth, drawHeight);
-                
+                // Apply blur to the displacement map if smoothness > 0
+                if (settings.smoothness && settings.smoothness > 0) {
+                  applyGaussianBlur(tempCtx, targetCanvas.width, targetCanvas.height, settings.smoothness);
+                }
                 const displacementData = tempCtx.getImageData(0, 0, targetCanvas.width, targetCanvas.height).data;
                 
                 // Get the source image data
@@ -2066,18 +2069,15 @@ export default function AdvancedEditor({
                     const sourceX = Math.round(x + dx);
                     const sourceY = Math.round(y + dy);
 
-                    // Get source pixel index
-                    const sourceIndex = (sourceY * targetCanvas.width + sourceX) * 4;
+                    // No color aberration: all channels use the same source pixel
+                    const srcIdx = (sourceY * targetCanvas.width + sourceX) * 4;
 
-                    // Only copy displaced pixels if there's significant displacement
-                    if (intensity > 0.05) { // Threshold to determine what's considered "non-zero"
-                      // Copy the displaced pixel to overlay
-                      overlayData[i] = data[sourceIndex] || data[i];
-                      overlayData[i + 1] = data[sourceIndex + 1] || data[i + 1];
-                      overlayData[i + 2] = data[sourceIndex + 2] || data[i + 2];
-                      overlayData[i + 3] = Math.min(255, intensity * 255 * 2); // Make the overlay semi-transparent based on intensity
+                    if (intensity > 0.05) {
+                      overlayData[i] = data[srcIdx] || data[i];
+                      overlayData[i + 1] = data[srcIdx + 1] || data[i + 1];
+                      overlayData[i + 2] = data[srcIdx + 2] || data[i + 2];
+                      overlayData[i + 3] = Math.min(255, intensity * 255 * 2);
                     } else {
-                      // For areas with no displacement, make them transparent
                       overlayData[i] = 0;
                       overlayData[i + 1] = 0;
                       overlayData[i + 2] = 0;
@@ -2370,7 +2370,7 @@ export default function AdvancedEditor({
       // Process the image with the new settings
       processImage();
     }
-  }, [canvasWidth, canvasHeight, originalImageDataRef]);
+  }, [canvasWidth, canvasHeight, originalImageDataRef, instanceSettings, effectInstances]);
   
   // Initialize the animation state
   const [animationState, animationControls] = useAnimation(
@@ -2852,6 +2852,11 @@ export default function AdvancedEditor({
     setShowNewLayerModal(false);
   };
 
+  // Add this after the other useEffects for image/canvas changes
+  useEffect(() => {
+    processImage();
+  }, [instanceSettings, effectInstances]);
+
   return (
     <div className="flex flex-col lg:flex-row gap-6">
       {/* Canvas Container */}
@@ -3022,18 +3027,22 @@ export default function AdvancedEditor({
             }}
             onExportPng={() => canvasRef.current && exportCanvasAsPng(canvasRef.current)}
             onExportSvg={() => canvasRef.current && exportCanvasAsSvg(canvasRef.current)}
-            onCropImage={handleCropImage}
-            textEffectSettings={textEffectSettings}
-            updateTextEffectSettings={(settings: Partial<TextEffectSettings>) => setTextEffectSettings(prev => ({ ...prev, ...settings }))}
-            onExportVideo={() => {}}
+            onExportVideo={handleExportVideo}
             onSaveSettings={() => {}}
             onLoadSettings={() => {}}
-            onRandomImage={() => {}}
             onUploadImage={() => {}}
-            onClearImage={() => {}}
+            onCropImage={handleCropImage}
+            onRandomImage={loadRandomImage}
+            onClearImage={() => {
+              setImage(null);
+              originalImageDataRef.current = null;
+            }}
+            processImageCallback={processImage}
+            textEffectSettings={textEffectSettings}
+            updateTextEffectSettings={(settings: Partial<TextEffectSettings>) => setTextEffectSettings(prev => ({ ...prev, ...settings }))}
             snakeEffectSettings={snakeEffectSettings}
             updateSnakeEffectSettings={(settings: Partial<SnakeEffectSettings>) => setSnakeEffectSettings(prev => ({ ...prev, ...settings }))}
-            truchetSettings={defaultTruchetSettings}
+            truchetSettings={truchetSettings}
             updateTruchetSettings={(settings: Partial<TruchetSettings>) => setTruchetSettings(prev => ({ ...prev, ...settings }))}
           />
           {/* Animation Section */}

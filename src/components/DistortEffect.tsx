@@ -19,6 +19,7 @@ export const DistortEffect: React.FC<DistortEffectProps> = ({ settings, onChange
         onChange({
           ...settings,
           displacementMap: reader.result as string,
+          displacementMapUpdatedAt: Date.now(), // Force re-render
           preserveAspectRatio: true, // Default to preserving aspect ratio
           scale: 1.0, // Default scale
           offsetX: 0, // Default X offset
@@ -112,8 +113,8 @@ export const DistortEffect: React.FC<DistortEffectProps> = ({ settings, onChange
               value={settings.smoothness}
               onChange={(value) => onChange({ ...settings, smoothness: value })}
               min={0}
-              max={200}
-              step={5}
+              max={20}
+              step={0.1}
               showValue={true}
             />
 

@@ -243,6 +243,7 @@ interface MobileControlsProps {
   updateSnakeEffectSettings: (settings: Partial<SnakeEffectSettings>) => void;
   truchetSettings: TruchetSettings;
   updateTruchetSettings: (settings: Partial<TruchetSettings>) => void;
+  processImageCallback?: () => void;
 }
 
 // Debounce function to limit update frequency
@@ -306,7 +307,8 @@ const MobileControls: React.FC<MobileControlsProps> = ({
   snakeEffectSettings,
   updateSnakeEffectSettings,
   truchetSettings,
-  updateTruchetSettings
+  updateTruchetSettings,
+  processImageCallback
 }) => {
   const [openSection, setOpenSection] = useState<string | null>(null)
   const [shapesOpenStates, setShapesOpenStates] = useState<{[key: string]: boolean}>({});
@@ -683,12 +685,17 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                         updateInstanceSettings(instance.id, {
                           ...settings,
                           displacementMap: reader.result as string,
+                          displacementMapUpdatedAt: Date.now(), // Force re-render
                           preserveAspectRatio: true,
                           scale: 1.0,
                           offsetX: 0,
                           offsetY: 0,
                           smoothness: 0
                         });
+                        // Call processImageCallback if provided to force re-render
+                        if (typeof processImageCallback === 'function') {
+                          processImageCallback();
+                        }
                       };
                       reader.readAsDataURL(file);
                     }
@@ -770,8 +777,8 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                     smoothness: value
                   })}
                   min={0}
-                  max={200}
-                  step={5}
+                  max={20}
+                  step={0.1}
                   showValue={true}
                   defaultValue={0} // Default value for Smoothness
                 />
@@ -3596,12 +3603,17 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                         updateInstanceSettings(instance.id, {
                           ...settings,
                           displacementMap: reader.result as string,
+                          displacementMapUpdatedAt: Date.now(), // Force re-render
                           preserveAspectRatio: true,
                           scale: 1.0,
                           offsetX: 0,
                           offsetY: 0,
                           smoothness: 0
                         });
+                        // Call processImageCallback if provided to force re-render
+                        if (typeof processImageCallback === 'function') {
+                          processImageCallback();
+                        }
                       };
                       reader.readAsDataURL(file);
                     }
@@ -3683,10 +3695,23 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                     smoothness: value
                   })}
                   min={0}
-                  max={200}
-                  step={5}
+                  max={20}
+                  step={0.1}
                   showValue={true}
                   defaultValue={0} // Default value for Smoothness
+                />
+                <Slider
+                  label="Color Aberration"
+                  value={settings.colorAberration || 0}
+                  onChange={(value) => updateInstanceSettings(instance.id, {
+                    ...settings,
+                    colorAberration: value
+                  })}
+                  min={0}
+                  max={10}
+                  step={0.1}
+                  showValue={true}
+                  defaultValue={0} // Default value for Color Aberration
                 />
 
                 <Slider
