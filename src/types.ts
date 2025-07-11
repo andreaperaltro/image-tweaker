@@ -213,6 +213,10 @@ export interface NoiseEffectSettings {
   blendMode: 'normal' | 'multiply' | 'screen' | 'overlay' | 'darken' | 'lighten' | 'color-dodge' | 'color-burn' | 'hard-light' | 'soft-light' | 'difference' | 'exclusion';
   monochrome?: boolean; // If true, use grayscale noise for all channels
   channel?: 'all' | 'r' | 'g' | 'b'; // Which channel(s) to apply noise to
+  octaves?: number; // Number of octaves for fBm
+  persistence?: number; // Persistence for fBm
+  amount?: number; // Amount of noise to apply (0-1)
+  density?: number; // Density of noise (0-1)
 }
 
 export interface LCDEffectSettings {

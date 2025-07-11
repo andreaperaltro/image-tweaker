@@ -39,16 +39,53 @@ export function applyNoiseEffect(
   settings: import('../types').NoiseEffectSettings
 ) {
   if (!settings.enabled) return;
-  const { intensity = 0.5, scale = 0.1, seed = 0, blendMode = 'normal', monochrome = false, channel = 'all' } = settings;
+  const { intensity = 0.5, scale = 0.1, seed = 0, blendMode = 'normal', monochrome = false, channel = 'all', type = 'perlin', octaves = 4, persistence = 0.5, amount = 1, density = 1 } = settings;
   const srcData = ctx.getImageData(0, 0, width, height);
   const dstData = ctx.createImageData(width, height);
   const noise = new Noise(seed);
   const freq = 1 / Math.max(scale, 0.0001);
+
+  // fBm (fractal Brownian motion) for Perlin/Simplex
+  function fbm(x: number, y: number) {
+    let total = 0;
+    let amplitude = 1;
+    let maxValue = 0;
+    let frequency = 1;
+    for (let o = 0; o < octaves; o++) {
+      let n = 0;
+      if (type === 'perlin') {
+        n = noise.perlin2(x * freq * frequency, y * freq * frequency);
+      } else if (type === 'simplex' && noise.simplex2) {
+        n = noise.simplex2(x * freq * frequency, y * freq * frequency);
+      }
+      total += n * amplitude;
+      maxValue += amplitude;
+      amplitude *= persistence;
+      frequency *= 2;
+    }
+    // Normalize to [-1, 1]
+    return maxValue > 0 ? total / maxValue : 0;
+  }
+
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const idx = (y * width + x) * 4;
-      // Perlin noise returns [-1, 1], map to [0, 255]
-      let n = (noise.perlin2(x * freq, y * freq) * 0.5 + 0.5) * 255;
+      // Density: only apply noise to a fraction of pixels
+      if (density < 1 && Math.random() > density) {
+        // Copy original pixel
+        dstData.data[idx + 0] = srcData.data[idx + 0];
+        dstData.data[idx + 1] = srcData.data[idx + 1];
+        dstData.data[idx + 2] = srcData.data[idx + 2];
+        dstData.data[idx + 3] = srcData.data[idx + 3];
+        continue;
+      }
+      // Use fBm for Perlin/Simplex, else single noise
+      let n = 0;
+      if (type === 'perlin' || type === 'simplex') {
+        n = (fbm(x, y) * 0.5 + 0.5) * 255;
+      } else {
+        n = (noise.perlin2(x * freq, y * freq) * 0.5 + 0.5) * 255;
+      }
       if (monochrome) n = Math.round(n);
       for (let c = 0; c < 3; c++) {
         const orig = srcData.data[idx + c];
@@ -60,9 +97,14 @@ export function applyNoiseEffect(
           (channel === 'b' && c === 2);
         let noiseVal = orig;
         if (applyToChannel) {
-          // If monochrome, use same n for all channels; else, recalc per channel
-          const nVal = monochrome ? n : (noise.perlin2((x + c * 1000) * freq, y * freq) * 0.5 + 0.5) * 255;
-          noiseVal = Math.round(orig * (1 - intensity) + nVal * intensity);
+          let nVal = monochrome ? n : 0;
+          if (type === 'perlin' || type === 'simplex') {
+            nVal = monochrome ? n : (fbm(x + c * 1000, y) * 0.5 + 0.5) * 255;
+          } else {
+            nVal = monochrome ? n : (noise.perlin2((x + c * 1000) * freq, y * freq) * 0.5 + 0.5) * 255;
+          }
+          // Amount: blend between original and noise value
+          noiseVal = Math.round(orig * (1 - intensity * amount) + nVal * intensity * amount);
         }
         dstData.data[idx + c] = Math.round(
           blend(orig, noiseVal, blendMode)

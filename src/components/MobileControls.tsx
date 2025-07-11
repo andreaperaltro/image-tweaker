@@ -2984,7 +2984,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                   value={settings.scale}
                   onChange={(value) => updateInstanceSettings(instance.id, { scale: value })}
                   min={0.01}
-                  max={0.5}
+                  max={100.0}
                   step={0.01}
                   defaultValue={0.1} // Default value for Scale
                 />
@@ -3015,7 +3015,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                   value={settings.scale}
                   onChange={(value) => updateInstanceSettings(instance.id, { scale: value })}
                   min={0.01}
-                  max={0.5}
+                  max={100.0}
                   step={0.01}
                   defaultValue={0.1} // Default value for Scale
                 />
