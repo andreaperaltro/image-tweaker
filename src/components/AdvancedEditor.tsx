@@ -2498,15 +2498,31 @@ export default function AdvancedEditor({
   const SIZE_DEPENDENT_FIELDS: Record<string, string[]> = {
     text: ['fontSize', 'strokeWeight'], // Only scale absolute pixel values; letterSpacing is a multiplier
     pixel: ['cellSize', 'offGridSize', 'minBlockSize', 'maxBlockSize', 'rings', 'segments', 'voronoiSeeds', 'ringCount'],
-    ascii: ['cellSize', 'fontSize'],
+    ascii: ['cellSize', 'fontSize', 'jitter'],
     blob: ['cellSize', 'minDistance', 'maxDistance', 'angleOffset', 'sizeVariation', 'dotScaleFactor', 'connectionStrength'],
     shapegrid: ['gridSize'],
     halftone: ['cellSize', 'dotSize', 'lineWidth'],
     grid: ['cellSize', 'lineWidth'],
-    linocut: ['lineSpacing', 'strokeWidth', 'minLine'],
-    lcd: ['cellWidth', 'cellHeight', 'padding'],
+    linocut: ['lineSpacing', 'strokeWidth', 'minLine', 'scale'],
+    lcd: ['cellWidth', 'cellHeight', 'padding', 'pixelSize'],
     threeD: ['scale', 'perspective', 'distance'],
-    // Add more as needed
+    glitch: ['glitchSize', 'blocksSize', 'blocksOffset', 'scanLinesCount', 'channelShiftAmount'],
+    blur: ['radius', 'centerRadius', 'centerGradient', 'focusWidth', 'gradient'],
+    mosaicShift: ['cellSize', 'shiftAmount', 'minCellSize'],
+    sliceShift: ['sliceHeight', 'shiftAmount', 'minSliceHeight'],
+    findEdges: ['threshold', 'edgeWidth'],
+    glow: ['softness', 'threshold'],
+    noise: ['scale', 'intensity'],
+    levels: [], // No size-dependent fields
+    posterize: [], // No size-dependent fields
+    color: [], // No size-dependent fields
+    threshold: [], // No size-dependent fields
+    gradient: [], // No size-dependent fields
+    distort: [], // No size-dependent fields
+    dither: [], // No size-dependent fields
+    snake: ['gridSize', 'padding', 'cornerRadius'],
+    truchet: ['tileSize', 'lineWidth'],
+    polarPixel: ['rings', 'segments']
   };
 
   function scaleEffectSettingsForExport(effectType: string, settings: any, scale: number): any {
@@ -2540,29 +2556,39 @@ export default function AdvancedEditor({
       originalImage.src = imageDataUrl;
     });
 
+    // --- Begin: Use original image size for export ---
+    const exportWidth = originalImage.naturalWidth;
+    const exportHeight = originalImage.naturalHeight;
+
     const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = originalImage.naturalWidth;
-    tempCanvas.height = originalImage.naturalHeight;
+    tempCanvas.width = exportWidth;
+    tempCanvas.height = exportHeight;
     const ctx = tempCanvas.getContext('2d', { willReadFrequently: true });
     if (!ctx) throw new Error('Could not get canvas context for export');
 
     const offscreenSourceCanvas = document.createElement('canvas');
-    offscreenSourceCanvas.width = originalImage.naturalWidth;
-    offscreenSourceCanvas.height = originalImage.naturalHeight;
+    offscreenSourceCanvas.width = exportWidth;
+    offscreenSourceCanvas.height = exportHeight;
     const offscreenSourceCtx = offscreenSourceCanvas.getContext('2d', { willReadFrequently: true });
     if (!offscreenSourceCtx) throw new Error('Could not get offscreen canvas context for export');
 
-    offscreenSourceCtx.drawImage(originalImage, 0, 0, originalImage.naturalWidth, originalImage.naturalHeight);
+    // Use drawCoverImage to fill the export canvas
+    drawCoverImage(
+      offscreenSourceCtx,
+      exportWidth,
+      exportHeight,
+      originalImage
+    );
 
     const enabledEffects = effectInstances.filter(instance => instance.enabled);
     if (enabledEffects.length === 0) {
-      ctx.drawImage(originalImage, 0, 0);
+      ctx.drawImage(originalImage, 0, 0, exportWidth, exportHeight);
       return tempCanvas;
     }
 
     // Compute scale factor between display and export
-    const displayWidth = canvasRef.current ? canvasRef.current.width : originalImage.naturalWidth;
-    const scale = originalImage.naturalWidth / displayWidth;
+    const displayWidth = canvasRef.current ? canvasRef.current.width : exportWidth;
+    const scale = exportWidth / displayWidth;
 
     const MAX_EFFECTS = 10;
     const effectsToProcess = enabledEffects.slice(0, MAX_EFFECTS);
@@ -2572,22 +2598,22 @@ export default function AdvancedEditor({
       let settings = getInstanceSettings(instance);
       settings = scaleEffectSettingsForExport(instance.type, settings, scale);
       await applyEffectDirectly(instance.type, offscreenSourceCtx, offscreenSourceCanvas, offscreenSourceCanvas, settings);
-      ctx.drawImage(offscreenSourceCanvas, 0, 0);
+      ctx.drawImage(offscreenSourceCanvas, 0, 0, exportWidth, exportHeight);
     } else {
       const tempCanvas1 = document.createElement('canvas');
-      tempCanvas1.width = originalImage.naturalWidth;
-      tempCanvas1.height = originalImage.naturalHeight;
+      tempCanvas1.width = exportWidth;
+      tempCanvas1.height = exportHeight;
       const tempCtx1 = tempCanvas1.getContext('2d', { willReadFrequently: true });
 
       const tempCanvas2 = document.createElement('canvas');
-      tempCanvas2.width = originalImage.naturalWidth;
-      tempCanvas2.height = originalImage.naturalHeight;
+      tempCanvas2.width = exportWidth;
+      tempCanvas2.height = exportHeight;
       const tempCtx2 = tempCanvas2.getContext('2d', { willReadFrequently: true });
 
       if (!tempCtx1 || !tempCtx2) {
-        ctx.drawImage(offscreenSourceCanvas, 0, 0);
+        ctx.drawImage(offscreenSourceCanvas, 0, 0, exportWidth, exportHeight);
       } else {
-        tempCtx1.drawImage(offscreenSourceCanvas, 0, 0);
+        tempCtx1.drawImage(offscreenSourceCanvas, 0, 0, exportWidth, exportHeight);
 
         for (const instance of effectsToProcess) {
           let settings = getInstanceSettings(instance);
@@ -2599,34 +2625,35 @@ export default function AdvancedEditor({
           const destCtx = effectsToProcess.indexOf(instance) % 2 === 0 ? tempCtx2 : tempCtx1;
 
           if (!isLast) {
-            destCtx.clearRect(0, 0, originalImage.naturalWidth, originalImage.naturalHeight);
-            destCtx.drawImage(srcCanvas, 0, 0);
+            destCtx.clearRect(0, 0, exportWidth, exportHeight);
+            destCtx.drawImage(srcCanvas, 0, 0, exportWidth, exportHeight);
             try {
               await applyEffectDirectly(instance.type, destCtx, destCanvas, srcCanvas, settings);
             } catch (err) {
               console.error(`Error processing effect ${instance.type} for export:`, err);
-              destCtx.clearRect(0, 0, originalImage.naturalWidth, originalImage.naturalHeight);
-              destCtx.drawImage(srcCanvas, 0, 0);
+              destCtx.clearRect(0, 0, exportWidth, exportHeight);
+              destCtx.drawImage(srcCanvas, 0, 0, exportWidth, exportHeight);
             }
           } else {
-            ctx.clearRect(0, 0, originalImage.naturalWidth, originalImage.naturalHeight);
-            ctx.drawImage(srcCanvas, 0, 0);
+            ctx.clearRect(0, 0, exportWidth, exportHeight);
+            ctx.drawImage(srcCanvas, 0, 0, exportWidth, exportHeight);
             try {
               await applyEffectDirectly(instance.type, ctx, tempCanvas, srcCanvas, settings);
             } catch (err) {
               console.error(`Error processing final effect ${instance.type} for export:`, err);
-              ctx.clearRect(0, 0, originalImage.naturalWidth, originalImage.naturalHeight);
-              ctx.drawImage(srcCanvas, 0, 0);
+              ctx.clearRect(0, 0, exportWidth, exportHeight);
+              ctx.drawImage(srcCanvas, 0, 0, exportWidth, exportHeight);
             }
           }
         }
       }
     }
     return tempCanvas;
+    // --- End: Use original image size for export ---
   }, [effectInstances, getInstanceSettings, applyEffectDirectly]);
 
   const handleExportPng = async () => {
-    if (!originalImageDataRef.current) {
+    if (!canvasRef.current || !originalImageDataRef.current) {
       alert('Please upload an image first.');
       return;
     }
@@ -2635,63 +2662,169 @@ export default function AdvancedEditor({
     const timestamp = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}-${String(now.getMinutes()).padStart(2, '0')}-${String(now.getSeconds()).padStart(2, '0')}`;
     const filename = `imagetweaker-${timestamp}.png`;
 
-    let finalExportCanvas: HTMLCanvasElement;
-
     try {
-      // Generate the high-resolution canvas with all effects applied
-      const processedHighResCanvas = await applyEffectsToCanvasForExport(
-        originalImageDataRef.current,
-        effectInstances,
-        getInstanceSettings,
-        applyEffectDirectly
-      );
-
-      // Apply final scaling if needed
-      if (finalScale !== 1) {
-        const targetWidth = Math.round(processedHighResCanvas.width * finalScale);
-        const targetHeight = Math.round(processedHighResCanvas.height * finalScale);
-        const scaledCanvas = document.createElement('canvas');
-        scaledCanvas.width = targetWidth;
-        scaledCanvas.height = targetHeight;
-        const ctx = scaledCanvas.getContext('2d');
-        if (ctx) {
-          ctx.imageSmoothingEnabled = true;
-          ctx.imageSmoothingQuality = 'high';
-          ctx.drawImage(processedHighResCanvas, 0, 0, targetWidth, targetHeight);
+      // Load the original image to get its dimensions
+      const originalImage = new Image();
+      originalImage.onload = async () => {
+        console.log('Export: Original image loaded', originalImage.naturalWidth, 'x', originalImage.naturalHeight);
+        
+        // Create export canvas at DISPLAY resolution (not original image resolution)
+        // This ensures the export exactly matches what's displayed on screen
+        const exportCanvas = document.createElement('canvas');
+        exportCanvas.width = canvasWidth;
+        exportCanvas.height = canvasHeight;
+        const exportCtx = exportCanvas.getContext('2d', { willReadFrequently: true });
+        
+        if (!exportCtx) {
+          alert('Failed to create export canvas');
+          setExporting(false);
+          return;
         }
-        finalExportCanvas = scaledCanvas;
-      } else {
-        // No scaling needed, use the processed high-res canvas directly
-        finalExportCanvas = processedHighResCanvas;
-      }
 
-      finalExportCanvas.toBlob(async (blob) => {
-        if (blob) {
-          // Add metadata to the PNG using the existing utility
-          const metadata = {
-            'Software': 'ImageTweaker v0.2.0',
-            'Author': 'ImageTweaker realized by andreaperato.com',
-            'Website': 'https://image-tweaker.vercel.app/'
-          };
-          try {
-            const metaBlob = await addPngMetadata(blob, metadata);
-            saveAs(metaBlob, filename);
-          } catch (metaError) {
-            console.error('Error adding metadata during export:', metaError);
-            saveAs(blob, filename); // Fallback to saving without metadata
+        // Create source canvas at DISPLAY resolution
+        const sourceCanvas = document.createElement('canvas');
+        sourceCanvas.width = canvasWidth;
+        sourceCanvas.height = canvasHeight;
+        const sourceCtx = sourceCanvas.getContext('2d', { willReadFrequently: true });
+        
+        if (!sourceCtx) {
+          alert('Failed to create source canvas');
+          setExporting(false);
+          return;
+        }
+
+        // Step 1: Draw the original image stretched to fill the source canvas
+        // This EXACTLY replicates what happens on screen: sourceCtx.drawImage(img, 0, 0, canvasWidth, canvasHeight)
+        console.log('Export: Drawing image to source canvas');
+        sourceCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+        sourceCtx.drawImage(originalImage, 0, 0, canvasWidth, canvasHeight);
+        
+        // Debug: Check if image was drawn
+        const imageData = sourceCtx.getImageData(0, 0, Math.min(100, canvasWidth), Math.min(100, canvasHeight));
+        const hasPixels = imageData.data.some(pixel => pixel > 0);
+        console.log('Export: Image drawn to source canvas:', hasPixels);
+
+        // Step 2: Apply all effects exactly like on screen (no scaling needed!)
+        const enabledEffects = effectInstances.filter(instance => instance.enabled);
+        console.log('Export: Enabled effects:', enabledEffects.map(e => e.type));
+        
+        if (enabledEffects.length === 0) {
+          // No effects - just copy source to export canvas
+          console.log('Export: No effects, copying source to export');
+          exportCtx.drawImage(sourceCanvas, 0, 0);
+        } else {
+          // No scaling needed since we're using the same canvas size as display
+          console.log('Export: Processing multiple effects sequentially');
+          
+          // Process effects sequentially using the same logic as on-screen
+          let currentCanvas = sourceCanvas;
+          let currentCtx = sourceCtx;
+          
+          for (let i = 0; i < enabledEffects.length; i++) {
+            const instance = enabledEffects[i];
+            const settings = getInstanceSettings(instance);
+            
+            console.log(`Export: Processing effect ${i + 1}/${enabledEffects.length}: ${instance.type}`);
+            
+            if (i === enabledEffects.length - 1) {
+              // Last effect - draw directly to export canvas
+              exportCtx.drawImage(currentCanvas, 0, 0);
+              await applyEffectDirectly(instance.type, exportCtx, exportCanvas, currentCanvas, settings);
+            } else {
+              // Intermediate effect - use temporary canvas
+              const tempCanvas = document.createElement('canvas');
+              tempCanvas.width = canvasWidth;
+              tempCanvas.height = canvasHeight;
+              const tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
+              
+              if (!tempCtx) continue;
+              
+              tempCtx.drawImage(currentCanvas, 0, 0);
+              await applyEffectDirectly(instance.type, tempCtx, tempCanvas, currentCanvas, settings);
+              
+              currentCanvas = tempCanvas;
+              currentCtx = tempCtx;
+            }
           }
         }
+        
+        // Step 3: Scale the final result to the original image resolution
+        console.log('Export: Scaling final result to original resolution');
+        const finalCanvas = document.createElement('canvas');
+        finalCanvas.width = originalImage.naturalWidth;
+        finalCanvas.height = originalImage.naturalHeight;
+        const finalCtx = finalCanvas.getContext('2d', { willReadFrequently: true });
+        
+        if (!finalCtx) {
+          alert('Failed to create final canvas');
+          setExporting(false);
+          return;
+        }
+        
+        // Use high-quality scaling to scale up to original resolution
+        finalCtx.imageSmoothingEnabled = true;
+        finalCtx.imageSmoothingQuality = 'high';
+        finalCtx.drawImage(exportCanvas, 0, 0, originalImage.naturalWidth, originalImage.naturalHeight);
+        
+        // Export the final high-resolution result
+        finalCanvas.toBlob(async (blob) => {
+          if (blob) {
+            const finalBlob = await addPngMetadata(blob, {
+              'Software': 'ImageTweaker',
+              'Author': 'ImageTweaker',
+              'Website': 'https://imagetweaker.com'
+            });
+            const url = URL.createObjectURL(finalBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+          }
+          setExporting(false);
+        }, 'image/png');
+      };
+      
+      originalImage.onerror = () => {
+        console.error('Export: Failed to load original image');
+        alert('Failed to load original image for export');
         setExporting(false);
-      }, 'image/png');
-
-      if (isClamped) {
-        alert(`Export size too large for your browser/GPU. Max allowed: ${maxTextureSize}x${maxTextureSize}px. Exported at maximum possible size.`);
-      }
+      };
+      
+      console.log('Export: Loading original image from:', originalImageDataRef.current.substring(0, 50) + '...');
+      originalImage.src = originalImageDataRef.current;
     } catch (error) {
-      console.error('Error during PNG export:', error);
+      console.error('Export failed:', error);
+      alert('Export failed. Please try again.');
       setExporting(false);
-      alert('Failed to export image. Please check the console for details.');
     }
+  };
+
+  // Helper function to scale effect settings for export
+  const scaleEffectSettings = (settings: any, scaleX: number, scaleY: number, effectType: string): any => {
+    const scaledSettings = { ...settings };
+    const sizeFields = SIZE_DEPENDENT_FIELDS[effectType] || [];
+    
+    console.log(`Export: Scaling ${effectType} settings with scaleX=${scaleX}, scaleY=${scaleY}`);
+    console.log('Export: Original settings:', settings);
+    
+    for (const field of sizeFields) {
+      if (scaledSettings[field] !== undefined) {
+        const originalValue = scaledSettings[field];
+        if (field.includes('X') || field.includes('Width') || field.includes('horizontal')) {
+          scaledSettings[field] = scaledSettings[field] * scaleX;
+        } else if (field.includes('Y') || field.includes('Height') || field.includes('vertical')) {
+          scaledSettings[field] = scaledSettings[field] * scaleY;
+        } else {
+          // For general size fields, use the average scale factor
+          scaledSettings[field] = scaledSettings[field] * ((scaleX + scaleY) / 2);
+        }
+        console.log(`Export: Scaled ${field} from ${originalValue} to ${scaledSettings[field]}`);
+      }
+    }
+    
+    console.log('Export: Final scaled settings:', scaledSettings);
+    return scaledSettings;
   };
 
   // Export SVG with scale
