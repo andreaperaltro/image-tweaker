@@ -5,6 +5,13 @@ A powerful web-based image manipulation tool that allows you to apply various ef
 ## Features
 
 - Multiple image effects:
+  - **Paint Effect** (interactive drawing directly on canvas)
+    - Real-time brush strokes with smooth drawing feedback
+    - Customizable brush size (1-100px)
+    - Color picker for paint color selection
+    - Opacity control (0-100%)
+    - Blend mode selection (Normal, Multiply, Screen, Overlay, etc.)
+    - Undo and Clear All functionality
   - Color adjustments (hue, saturation, brightness, contrast)
   - Posterize (with adjustable levels)
   - Find Edges (edge detection with customizable threshold)

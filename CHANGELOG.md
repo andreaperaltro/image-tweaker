@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.3] - 2024-12-19
+
+### Added
+- **New Paint Effect**: Interactive painting directly on the canvas
+  - Real-time brush strokes with smooth drawing feedback
+  - Customizable brush size (1-100px)
+  - Color picker for paint color selection
+  - Opacity control (0-100%)
+  - Blend mode selection (Normal, Multiply, Screen, Overlay, etc.)
+  - Undo button to remove the last paint stroke
+  - Clear All button to remove all paint strokes
+  - Proper brush icon (FiPenTool) for better visual representation
+  - Full-width button styling consistent with the rest of the UI
+
+### Fixed
+- Fixed paint effect background image disappearing when effect is added
+- Fixed paint strokes appearing as disconnected dots during real-time drawing
+- Improved paint effect integration with the sequential effects pipeline
+- Enhanced paint effect UI with proper button styling and layout
+
 ## [0.6.2] - 2024-05-16
 
 ### Fixed

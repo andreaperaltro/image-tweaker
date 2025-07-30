@@ -202,7 +202,8 @@ export type EffectType =
   | 'lcd'
   | 'snake'
   | 'threeD'
-  | 'distort';
+  | 'distort'
+  | 'paint';
 
 export interface NoiseEffectSettings {
   enabled: boolean;
@@ -237,4 +238,27 @@ export interface ThreeDEffectSettings {
   backgroundColor: string; // hex color code
   perspective: number; // 0 to 100, controls field of view
   distance: number; // 100 to 1000, controls camera distance
+}
+
+export interface PaintEffectSettings {
+  enabled: boolean;
+  brushSize: number; // 1-100 pixels
+  color: string; // hex color code
+  opacity: number; // 0-1
+  blendMode: GlobalCompositeOperation; // canvas blend mode
+  strokes: PaintStroke[]; // array of painted strokes
+}
+
+export interface PaintStroke {
+  points: PaintPoint[];
+  brushSize: number;
+  color: string;
+  opacity: number;
+  blendMode: GlobalCompositeOperation;
+}
+
+export interface PaintPoint {
+  x: number;
+  y: number;
+  pressure?: number; // for future tablet support
 } 

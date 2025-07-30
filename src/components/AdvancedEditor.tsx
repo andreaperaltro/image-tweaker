@@ -49,6 +49,7 @@ import { applyThreeDEffect } from './ThreeDEffect';
 import { ThreeDEffectSettings } from '../types';
 import { applyShapeGridEffect, ShapeGridSettings } from './ShapeGridEffect';
 import { useTruchetEffect, TruchetSettings } from './TruchetEffect';
+import { applyPaintEffect, usePaintCanvasInteraction } from './PaintEffect';
 import { Effects } from '../types';
 import { addPngMetadata } from '../utils/PngMetadata';
 import { ASCII_CHARSETS } from './AsciiEffect';
@@ -701,10 +702,48 @@ export default function AdvancedEditor({
         } as ShapeGridSettings;
       case 'truchet':
         return instanceSettings[instance.id];
+      case 'paint':
+        return {
+          enabled: true,
+          brushSize: 10,
+          color: '#000000',
+          opacity: 1,
+          blendMode: 'source-over',
+          strokes: [],
+          ...instanceSettings[instance.id]
+        };
       default:
         return {};
     }
   };
+
+  // Check if any paint effect is enabled and active
+  const activePaintEffect = effectInstances.find(instance => 
+    instance.type === 'paint' && instance.enabled
+  );
+  const isPaintEffectActive = !!activePaintEffect;
+
+  // Get the paint settings for the active paint effect
+  const paintSettings = activePaintEffect ? getInstanceSettings(activePaintEffect) : {
+    enabled: false,
+    brushSize: 10,
+    color: '#000000',
+    opacity: 1,
+    blendMode: 'source-over',
+    strokes: []
+  };
+
+  // Setup paint canvas interaction
+  usePaintCanvasInteraction({
+    canvas: canvasRef.current,
+    settings: paintSettings,
+    onSettingsChange: (newPaintSettings) => {
+      if (activePaintEffect) {
+        updateInstanceSettings(activePaintEffect.id, newPaintSettings);
+      }
+    },
+    enabled: isPaintEffectActive
+  });
 
   // Handle color setting changes
   const handleColorChange = (setting: keyof ColorSettings, value: any) => {
@@ -1069,6 +1108,16 @@ export default function AdvancedEditor({
           focusPosition: 50,
           focusWidth: 25,
           gradient: 12.5
+        };
+        break;
+      case 'paint':
+        defaultSettings = {
+          enabled: true,
+          brushSize: 10,
+          color: '#000000',
+          opacity: 1,
+          blendMode: 'source-over',
+          strokes: []
         };
         break;
       default:
@@ -2226,6 +2275,9 @@ export default function AdvancedEditor({
           break;
         case 'truchet':
           applyTruchetEffect(targetCanvas, settings as TruchetSettings);
+          break;
+        case 'paint':
+          applyPaintEffect(ctx, targetCanvas, sourceCanvas, settings);
           break;
         default:
           break;
