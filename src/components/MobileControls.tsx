@@ -14,7 +14,7 @@ import Slider from './Slider'
 import { BlurSettings, EffectInstance, TextEffectSettings, EffectType } from '../types'
 import { saveEffectSettings, loadEffectSettings, EffectSettings } from '../utils/EffectSettingsUtils'
 import { isVectorExportAvailable } from './ExportUtils'
-import { FiFileText, FiPlus, FiCopy, FiTrash2, FiArrowUp, FiArrowDown, FiGrid, FiDroplet, FiSliders, FiZap, FiEye, FiLayers, FiType, FiHash, FiImage, FiStar, FiAlignCenter, FiBarChart2, FiCpu, FiFilter, FiChevronRight, FiTv } from 'react-icons/fi'
+import { FiFileText, FiPlus, FiCopy, FiTrash2, FiArrowUp, FiArrowDown, FiGrid, FiDroplet, FiSliders, FiZap, FiEye, FiLayers, FiType, FiHash, FiImage, FiStar, FiAlignCenter, FiBarChart2, FiCpu, FiFilter, FiChevronRight, FiTv, FiEdit3 } from 'react-icons/fi'
 import { FaRegDotCircle, FaRegSquare, FaRegCircle, FaRegClone, FaRegObjectGroup, FaRegSmile, FaRegSun, FaRegMoon, FaRegSnowflake, FaRegChartBar, FaRegKeyboard, FaThLarge } from 'react-icons/fa'
 import { MdGradient, MdBlurOn, MdOutlineTextFields, MdOutlineNoiseControlOff, MdOutlineGridOn, MdOutlineColorLens, MdOutlineInvertColors, MdOutlineTextIncrease, MdOutlineTextRotateVertical, MdOutlineTextRotationNone, MdOutlineTextRotationAngleup, MdOutlineTextRotationAngledown, MdDragIndicator, MdExpandLess, MdExpandMore } from 'react-icons/md'
 import { MdFitbit, MdCompare, MdTexture, MdFingerprint, MdGrain, MdTonality, MdPattern, MdSnowing, MdTerminal, MdStream, MdOutlineWaves, Md3dRotation, MdInterests, MdEmojiSymbols } from 'react-icons/md'
@@ -36,6 +36,7 @@ import { TruchetSettings } from './TruchetEffect'
 import { GiGearStickPattern } from 'react-icons/gi'
 import { MdWaves, MdApps, MdViewComfy, MdContentCut, MdPalette, MdRadar } from 'react-icons/md'
 import { ASCII_CHARSETS } from './AsciiEffect'
+import { PaintEffectSettings, defaultPaintSettings, addPaintStroke, clearPaintStrokes, undoLastPaintStroke, PaintPoint } from './PaintEffect'
 
 // Font Family Selector Component
 interface FontFamilySelectorProps {
@@ -3746,6 +3747,119 @@ const MobileControls: React.FC<MobileControlsProps> = ({
           </div>
         );
 
+      case 'paint':
+        const paintSettings = { ...defaultPaintSettings, ...settings };
+        
+        return (
+          <div className={`mobile-effect-content ${openSection === instance.id ? 'open' : ''}`}>
+            <Slider
+              label="Brush Size"
+              value={paintSettings.brushSize}
+              onChange={(value) => updateInstanceSettings(instance.id, { brushSize: value })}
+              min={1}
+              max={100}
+              step={1}
+              unit="px"
+              defaultValue={20}
+            />
+            
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Brush Color</label>
+              <input
+                type="color"
+                value={paintSettings.brushColor}
+                onChange={(e) => updateInstanceSettings(instance.id, { brushColor: e.target.value })}
+                className="mobile-color-input"
+              />
+            </div>
+            
+            <Slider
+              label="Brush Opacity"
+              value={paintSettings.brushOpacity}
+              onChange={(value) => updateInstanceSettings(instance.id, { brushOpacity: value })}
+              min={1}
+              max={100}
+              step={1}
+              unit="%"
+              defaultValue={80}
+            />
+            
+            <Slider
+              label="Brush Hardness"
+              value={paintSettings.brushHardness}
+              onChange={(value) => updateInstanceSettings(instance.id, { brushHardness: value })}
+              min={0}
+              max={100}
+              step={1}
+              unit="%"
+              defaultValue={50}
+            />
+            
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Blend Mode</label>
+              <select
+                className="mobile-select"
+                value={paintSettings.blendMode}
+                onChange={(e) => updateInstanceSettings(instance.id, { blendMode: e.target.value as GlobalCompositeOperation })}
+              >
+                <option value="source-over">Normal</option>
+                <option value="multiply">Multiply</option>
+                <option value="screen">Screen</option>
+                <option value="overlay">Overlay</option>
+                <option value="darken">Darken</option>
+                <option value="lighten">Lighten</option>
+                <option value="color-dodge">Color Dodge</option>
+                <option value="color-burn">Color Burn</option>
+                <option value="hard-light">Hard Light</option>
+                <option value="soft-light">Soft Light</option>
+                <option value="difference">Difference</option>
+                <option value="exclusion">Exclusion</option>
+              </select>
+            </div>
+            
+            <div className="mobile-control-group">
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <button
+                  className="plain-effect-btn"
+                  onClick={() => {
+                    const newSettings = clearPaintStrokes(paintSettings);
+                    updateInstanceSettings(instance.id, newSettings);
+                  }}
+                  style={{ flex: '1', minWidth: '120px' }}
+                >
+                  Clear All
+                </button>
+                <button
+                  className="plain-effect-btn"
+                  onClick={() => {
+                    const newSettings = undoLastPaintStroke(paintSettings);
+                    updateInstanceSettings(instance.id, newSettings);
+                  }}
+                  style={{ flex: '1', minWidth: '120px' }}
+                  disabled={!paintSettings.paintData || paintSettings.paintData.length === 0}
+                >
+                  Undo Last
+                </button>
+              </div>
+            </div>
+            
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Paint Instructions</label>
+              <div style={{ 
+                fontSize: '12px', 
+                color: 'var(--text-muted)', 
+                lineHeight: '1.4',
+                padding: '8px',
+                backgroundColor: 'var(--bg-secondary)',
+                borderRadius: '4px',
+                border: '1px solid var(--border-color)'
+              }}>
+                Click and drag on the image to paint. Adjust brush settings above to customize your painting experience.
+              </div>
+            </div>
+          </div>
+        );
+
       default:
         return null;
     }
@@ -3815,8 +3929,9 @@ const MobileControls: React.FC<MobileControlsProps> = ({
       instance.type === 'snake' ? 'Snake' :
       instance.type === 'threeD' ? '3D' :
       instance.type === 'shapegrid' ? 'Shape Grid' :
-      instance.type === 'truchet' ? 'Truchet' :
-      instance.type === 'distort' ? 'Distort' :
+instance.type === 'truchet' ? 'Truchet' :
+instance.type === 'distort' ? 'Distort' :
+instance.type === 'paint' ? 'Paint' :
       'Effect';
     const title = sameTypeCount > 1 ? `${effectLabel} ${instanceIndex + 1}` : effectLabel;
 
@@ -3908,7 +4023,8 @@ const MobileControls: React.FC<MobileControlsProps> = ({
     mosaicShift: <MdViewComfy />,
     sliceShift: <MdContentCut />,
     posterize: <MdPalette />,
-    polarPixel: <MdRadar />
+    polarPixel: <MdRadar />,
+    paint: <FiEdit3 />
   };
 
   return (
@@ -3939,6 +4055,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
             { label: 'Linocut', type: 'linocut', desc: 'Create a linocut or woodcut print effect.' },
             { label: 'Mosaic Shift', type: 'mosaicShift', desc: 'Create mosaic patterns with shifting tiles.' },
             { label: 'Noise', type: 'noise', desc: 'Add various types of noise patterns to your image.' },
+            { label: 'Paint', type: 'paint', desc: 'Paint directly on your image with customizable brush settings.' },
             { label: 'Pixel', type: 'pixel', desc: 'Create pixel art effects with customizable grid sizes.' },
             { label: 'Posterize', type: 'posterize', desc: 'Reduce the number of colors for a poster-like look.' },
             { label: 'Shape Grid', type: 'shapegrid', desc: 'Fill a grid with various shapes based on image brightness.' },

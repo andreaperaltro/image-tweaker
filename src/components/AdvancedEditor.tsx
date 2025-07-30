@@ -49,6 +49,7 @@ import { applyThreeDEffect } from './ThreeDEffect';
 import { ThreeDEffectSettings } from '../types';
 import { applyShapeGridEffect, ShapeGridSettings } from './ShapeGridEffect';
 import { useTruchetEffect, TruchetSettings } from './TruchetEffect';
+import { applyPaintEffect, PaintEffectSettings } from './PaintEffect';
 import { Effects } from '../types';
 import { addPngMetadata } from '../utils/PngMetadata';
 import { ASCII_CHARSETS } from './AsciiEffect';
@@ -2227,6 +2228,9 @@ export default function AdvancedEditor({
         case 'truchet':
           applyTruchetEffect(targetCanvas, settings as TruchetSettings);
           break;
+        case 'paint':
+          applyPaintEffect(ctx, targetCanvas, targetCanvas.width, targetCanvas.height, settings as PaintEffectSettings);
+          break;
         default:
           break;
       }
@@ -2522,7 +2526,8 @@ export default function AdvancedEditor({
     dither: [], // No size-dependent fields
     snake: ['gridSize', 'padding', 'cornerRadius'],
     truchet: ['tileSize', 'lineWidth'],
-    polarPixel: ['rings', 'segments']
+    polarPixel: ['rings', 'segments'],
+    paint: ['brushSize'] // Brush size needs to scale with export resolution
   };
 
   function scaleEffectSettingsForExport(effectType: string, settings: any, scale: number): any {
@@ -2932,6 +2937,89 @@ export default function AdvancedEditor({
   const [newLayerRatio, setNewLayerRatio] = useState('4:3');
   const [newLayerLockRatio, setNewLayerLockRatio] = useState(true);
   const [newLayerColor, setNewLayerColor] = useState('#ffffff');
+  
+  // Paint state
+  const [isPainting, setIsPainting] = useState(false);
+  const [currentStroke, setCurrentStroke] = useState<{x: number, y: number}[]>([]);
+  const paintModeRef = useRef(false);
+  
+  // Check if paint mode is active (if there's an enabled paint effect)
+  const isPaintModeActive = useCallback(() => {
+    return effectInstances.some(instance => instance.type === 'paint' && instance.enabled);
+  }, [effectInstances]);
+  
+  // Update paint mode ref when effect instances change
+  useEffect(() => {
+    paintModeRef.current = isPaintModeActive();
+  }, [isPaintModeActive]);
+  
+  // Get canvas coordinates from mouse event
+  const getCanvasCoordinates = useCallback((e: MouseEvent | React.MouseEvent, canvas: HTMLCanvasElement) => {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    
+    return {
+      x: (e.clientX - rect.left) * scaleX,
+      y: (e.clientY - rect.top) * scaleY
+    };
+  }, []);
+  
+  // Convert canvas coordinates to relative coordinates (0-1)
+  const canvasToRelativeCoords = useCallback((canvasX: number, canvasY: number) => {
+    return {
+      x: canvasX / canvasWidth,
+      y: canvasY / canvasHeight
+    };
+  }, [canvasWidth, canvasHeight]);
+  
+  // Mouse event handlers for painting
+  const handleMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!paintModeRef.current || !canvasRef.current) return;
+    
+    const coords = getCanvasCoordinates(e, canvasRef.current);
+    const relativeCoords = canvasToRelativeCoords(coords.x, coords.y);
+    
+    setIsPainting(true);
+    setCurrentStroke([relativeCoords]);
+  }, [getCanvasCoordinates, canvasToRelativeCoords]);
+  
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!paintModeRef.current || !isPainting || !canvasRef.current) return;
+    
+    const coords = getCanvasCoordinates(e, canvasRef.current);
+    const relativeCoords = canvasToRelativeCoords(coords.x, coords.y);
+    
+    setCurrentStroke(prev => [...prev, relativeCoords]);
+  }, [isPainting, getCanvasCoordinates, canvasToRelativeCoords]);
+  
+  const handleMouseUp = useCallback(() => {
+    if (!paintModeRef.current || !isPainting) return;
+    
+    // Find the active paint effect and add the stroke
+    const paintEffect = effectInstances.find(instance => instance.type === 'paint' && instance.enabled);
+    if (paintEffect && currentStroke.length > 0) {
+      const currentSettings = instanceSettings[paintEffect.id] || {};
+      const paintPoints = currentStroke.map(point => ({ x: point.x, y: point.y }));
+      
+      // Import the addPaintStroke function and use it
+      import('./PaintEffect').then(({ addPaintStroke, defaultPaintSettings }) => {
+        const paintSettings = { ...defaultPaintSettings, ...currentSettings };
+        const newSettings = addPaintStroke(paintSettings, paintPoints);
+        
+        setInstanceSettings(prev => ({
+          ...prev,
+          [paintEffect.id]: newSettings
+        }));
+        
+        // Trigger a re-render
+        processImage();
+      });
+    }
+    
+    setIsPainting(false);
+    setCurrentStroke([]);
+  }, [isPainting, currentStroke, effectInstances, instanceSettings, processImage]);
 
   // Handle ratio lock
   useEffect(() => {
@@ -3099,6 +3187,11 @@ export default function AdvancedEditor({
                   width={canvasWidth}
                   height={canvasHeight}
                   className="max-w-full h-auto mx-auto"
+                  style={{ cursor: isPaintModeActive() ? 'crosshair' : 'default' }}
+                  onMouseDown={handleMouseDown}
+                  onMouseMove={handleMouseMove}
+                  onMouseUp={handleMouseUp}
+                  onMouseLeave={handleMouseUp} // End stroke if mouse leaves canvas
                 />
                 {(processing || imageLoading) && (
                   <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
