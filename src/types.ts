@@ -12,6 +12,7 @@ import type { PosterizeSettings } from './components/Posterize';
 import type { FindEdgesSettings } from './components/FindEdges';
 import type { BlobSettings } from './components/Blob';
 import type { PixelEffectSettings } from './components/PixelEffect';
+import type { PaintEffectSettings } from './components/PaintEffect';
 
 // Re-export all imported types
 export type {
@@ -27,7 +28,8 @@ export type {
   PosterizeSettings,
   FindEdgesSettings,
   BlobSettings,
-  PixelEffectSettings
+  PixelEffectSettings,
+  PaintEffectSettings
 };
 
 // Effect settings types
@@ -202,7 +204,8 @@ export type EffectType =
   | 'lcd'
   | 'snake'
   | 'threeD'
-  | 'distort';
+  | 'distort'
+  | 'paint';
 
 export interface NoiseEffectSettings {
   enabled: boolean;

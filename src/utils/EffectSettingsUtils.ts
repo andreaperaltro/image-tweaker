@@ -13,6 +13,7 @@ import { FindEdgesSettings } from '../components/FindEdges';
 import { BlobSettings } from '../components/Blob';
 import { PixelEffectSettings } from '../components/PixelEffect';
 import { LinocutEffectSettings } from '../components/LinocutEffect';
+import { PaintEffectSettings } from '../components/PaintEffect';
 
 export interface EffectSettings {
   ditherSettings?: DitherSettings;
@@ -31,6 +32,7 @@ export interface EffectSettings {
   blobSettings?: BlobSettings;
   pixelSettings?: PixelEffectSettings;
   linocutSettings?: LinocutEffectSettings;
+  paintSettings?: PaintEffectSettings;
   instanceSettings?: {[id: string]: any};
   textEffectSettings?: TextEffectSettings;
   threeDSettings?: ThreeDEffectSettings;
