@@ -73,6 +73,8 @@ interface MobileControlsProps {
   gridSettings: GridSettings;
   effectInstances: EffectInstance[];
   instanceSettings: {[id: string]: any};
+  openSection: string | null;
+  setOpenSection: (section: string | null) => void;
   updateDitherSettings: (settings: Partial<DitherSettings>) => void;
   updateHalftoneSettings: (setting: keyof HalftoneSettings, value: any) => void;
   updateColorSettings: (setting: keyof ColorSettings, value: any) => void;
@@ -397,6 +399,9 @@ export default function AdvancedEditor({
 
   // Animation state for keyframes
   const [keyframes, setKeyframes] = useState<Keyframe[]>([]);
+  
+  // Add state to track which effect section is open in mobile controls
+  const [openSection, setOpenSection] = useState<string | null>(null);
   const [selectedKeyframeId, setSelectedKeyframeId] = useState<string | null>(null);
   const [exportStatus, setExportStatus] = useState<'idle' | 'exporting' | 'complete'>('idle');
   const [exportProgress, setExportProgress] = useState(0);
@@ -717,9 +722,9 @@ export default function AdvancedEditor({
     }
   };
 
-  // Check if any paint effect is enabled and active
+  // Check if any paint effect is enabled and active based on open section
   const activePaintEffect = effectInstances.find(instance => 
-    instance.type === 'paint' && instance.enabled
+    instance.type === 'paint' && instance.enabled && instance.id === openSection
   );
   const isPaintEffectActive = !!activePaintEffect;
 
@@ -730,7 +735,8 @@ export default function AdvancedEditor({
     color: '#000000',
     opacity: 1,
     blendMode: 'source-over',
-    strokes: []
+    strokes: [],
+    isActive: false
   };
 
   // Setup paint canvas interaction
@@ -1117,7 +1123,8 @@ export default function AdvancedEditor({
           color: '#000000',
           opacity: 1,
           blendMode: 'source-over',
-          strokes: []
+          strokes: [],
+          isActive: true // First paint effect is active by default
         };
         break;
       default:
@@ -3194,6 +3201,8 @@ export default function AdvancedEditor({
             gridSettings={gridSettings}
             effectInstances={effectInstances}
             instanceSettings={instanceSettings}
+            openSection={openSection}
+            setOpenSection={setOpenSection}
             updateDitherSettings={(settings) => setDitherSettings(prev => ({ ...prev, ...settings }))}
             updateHalftoneSettings={(settings: Partial<HalftoneSettings>) => setHalftoneSettings(prev => ({ ...prev, ...settings }))}
             updateColorSettings={(settings: Partial<ColorSettings>) => setColorSettings(prev => ({ ...prev, ...settings }))}

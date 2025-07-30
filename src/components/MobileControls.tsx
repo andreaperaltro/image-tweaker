@@ -215,6 +215,8 @@ interface MobileControlsProps {
   gridSettings: GridSettings
   effectInstances: EffectInstance[]
   instanceSettings: {[id: string]: any}
+  openSection: string | null;
+  setOpenSection: (section: string | null) => void;
   updateDitherSettings: (settings: Partial<DitherSettings>) => void
   updateHalftoneSettings: (settings: Partial<HalftoneSettings>, key?: string) => void
   updateColorSettings: (settings: Partial<ColorSettings>) => void
@@ -280,6 +282,8 @@ const MobileControls: React.FC<MobileControlsProps> = ({
   gridSettings,
   effectInstances,
   instanceSettings,
+  openSection,
+  setOpenSection,
   updateDitherSettings,
   updateHalftoneSettings,
   updateColorSettings,
@@ -310,7 +314,6 @@ const MobileControls: React.FC<MobileControlsProps> = ({
   updateTruchetSettings,
   processImageCallback
 }) => {
-  const [openSection, setOpenSection] = useState<string | null>(null)
   const [shapesOpenStates, setShapesOpenStates] = useState<{[key: string]: boolean}>({});
 
   // Create debounced versions of update functions for color pickers
@@ -1903,7 +1906,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
             {/* Info about using paint */}
             <div className="mobile-control-group">
               <p className="text-xs text-[var(--text-secondary)] p-2 bg-[var(--bg-secondary)] rounded">
-                💡 When Paint effect is enabled and active, click and drag on the canvas to paint directly onto your image.
+                💡 Open this paint effect section to make it active for painting. Close all paint sections to disable painting.
               </p>
             </div>
           </div>

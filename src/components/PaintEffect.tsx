@@ -166,50 +166,101 @@ export const usePaintCanvasInteraction = ({
     currentStrokeRef.current = [];
   }, [enabled, canvas, settings, onSettingsChange]);
 
-  // Touch event handlers
+  // Touch event handlers - handle touch events directly to avoid closure issues
   const handleTouchStart = useCallback((event: TouchEvent) => {
     if (!enabled || !canvas) return;
     event.preventDefault();
-    const mouseEvent = new MouseEvent('mousedown', {
+    
+    const coords = getCanvasCoordinates({
       clientX: event.touches[0].clientX,
       clientY: event.touches[0].clientY
-    });
-    handleMouseDown(mouseEvent);
-  }, [enabled, canvas, handleMouseDown]);
+    } as MouseEvent, canvas);
+    
+    isDrawingRef.current = true;
+    currentStrokeRef.current = [coords];
+    
+  }, [enabled, canvas, getCanvasCoordinates]);
 
   const handleTouchMove = useCallback((event: TouchEvent) => {
-    if (!enabled || !canvas) return;
+    if (!enabled || !canvas || !isDrawingRef.current) return;
     event.preventDefault();
-    const mouseEvent = new MouseEvent('mousemove', {
+    
+    const coords = getCanvasCoordinates({
       clientX: event.touches[0].clientX,
       clientY: event.touches[0].clientY
-    });
-    handleMouseMove(mouseEvent);
-  }, [enabled, canvas, handleMouseMove]);
+    } as MouseEvent, canvas);
+    
+    currentStrokeRef.current.push(coords);
+    
+    // Draw preview directly on canvas for smooth real-time feedback
+    const ctx = canvas.getContext('2d');
+    if (ctx && currentStrokeRef.current.length > 1) {
+      // Draw the entire current stroke for smooth real-time feedback
+      ctx.save();
+      ctx.globalCompositeOperation = settings.blendMode || 'source-over';
+      ctx.globalAlpha = settings.opacity || 1;
+      ctx.strokeStyle = settings.color || '#000000';
+      ctx.lineWidth = settings.brushSize || 10;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      
+      ctx.beginPath();
+      ctx.moveTo(currentStrokeRef.current[0].x, currentStrokeRef.current[0].y);
+      
+      // Draw through all points to create a smooth continuous line
+      for (let i = 1; i < currentStrokeRef.current.length; i++) {
+        ctx.lineTo(currentStrokeRef.current[i].x, currentStrokeRef.current[i].y);
+      }
+      
+      ctx.stroke();
+      ctx.restore();
+    }
+  }, [enabled, canvas, settings, getCanvasCoordinates]);
 
   const handleTouchEnd = useCallback((event: TouchEvent) => {
-    if (!enabled || !canvas) return;
+    if (!enabled || !canvas || !isDrawingRef.current) return;
     event.preventDefault();
-    const lastTouch = event.changedTouches[0];
-    const mouseEvent = new MouseEvent('mouseup', {
-      clientX: lastTouch.clientX,
-      clientY: lastTouch.clientY
-    });
-    handleMouseUp(mouseEvent);
-  }, [enabled, canvas, handleMouseUp]);
+    
+    isDrawingRef.current = false;
+    
+    if (currentStrokeRef.current.length > 1) {
+      const newStroke: PaintStroke = {
+        points: [...currentStrokeRef.current],
+        brushSize: settings.brushSize,
+        color: settings.color,
+        opacity: settings.opacity,
+        blendMode: settings.blendMode
+      };
+      
+      const newStrokes = [...(settings.strokes || []), newStroke];
+      onSettingsChange({ strokes: newStrokes });
+    }
+    
+    currentStrokeRef.current = [];
+  }, [enabled, canvas, settings, onSettingsChange]);
 
   useEffect(() => {
     if (!canvas || !enabled) return;
+
+    // Safari-specific: Prevent default touch behaviors that might interfere
+    const preventDefaultTouch = (e: Event) => {
+      e.preventDefault();
+    };
 
     canvas.addEventListener('mousedown', handleMouseDown);
     canvas.addEventListener('mousemove', handleMouseMove);
     canvas.addEventListener('mouseup', handleMouseUp);
     canvas.addEventListener('mouseleave', handleMouseUp); // End drawing when leaving canvas
     
-    // Touch events
+    // Touch events with Safari-specific handling
     canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
     canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
     canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
+    canvas.addEventListener('touchcancel', handleTouchEnd, { passive: false });
+    
+    // Safari-specific: Prevent zoom and scroll on touch
+    canvas.addEventListener('touchstart', preventDefaultTouch, { passive: false });
+    canvas.addEventListener('touchmove', preventDefaultTouch, { passive: false });
 
     // Change cursor to indicate paint mode
     canvas.style.cursor = 'crosshair';
@@ -223,6 +274,11 @@ export const usePaintCanvasInteraction = ({
       canvas.removeEventListener('touchstart', handleTouchStart);
       canvas.removeEventListener('touchmove', handleTouchMove);
       canvas.removeEventListener('touchend', handleTouchEnd);
+      canvas.removeEventListener('touchcancel', handleTouchEnd);
+      
+      // Remove Safari-specific listeners
+      canvas.removeEventListener('touchstart', preventDefaultTouch);
+      canvas.removeEventListener('touchmove', preventDefaultTouch);
       
       canvas.style.cursor = 'default';
     };
