@@ -51,12 +51,12 @@ export default function Home() {
     <main className="min-h-screen bg-[var(--primary-bg)] text-[var(--text-primary)] transition-colors duration-200 flex flex-col">
       <DynamicTitle baseTitle="ImageTweaker" />
       
-      <header className="bg-[var(--header-bg)] text-white p-3 border-b-2 border-gray-700 sticky top-0 z-50">
-        <div className="container mx-auto">
+      <header className="bg-black text-white px-3 py-3 border-b border-[#374151] sticky top-0 z-50">
+        <div className="w-full">
           <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-xl md:text-2xl pp-mondwest-font uppercase">ImageTweaker</h1>
-              <p className="text-xs pp-mondwest-font">Image manipulation studio</p>
+            <div className="flex items-baseline gap-3 min-w-0">
+              <h1 className="text-sm md:text-base pp-mondwest-font uppercase leading-none tracking-normal">ImageTwe4k3r</h1>
+              <p className="hidden sm:block text-xs text-gray-400 pp-mondwest-font leading-none">Image manipulation studio</p>
             </div>
             <div className="flex items-center gap-3">
               <button
@@ -82,7 +82,7 @@ export default function Home() {
                 className="text-[var(--accent-color)] hover:text-[var(--accent-color)] hover:opacity-80 transition-colors text-sm flex items-center font-medium"
                 title="Support the project"
               >
-                Donate
+                  Donate
               </a>
             </div>
           </div>
@@ -457,8 +457,8 @@ export default function Home() {
         </div>
       </header>
 
-      <div className="container mx-auto py-4 md:py-6 flex-grow flex flex-col">
-        <div className="border-2 border-[var(--border-color)] p-2 md:p-3 flex-grow">
+      <div className="w-full px-3 py-6 flex-grow flex flex-col">
+        <div className="border border-[var(--border-color)] p-3 flex-grow bg-[var(--primary-bg)]">
           <AdvancedEditor
             blur={blurSettings}
             onBlurChange={setBlurSettings}
@@ -466,14 +466,14 @@ export default function Home() {
         </div>
       </div>
 
-      <footer className="bg-[var(--header-bg)] text-white p-3 border-t-2 border-gray-700 mt-auto">
-        <div className="container mx-auto text-center">
+      <footer className="bg-black text-white px-3 py-3 border-t border-[#374151] mt-auto">
+        <div className="w-full flex flex-col gap-2 md:grid md:grid-cols-3 md:items-center text-center md:text-left">
           <p className="text-xs pp-mondwest-font uppercase">ImageTweaker | Image manipulation app</p>
-          <p className="text-xs text-gray-400 pp-mondwest-font">
-            All processing happens on your device
-          </p>
-          <p className="text-xs text-gray-400 pp-mondwest-font mt-2">
+          <p className="text-xs text-gray-400 pp-mondwest-font md:text-center">
             Created by <a href="https://andreaperato.com" target="_blank" rel="noopener noreferrer" className="text-white hover:underline">Andrea Perato</a> with AI assistance
+          </p>
+          <p className="text-xs text-gray-400 pp-mondwest-font md:text-right">
+            All processing happens on your device
           </p>
         </div>
       </footer>

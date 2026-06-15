@@ -3,30 +3,30 @@
   position: relative;
   z-index: 9999;
   font-family: 'PP Mondwest', sans-serif;
-  padding: 12px;
-  background: var(--accent-bg);
+  padding: 0;
+  background: transparent;
   color: var(--text-primary);
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
-  border: 1px solid var(--border-color);
+  border-radius: 0;
+  box-shadow: none;
+  border: 0;
   height: 100%;
-  max-height: calc(100vh - 40px);
+  max-height: none;
   overflow-y: auto;
 }
 
 /* Controls panel - consistent for all screen sizes */
 .mobile-controls-panel {
   position: static;
-  background: var(--accent-bg);
+  background: transparent;
   color: var(--text-primary);
-  border-radius: 8px;
-  padding: 12px;
+  border-radius: 0;
+  padding: 0;
   overflow-y: auto;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+  box-shadow: none;
   font-size: 14px;
   height: 100%;
-  max-height: calc(100vh - 40px);
-  border: 1px solid var(--border-color);
+  max-height: none;
+  border: 0;
   font-family: 'PP Mondwest', sans-serif;
 }
 
@@ -48,17 +48,18 @@
 }
 
 .mobile-effect-section {
-  margin-bottom: 12px;
-  border-bottom: 1px solid var(--border-color);
-  padding-bottom: 12px;
+  margin-bottom: 8px;
+  border: 1px solid var(--border-color);
+  padding-bottom: 0;
+  background: var(--primary-bg);
 }
 
 /* Style for mobile-effect-header to make it more responsive */
 .mobile-effect-header {
   padding: 10px;
-  border-radius: 6px;
-  background-color: rgba(0, 0, 0, 0.05);
-  margin-bottom: 2px;
+  border-radius: 0;
+  background-color: var(--accent-bg);
+  margin-bottom: 0;
   cursor: pointer;
   transition: background-color 0.2s ease;
   display: flex;
@@ -68,13 +69,13 @@
 }
 
 .mobile-effect-header:hover {
-  background-color: rgba(0, 0, 0, 0.08);
+  background-color: var(--secondary-bg);
 }
 
 .mobile-effect-header.section-open {
-  background-color: rgba(0, 0, 0, 0.1);
+  background-color: var(--secondary-bg);
   margin-bottom: 0;
-  border-radius: 6px 6px 0 0;
+  border-radius: 0;
 }
 
 /* Improving effect title and toggle layout for small screens */
@@ -102,7 +103,7 @@
 }
 
 .mobile-effect-title {
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   font-weight: 600;
   margin: 0;
   cursor: pointer;
@@ -230,13 +231,24 @@
 .mobile-effect-content.open {
   max-height: 2000px; /* Use a large enough value to accommodate all content */
   opacity: 1;
-  padding: 10px 0;
+  padding: 10px;
   transition: all 0.3s ease;
   visibility: visible;
-  background-color: rgba(0, 0, 0, 0.03);
-  border-radius: 0 0 6px 6px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-top: none;
+  background-color: var(--primary-bg);
+  border-radius: 0;
+  border-top: 1px solid var(--border-color);
+}
+
+.effect-order-number {
+  min-width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--topbar-bg);
+  color: #9ca3af;
+  border: 1px solid var(--border-color);
+  font-size: 11px;
 }
 
 /* Sub-section styling for grouped controls within effects */
@@ -524,11 +536,6 @@
   display: none;
 }
 
-/* Add dark mode styles - these overrides should no longer be needed since we're using CSS variables */
-@media (prefers-color-scheme: dark) {
-  /* Remove the dark mode specific overrides since our variables take care of it */
-}
-
 .effect-action-buttons {
   display: flex;
   gap: 4px;
@@ -595,12 +602,6 @@
   transform: translateY(-1px);
 }
 
-@media (prefers-color-scheme: dark) {
-  .effect-btn:hover {
-    background-color: #333336;
-  }
-}
-
 .effect-btn:active {
   transform: translateY(0px);
 }
@@ -651,9 +652,9 @@
 
 .effect-buttons-container {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
   gap: 8px;
-  padding: 0 2px;
+  padding: 0;
   margin-bottom: 10px;
 }
 
@@ -668,31 +669,27 @@
   align-items: center;
   justify-content: flex-start;
   gap: 6px;
-  background-color: var(--accent-bg);
+  background-color: var(--topbar-bg);
   color: var(--text-primary);
   border: 1px solid var(--border-color);
-  border-radius: 6px;
-  padding: 6px 8px;
-  font-size: 0.82rem;
+  border-radius: 0;
+  padding: 7px 8px;
+  font-size: 12px;
+  line-height: 1;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
   margin: 0;
   width: 100%;
+  min-height: 32px;
   min-width: 0;
   box-sizing: border-box;
 }
 
 .plain-effect-btn:hover {
-  background-color: var(--header-bg);
-  color: white;
-  transform: translateY(-1px);
-}
-
-@media (prefers-color-scheme: dark) {
-  .plain-effect-btn:hover {
-    background-color: var(--header-bg);
-    color: white;
-  }
+  background-color: var(--secondary-bg);
+  color: var(--text-primary);
+  border-color: var(--text-muted);
+  transform: none;
 }
 
 .plain-effect-btn:active {
@@ -712,22 +709,6 @@
 .effect-buttons-row,
 .effects-separator {
   display: none !important; /* Force hide with !important */
-}
-
-/* Style for the effect order number */
-.effect-order-number {
-  background: var(--accent-bg);
-  color: var(--text-primary);
-  border-radius: 50%;
-  min-width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 8px;
-  font-weight: bold;
-  font-size: 11px;
-  border: 1px solid var(--border-color);
 }
 
 /* File upload styles */

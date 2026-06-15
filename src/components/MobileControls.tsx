@@ -37,6 +37,41 @@ import { GiGearStickPattern } from 'react-icons/gi'
 import { MdWaves, MdApps, MdViewComfy, MdContentCut, MdPalette, MdRadar } from 'react-icons/md'
 import { ASCII_CHARSETS } from './AsciiEffect'
 
+const EFFECT_OPTIONS = [
+  { label: '3D', type: 'threeD', desc: 'Rotate and tilt your image in 3D space for a perspective or isometric look.' },
+  { label: 'Ascii', type: 'ascii', desc: 'Convert your image into ASCII art using characters.' },
+  { label: 'Blob', type: 'blob', desc: 'Connect dots based on brightness to create organic, blobby patterns.' },
+  { label: 'Blur', type: 'blur', desc: 'Soften or distort your image with various blur types (Gaussian, Box, Motion, etc.).' },
+  { label: 'Color', type: 'color', desc: 'Adjust brightness, contrast, saturation, hue, and invert colors.' },
+  { label: 'Dither', type: 'dither', desc: 'Apply classic or modern dithering for a retro, pixelated look.' },
+  { label: 'Distort', type: 'distort', desc: 'Apply displacement map distortion using a grayscale image.' },
+  { label: 'Find Edges', type: 'findEdges', desc: 'Highlight edges in your image using various edge detection algorithms.' },
+  { label: 'Glitch', type: 'glitch', desc: 'Add digital glitch effects: pixel sorting, channel shift, scan lines, and more.' },
+  { label: 'Glow', type: 'glow', desc: 'Add a glowing aura to bright areas for a dreamy or sci-fi look.' },
+  { label: 'Gradient', type: 'gradient', desc: 'Map image brightness to a custom color gradient for creative colorization.' },
+  { label: 'Grid', type: 'grid', desc: 'Overlay a grid and manipulate cells for mosaic or tiled effects.' },
+  { label: 'Halftone', type: 'halftone', desc: 'Simulate print halftone patterns with dots, lines, or shapes.' },
+  { label: 'LCD', type: 'lcd', desc: 'Simulate LCD/CRT subpixel patterns for a digital or retro display look.' },
+  { label: 'Levels', type: 'levels', desc: 'Fine-tune image brightness, contrast, and color levels.' },
+  { label: 'Linocut', type: 'linocut', desc: 'Create a linocut or woodcut print effect.' },
+  { label: 'Mosaic Shift', type: 'mosaicShift', desc: 'Create mosaic patterns with shifting tiles.' },
+  { label: 'Noise', type: 'noise', desc: 'Add various types of noise patterns to your image.' },
+  { label: 'Paint', type: 'paint', desc: 'Paint directly on the canvas with customizable brush size and colors.' },
+  { label: 'Pixel', type: 'pixel', desc: 'Create pixel art effects with customizable grid sizes.' },
+  { label: 'Posterize', type: 'posterize', desc: 'Reduce the number of colors for a poster-like look.' },
+  { label: 'Shape Grid', type: 'shapegrid', desc: 'Fill a grid with various shapes based on image brightness.' },
+  { label: 'Slice', type: 'sliceShift', desc: 'Create sliced and shifted patterns with various effects.' },
+  { label: 'Snake', type: 'snake', desc: 'Create a snake-like pattern that follows image contours.' },
+  { label: 'Text', type: 'text', desc: 'Add customizable text overlays with various fonts and styles.' },
+  { label: 'Threshold', type: 'threshold', desc: 'Convert your image to black and white using a threshold value.' },
+  { label: 'Truchet', type: 'truchet', desc: 'Generate Truchet tile patterns based on your image.' }
+] as const;
+
+const EFFECT_LABELS = EFFECT_OPTIONS.reduce<Record<string, string>>((labels, effect) => {
+  labels[effect.type] = effect.label;
+  return labels;
+}, {});
+
 // Font Family Selector Component
 interface FontFamilySelectorProps {
   value: string;
@@ -3895,35 +3930,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
     const sameTypeCount = sameTypeEffects.length;
     const instanceIndex = sameTypeEffects.findIndex(i => i.id === instance.id);
 
-    const effectLabel =
-      instance.type === 'color' ? 'Color' :
-      instance.type === 'halftone' ? 'Halftone' :
-      instance.type === 'grid' ? 'Grid' :
-      instance.type === 'dither' ? 'Dither' :
-      instance.type === 'text' ? 'Text' :
-      instance.type === 'glitch' ? 'Glitch' :
-      instance.type === 'blur' ? 'Blur' :
-      instance.type === 'gradient' ? 'Gradient' :
-      instance.type === 'threshold' ? 'Threshold' :
-      instance.type === 'mosaicShift' ? 'Mosaic' :
-      instance.type === 'sliceShift' ? 'Slice' :
-      instance.type === 'posterize' ? 'Posterize' :
-      instance.type === 'findEdges' ? 'Find Edges' :
-      instance.type === 'blob' ? 'Blob' :
-      instance.type === 'glow' ? 'Glow' :
-      instance.type === 'pixel' ? 'Pixel' :
-      instance.type === 'noise' ? 'Noise' :
-      instance.type === 'linocut' ? 'Linocut' :
-      instance.type === 'levels' ? 'Levels' :
-      instance.type === 'ascii' ? 'Ascii' :
-      instance.type === 'lcd' ? 'LCD' :
-      instance.type === 'snake' ? 'Snake' :
-      instance.type === 'threeD' ? '3D' :
-      instance.type === 'shapegrid' ? 'Shape Grid' :
-      instance.type === 'truchet' ? 'Truchet' :
-      instance.type === 'distort' ? 'Distort' :
-      instance.type === 'paint' ? 'Paint' :
-      'Effect';
+    const effectLabel = EFFECT_LABELS[instance.type] || 'Effect';
     const title = sameTypeCount > 1 ? `${effectLabel} ${instanceIndex + 1}` : effectLabel;
 
     // Visual feedback for drag-over
@@ -4027,35 +4034,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
       <div>
         <h3 className="text-[var(--text-color)] text-lg pp-mondwest-font mb-3">Add Effect</h3>
         <div className="effect-buttons-container">
-          {[
-            { label: '3D', type: 'threeD', desc: 'Rotate and tilt your image in 3D space for a perspective or isometric look.' },
-            { label: 'Ascii', type: 'ascii', desc: 'Convert your image into ASCII art using characters.' },
-            { label: 'Blob', type: 'blob', desc: 'Connect dots based on brightness to create organic, blobby patterns.' },
-            { label: 'Blur', type: 'blur', desc: 'Soften or distort your image with various blur types (Gaussian, Box, Motion, etc.).' },
-            { label: 'Color', type: 'color', desc: 'Adjust brightness, contrast, saturation, hue, and invert colors.' },
-            { label: 'Dither', type: 'dither', desc: 'Apply classic or modern dithering for a retro, pixelated look.' },
-            { label: 'Distort', type: 'distort', desc: 'Apply displacement map distortion using a grayscale image.' },
-            { label: 'Find Edges', type: 'findEdges', desc: 'Highlight edges in your image using various edge detection algorithms.' },
-            { label: 'Glitch', type: 'glitch', desc: 'Add digital glitch effects: pixel sorting, channel shift, scan lines, and more.' },
-            { label: 'Glow', type: 'glow', desc: 'Add a glowing aura to bright areas for a dreamy or sci-fi look.' },
-            { label: 'Gradient', type: 'gradient', desc: 'Map image brightness to a custom color gradient for creative colorization.' },
-            { label: 'Grid', type: 'grid', desc: 'Overlay a grid and manipulate cells for mosaic or tiled effects.' },
-            { label: 'Halftone', type: 'halftone', desc: 'Simulate print halftone patterns with dots, lines, or shapes.' },
-            { label: 'LCD', type: 'lcd', desc: 'Simulate LCD/CRT subpixel patterns for a digital or retro display look.' },
-            { label: 'Levels', type: 'levels', desc: 'Fine-tune image brightness, contrast, and color levels.' },
-            { label: 'Linocut', type: 'linocut', desc: 'Create a linocut or woodcut print effect.' },
-            { label: 'Mosaic Shift', type: 'mosaicShift', desc: 'Create mosaic patterns with shifting tiles.' },
-            { label: 'Noise', type: 'noise', desc: 'Add various types of noise patterns to your image.' },
-            { label: 'Paint', type: 'paint', desc: 'Paint directly on the canvas with customizable brush size and colors.' },
-            { label: 'Pixel', type: 'pixel', desc: 'Create pixel art effects with customizable grid sizes.' },
-            { label: 'Posterize', type: 'posterize', desc: 'Reduce the number of colors for a poster-like look.' },
-            { label: 'Shape Grid', type: 'shapegrid', desc: 'Fill a grid with various shapes based on image brightness.' },
-            { label: 'Slice', type: 'sliceShift', desc: 'Create sliced and shifted patterns with various effects.' },
-            { label: 'Snake', type: 'snake', desc: 'Create a snake-like pattern that follows image contours.' },
-            { label: 'Text', type: 'text', desc: 'Add customizable text overlays with various fonts and styles.' },
-            { label: 'Threshold', type: 'threshold', desc: 'Convert your image to black and white using a threshold value.' },
-            { label: 'Truchet', type: 'truchet', desc: 'Generate Truchet tile patterns based on your image.' }
-          ].map(effect => (
+          {EFFECT_OPTIONS.map(effect => (
             <button
               key={effect.type}
               className="plain-effect-btn"

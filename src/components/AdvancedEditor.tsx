@@ -3050,15 +3050,15 @@ export default function AdvancedEditor({
   }, [instanceSettings, effectInstances]);
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6">
+    <div className="flex flex-col xl:flex-row gap-6 min-h-[calc(100vh-192px)]">
       {/* Canvas Container */}
       <div className="flex-1 min-w-0">
-        <div className="sticky top-20">
-          <div className="flex flex-col gap-3 mb-4">
-            <div className="flex w-full justify-between gap-2">
+        <div className="xl:sticky xl:top-[78px]">
+          <div className="flex flex-col gap-3 mb-6">
+            <div className="flex w-full justify-between gap-2 overflow-x-auto pb-1">
               <div className="flex flex-nowrap gap-2 items-center">
                 <label 
-                  className="px-2 py-1 bg-[var(--topbar-bg)] text-[var(--text-primary)] text-xs rounded hover:bg-[var(--secondary-bg)] transition-colors pp-mondwest-font cursor-pointer flex items-center gap-1 min-w-fit"
+                  className="px-2.5 py-1.5 bg-[var(--topbar-bg)] text-[var(--text-primary)] text-xs border border-[var(--border-color)] hover:border-[var(--text-muted)] hover:bg-[var(--secondary-bg)] transition-colors pp-mondwest-font cursor-pointer flex items-center gap-1 min-w-fit"
                 >
                   <FiUpload size={16} />
                   <span className="hidden sm:inline">Upload</span>
@@ -3075,14 +3075,14 @@ export default function AdvancedEditor({
                 </label>
                 <button
                   onClick={() => setShowNewLayerModal(true)}
-                  className="px-2 py-1 bg-[var(--topbar-bg)] text-[var(--text-primary)] text-xs rounded hover:bg-[var(--secondary-bg)] transition-colors pp-mondwest-font flex items-center gap-1 min-w-fit"
+                  className="px-2.5 py-1.5 bg-[var(--topbar-bg)] text-[var(--text-primary)] text-xs border border-[var(--border-color)] hover:border-[var(--text-muted)] hover:bg-[var(--secondary-bg)] transition-colors pp-mondwest-font flex items-center gap-1 min-w-fit"
                 >
                   <FiLayers size={16} />
                   <span className="hidden sm:inline">New Layer</span>
                 </button>
                 <button
                   onClick={loadRandomImage}
-                  className="px-2 py-1 bg-[var(--topbar-bg)] text-[var(--text-primary)] text-xs rounded hover:bg-[var(--secondary-bg)] transition-colors pp-mondwest-font flex items-center gap-1 min-w-fit"
+                  className="px-2.5 py-1.5 bg-[var(--topbar-bg)] text-[var(--text-primary)] text-xs border border-[var(--border-color)] hover:border-[var(--text-muted)] hover:bg-[var(--secondary-bg)] transition-colors pp-mondwest-font flex items-center gap-1 min-w-fit"
                 >
                   <FiShuffle size={16} />
                   <span className="hidden sm:inline">Random</span>
@@ -3092,26 +3092,26 @@ export default function AdvancedEditor({
                     setImage(null);
                     originalImageDataRef.current = null; // Reset the URL reference
                   }}
-                  className="px-2 py-1 bg-[var(--topbar-bg)] text-[var(--text-primary)] text-xs rounded hover:bg-[var(--secondary-bg)] transition-colors pp-mondwest-font flex items-center gap-1 min-w-fit"
+                  className="px-2.5 py-1.5 bg-[var(--topbar-bg)] text-[var(--text-primary)] text-xs border border-[var(--border-color)] hover:border-[var(--text-muted)] hover:bg-[var(--secondary-bg)] transition-colors pp-mondwest-font flex items-center gap-1 min-w-fit"
                 >
                   <FiTrash size={16} />
                   <span className="hidden sm:inline">Clear</span>
                 </button>
                 
-                <div className="h-4 mx-1 border-r border-[var(--border-color)]"></div>
+                <div className="h-5 mx-1 border-r border-[var(--border-color)]"></div>
                 
                 <button
                   onClick={resetAllEffects}
-                  className="px-2 py-1 bg-[var(--topbar-bg)] text-[var(--text-primary)] text-xs rounded hover:bg-[var(--secondary-bg)] transition-colors pp-mondwest-font flex items-center gap-1 min-w-fit"
+                  className="px-2.5 py-1.5 bg-[var(--topbar-bg)] text-[var(--text-primary)] text-xs border border-[var(--border-color)] hover:border-[var(--text-muted)] hover:bg-[var(--secondary-bg)] transition-colors pp-mondwest-font flex items-center gap-1 min-w-fit"
                 >
                   <FiRefreshCw size={16} />
                   <span className="hidden sm:inline">Reset</span>
                 </button>
                 
-                <div className="h-4 mx-1 border-r border-[var(--border-color)]"></div>
+                <div className="h-5 mx-1 border-r border-[var(--border-color)]"></div>
                 
                 <label 
-                  className="px-2 py-1 bg-[var(--topbar-bg)] text-[var(--text-primary)] text-xs rounded hover:bg-[var(--secondary-bg)] transition-colors pp-mondwest-font cursor-pointer flex items-center gap-1 min-w-fit"
+                  className="px-2.5 py-1.5 bg-[var(--topbar-bg)] text-[var(--text-primary)] text-xs border border-[var(--border-color)] hover:border-[var(--text-muted)] hover:bg-[var(--secondary-bg)] transition-colors pp-mondwest-font cursor-pointer flex items-center gap-1 min-w-fit"
                 >
                   <FiDownload size={16} />
                   <span className="hidden sm:inline">Save</span>
@@ -3123,7 +3123,7 @@ export default function AdvancedEditor({
                   />
                 </label>
                 <label 
-                  className="px-2 py-1 bg-[var(--topbar-bg)] text-[var(--text-primary)] text-xs rounded hover:bg-[var(--secondary-bg)] transition-colors pp-mondwest-font cursor-pointer flex items-center gap-1 min-w-fit"
+                  className="px-2.5 py-1.5 bg-[var(--topbar-bg)] text-[var(--text-primary)] text-xs border border-[var(--border-color)] hover:border-[var(--text-muted)] hover:bg-[var(--secondary-bg)] transition-colors pp-mondwest-font cursor-pointer flex items-center gap-1 min-w-fit"
                 >
                   <FiUpload size={16} />
                   <span className="hidden sm:inline">Load</span>
@@ -3135,10 +3135,10 @@ export default function AdvancedEditor({
                   />
                 </label>
                 
-                <div className="h-4 mx-1 border-r border-[var(--border-color)]"></div>
+                <div className="h-5 mx-1 border-r border-[var(--border-color)]"></div>
                 
                 <button
-                  className="px-2 py-1 bg-[var(--topbar-bg)] text-[var(--text-primary)] text-xs rounded hover:bg-[var(--secondary-bg)] transition-colors pp-mondwest-font flex items-center gap-1 min-w-fit"
+                  className="px-2.5 py-1.5 bg-[var(--topbar-bg)] text-[var(--text-primary)] text-xs border border-[var(--border-color)] hover:border-[var(--text-muted)] hover:bg-[var(--secondary-bg)] transition-colors pp-mondwest-font flex items-center gap-1 min-w-fit disabled:opacity-40 disabled:cursor-not-allowed"
                   onClick={handleCropImage}
                   disabled={!image}
                 >
@@ -3150,14 +3150,14 @@ export default function AdvancedEditor({
             </div>
           </div>
           
-          <div className="relative">
+          <div className="relative min-h-[420px] flex items-center justify-center bg-[var(--secondary-bg)] border border-[var(--border-color)]">
             {image ? (
-              <div className="relative">
+              <div className="relative w-full p-4">
                 <canvas
                   ref={canvasRef}
                   width={canvasWidth}
                   height={canvasHeight}
-                  className="max-w-full h-auto mx-auto"
+                  className="max-w-full max-h-[calc(100vh-260px)] h-auto mx-auto"
                 />
                 {(processing || imageLoading) && (
                   <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
@@ -3168,8 +3168,8 @@ export default function AdvancedEditor({
             ) : (
               <div
                 {...getRootProps()}
-                className={`border-2 border-dashed rounded-lg p-12 text-center cursor-pointer transition-colors ${
-                  isDragActive ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' : 'border-[var(--border-color)] hover:border-emerald-500/50'
+                className={`w-full min-h-[420px] border border-dashed p-12 text-center cursor-pointer transition-colors flex items-center justify-center ${
+                  isDragActive ? 'border-emerald-500 bg-emerald-500/10' : 'border-[var(--border-color)] hover:border-emerald-500/50'
                 }`}
               >
                 <input {...getInputProps()} />
@@ -3189,8 +3189,8 @@ export default function AdvancedEditor({
       </div>
 
       {/* Controls Panel */}
-      <div className="lg:w-1/3 xl:w-[35%]">
-        <div className="sticky top-20 bg-[var(--accent-bg)] p-4 rounded-lg border border-[var(--border-color)] shadow-sm">
+      <div className="xl:w-[35%] 2xl:w-[32%]">
+        <div className="xl:sticky xl:top-[78px] bg-[var(--accent-bg)] p-3 border border-[var(--border-color)] shadow-sm max-h-none xl:max-h-[calc(100vh-120px)] xl:overflow-y-auto">
           <MobileControls 
             ditherSettings={ditherSettings}
             halftoneSettings={halftoneSettings}
