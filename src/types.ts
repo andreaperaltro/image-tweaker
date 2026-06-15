@@ -227,6 +227,11 @@ export interface LCDEffectSettings {
   intensity: number;
   pattern?: 'TV CRT' | 'PC CRT' | 'XO-1 LCD' | 'LCD';
   padding?: number;
+  pixelSize?: number;
+  contrast?: number;
+  subpixelOrientation?: 'rgb' | 'bgr';
+  gridLines?: boolean;
+  gridThickness?: number;
 }
 
 export interface ThreeDEffectSettings {

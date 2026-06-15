@@ -1031,9 +1031,14 @@ export default function AdvancedEditor({
       case 'lcd':
         defaultSettings = {
           enabled: true,
-          cellWidth: 3,
-          cellHeight: 3,
-          intensity: 1
+          cellWidth: 6,
+          cellHeight: 6,
+          intensity: 1,
+          pixelSize: 2,
+          contrast: 100,
+          subpixelOrientation: 'bgr',
+          gridLines: false,
+          gridThickness: 0.5
         };
         break;
       case 'snake':

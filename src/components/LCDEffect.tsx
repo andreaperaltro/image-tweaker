@@ -1,13 +1,7 @@
 import { useEffect, useRef } from 'react';
-import { EffectSettings } from '@/types';
+import type { LCDEffectSettings as BaseLCDEffectSettings } from '@/types';
 
-interface LCDEffectSettings extends EffectSettings {
-  cellWidth: number;
-  cellHeight: number;
-  intensity: number;
-  pattern?: string;
-  padding?: number;
-}
+interface LCDEffectSettings extends BaseLCDEffectSettings {}
 
 export function applyLCDEffect(
   canvas: HTMLCanvasElement,
@@ -16,7 +10,30 @@ export function applyLCDEffect(
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
 
-  const { cellWidth, cellHeight, intensity, pattern = 'LCD', padding = 2 } = settings;
+  const {
+    intensity = 1,
+    pattern = 'LCD',
+    padding = 1,
+    contrast = 100,
+    subpixelOrientation = 'bgr',
+    gridLines = false,
+    gridThickness = 0.5
+  } = settings;
+  const pixelSize = Math.max(
+    1,
+    Math.round(settings.pixelSize ?? Math.max(1, Math.round((settings.cellWidth || 3) / 3)))
+  );
+  const cellWidth = Math.max(
+    3,
+    Math.round(settings.pixelSize === undefined ? settings.cellWidth : pixelSize * 3)
+  );
+  const cellHeight = Math.max(
+    3,
+    Math.round(settings.pixelSize === undefined ? settings.cellHeight : pixelSize * 3)
+  );
+  const contrastFactor = Math.max(0, contrast) / 100;
+  const applyContrast = (value: number) => Math.max(0, Math.min(255, Math.round(128 + (value - 128) * contrastFactor)));
+  const channels = subpixelOrientation === 'rgb' ? ['r', 'g', 'b'] : ['b', 'g', 'r'];
   
   // Get the image data
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -37,7 +54,7 @@ export function applyLCDEffect(
   tempCtx.fillRect(0, 0, canvas.width, canvas.height);
 
   // Clamp padding to a reasonable range
-  const maxPadding = Math.floor(Math.min(cellWidth, cellHeight) / 2 - 1);
+  const maxPadding = Math.max(0, Math.floor(Math.min(cellWidth, cellHeight) / 2 - 1));
   const safePadding = Math.max(0, Math.min(padding, maxPadding));
 
   if (pattern === 'TV CRT' || pattern === 'LCD') {
@@ -62,10 +79,15 @@ export function applyLCDEffect(
           }
         }
         if (count > 0) {
-          r = Math.round(r / count);
-          g = Math.round(g / count);
-          b = Math.round(b / count);
-          const drawStripe = (color: string, sx: number) => {
+          r = applyContrast(r / count);
+          g = applyContrast(g / count);
+          b = applyContrast(b / count);
+          const drawStripe = (channel: string, sx: number) => {
+            const color = channel === 'r'
+              ? `rgb(${r},0,0)`
+              : channel === 'g'
+                ? `rgb(0,${g},0)`
+                : `rgb(0,0,${b})`;
             tempCtx.save();
             tempCtx.beginPath();
             const radius = Math.max(1, stripeWidth * 0.45);
@@ -85,15 +107,7 @@ export function applyLCDEffect(
             tempCtx.globalAlpha = 1.0;
             tempCtx.restore();
           };
-          if (pattern === 'TV CRT') {
-            drawStripe(`rgb(${r},0,0)`, gapX);
-            drawStripe(`rgb(0,${g},0)`, gapX + stripeWidth);
-            drawStripe(`rgb(0,0,${b})`, gapX + stripeWidth * 2);
-          } else {
-            drawStripe(`rgb(0,0,${b})`, gapX);
-            drawStripe(`rgb(0,${g},0)`, gapX + stripeWidth);
-            drawStripe(`rgb(${r},0,0)`, gapX + stripeWidth * 2);
-          }
+          channels.forEach((channel, index) => drawStripe(channel, gapX + stripeWidth * index));
         }
       }
     }
@@ -117,9 +131,9 @@ export function applyLCDEffect(
           }
         }
         if (count > 0) {
-          r = Math.round(r / count);
-          g = Math.round(g / count);
-          b = Math.round(b / count);
+          r = applyContrast(r / count);
+          g = applyContrast(g / count);
+          b = applyContrast(b / count);
           const rowOffset = offset && Math.floor((y / cellHeight)) % 2 === 1 ? cellWidth / 3 : 0;
           // Red dot
           tempCtx.beginPath();
@@ -145,6 +159,24 @@ export function applyLCDEffect(
         }
       }
     }
+  }
+  if (gridLines) {
+    tempCtx.save();
+    tempCtx.strokeStyle = 'rgba(0, 0, 0, 0.85)';
+    tempCtx.lineWidth = Math.max(0.1, gridThickness);
+    for (let x = 0; x <= canvas.width; x += cellWidth) {
+      tempCtx.beginPath();
+      tempCtx.moveTo(x, 0);
+      tempCtx.lineTo(x, canvas.height);
+      tempCtx.stroke();
+    }
+    for (let y = 0; y <= canvas.height; y += cellHeight) {
+      tempCtx.beginPath();
+      tempCtx.moveTo(0, y);
+      tempCtx.lineTo(canvas.width, y);
+      tempCtx.stroke();
+    }
+    tempCtx.restore();
   }
   // Draw the processed image back to the original canvas
   ctx.clearRect(0, 0, canvas.width, canvas.height);

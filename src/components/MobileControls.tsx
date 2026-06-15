@@ -3454,8 +3454,8 @@ const MobileControls: React.FC<MobileControlsProps> = ({
           <div className={`mobile-effect-content ${openSection === instance.id ? 'open' : ''}`}>
             <Slider
               label="Pixel Size"
-              value={settings.pixelSize}
-              onChange={(value) => updateInstanceSettings(instance.id, { pixelSize: value })}
+              value={settings.pixelSize ?? Math.max(1, Math.round((settings.cellWidth || 3) / 3))}
+              onChange={(value) => updateInstanceSettings(instance.id, { pixelSize: value, cellWidth: value * 3, cellHeight: value * 3 })}
               min={1}
               max={10}
               step={1}
@@ -3464,7 +3464,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
             />
             <Slider
               label="Contrast"
-              value={settings.contrast}
+              value={settings.contrast ?? 100}
               onChange={(value) => updateInstanceSettings(instance.id, { contrast: value })}
               min={0}
               max={200}
@@ -3476,7 +3476,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               <label className="mobile-control-label">Subpixel Orientation</label>
               <select
                 className="mobile-select"
-                value={settings.subpixelOrientation}
+                value={settings.subpixelOrientation ?? 'bgr'}
                 onChange={e => updateInstanceSettings(instance.id, { subpixelOrientation: e.target.value })}
               >
                 <option value="rgb">RGB</option>
@@ -3488,7 +3488,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               <label className="mobile-effect-toggle">
                 <input 
                   type="checkbox" 
-                  checked={settings.gridLines}
+                  checked={settings.gridLines ?? false}
                   onChange={(e) => updateInstanceSettings(instance.id, { gridLines: e.target.checked })}
                 />
                 <span className="mobile-effect-toggle-slider"></span>
@@ -3496,7 +3496,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
             </div>
             <Slider
               label="Grid Thickness"
-              value={settings.gridThickness}
+              value={settings.gridThickness ?? 0.5}
               onChange={(value) => updateInstanceSettings(instance.id, { gridThickness: value })}
               min={0.1}
               max={2}
