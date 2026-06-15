@@ -3146,16 +3146,16 @@ export default function AdvancedEditor({
 
       <div className="flex flex-col xl:flex-row gap-6">
         {/* Canvas Container */}
-        <div className="flex-1 min-w-0">
+        <div className="z-30 min-w-0 bg-[var(--primary-bg)] max-xl:sticky max-xl:top-[52px] max-xl:-mx-3 max-xl:px-3 max-xl:pb-3 xl:flex-1 xl:bg-transparent">
           <div className="xl:sticky xl:top-[78px]">
-          <div className="relative min-h-[420px] flex items-center justify-center bg-[var(--secondary-bg)] border border-[var(--border-color)]">
+          <div className="relative flex min-h-[260px] items-center justify-center border border-[var(--border-color)] bg-[var(--secondary-bg)] sm:min-h-[320px] xl:min-h-[420px]">
             {image ? (
               <div className="relative w-full p-4">
                 <canvas
                   ref={canvasRef}
                   width={canvasWidth}
                   height={canvasHeight}
-                  className="max-w-full max-h-[calc(100vh-260px)] h-auto mx-auto"
+                  className="mx-auto h-auto max-h-[36vh] max-w-full sm:max-h-[42vh] xl:max-h-[calc(100vh-260px)]"
                 />
                 {(processing || imageLoading) && (
                   <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
@@ -3166,7 +3166,7 @@ export default function AdvancedEditor({
             ) : (
               <div
                 {...getRootProps()}
-                className={`w-full min-h-[420px] border border-dashed p-12 text-center cursor-pointer transition-colors flex items-center justify-center ${
+                className={`flex min-h-[260px] w-full cursor-pointer items-center justify-center border border-dashed p-6 text-center transition-colors sm:min-h-[320px] sm:p-12 xl:min-h-[420px] ${
                   isDragActive ? 'border-emerald-500 bg-emerald-500/10' : 'border-[var(--border-color)] hover:border-emerald-500/50'
                 }`}
               >
