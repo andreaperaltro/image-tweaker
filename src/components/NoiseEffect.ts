@@ -31,6 +31,24 @@ function blend(a: number, b: number, mode: string): number {
   }
 }
 
+function parseHexColor(color: string | undefined): [number, number, number] {
+  const match = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(color || '#ffffff');
+  if (!match) return [255, 255, 255];
+  return [parseInt(match[1], 16), parseInt(match[2], 16), parseInt(match[3], 16)];
+}
+
+function seededRandom(seed: number, x: number, y: number, channel = 0): number {
+  const value = Math.sin(seed * 12.9898 + x * 78.233 + y * 37.719 + channel * 19.19) * 43758.5453;
+  return value - Math.floor(value);
+}
+
+function gaussianRandom(seed: number, x: number, y: number, channel = 0): number {
+  const u1 = Math.max(seededRandom(seed, x, y, channel), 0.000001);
+  const u2 = seededRandom(seed + 1, x, y, channel);
+  const normal = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+  return Math.max(0, Math.min(255, 128 + normal * 48));
+}
+
 export function applyNoiseEffect(
   ctx: CanvasRenderingContext2D,
   sourceCanvas: HTMLCanvasElement,
@@ -39,11 +57,12 @@ export function applyNoiseEffect(
   settings: import('../types').NoiseEffectSettings
 ) {
   if (!settings.enabled) return;
-  const { intensity = 0.5, scale = 0.1, seed = 0, blendMode = 'normal', monochrome = false, channel = 'all', type = 'perlin', octaves = 4, persistence = 0.5, amount = 1, density = 1 } = settings;
+  const { intensity = 0.5, scale = 0.1, seed = 0, blendMode = 'normal', monochrome = false, monochromeColor = '#ffffff', channel = 'all', type = 'perlin', octaves = 4, persistence = 0.5, amount = 1, density = 1 } = settings;
   const srcData = ctx.getImageData(0, 0, width, height);
   const dstData = ctx.createImageData(width, height);
   const noise = new Noise(seed);
   const freq = 1 / Math.max(scale, 0.0001);
+  const monoColor = parseHexColor(monochromeColor);
 
   // fBm (fractal Brownian motion) for Perlin/Simplex
   function fbm(x: number, y: number) {
@@ -83,6 +102,12 @@ export function applyNoiseEffect(
       let n = 0;
       if (type === 'perlin' || type === 'simplex') {
         n = (fbm(x, y) * 0.5 + 0.5) * 255;
+      } else if (type === 'gaussian') {
+        n = gaussianRandom(seed, x, y);
+      } else if (type === 'uniform') {
+        n = seededRandom(seed, x, y) * 255;
+      } else if (type === 'salt-and-pepper') {
+        n = seededRandom(seed, x, y) < 0.5 ? 0 : 255;
       } else {
         n = (noise.perlin2(x * freq, y * freq) * 0.5 + 0.5) * 255;
       }
@@ -100,8 +125,17 @@ export function applyNoiseEffect(
           let nVal = monochrome ? n : 0;
           if (type === 'perlin' || type === 'simplex') {
             nVal = monochrome ? n : (fbm(x + c * 1000, y) * 0.5 + 0.5) * 255;
+          } else if (type === 'gaussian') {
+            nVal = monochrome ? n : gaussianRandom(seed, x, y, c);
+          } else if (type === 'uniform') {
+            nVal = monochrome ? n : seededRandom(seed, x, y, c) * 255;
+          } else if (type === 'salt-and-pepper') {
+            nVal = monochrome ? n : seededRandom(seed, x, y, c) < 0.5 ? 0 : 255;
           } else {
             nVal = monochrome ? n : (noise.perlin2((x + c * 1000) * freq, y * freq) * 0.5 + 0.5) * 255;
+          }
+          if (monochrome) {
+            nVal = monoColor[c] * (n / 255);
           }
           // Amount: blend between original and noise value
           noiseVal = Math.round(orig * (1 - intensity * amount) + nVal * intensity * amount);

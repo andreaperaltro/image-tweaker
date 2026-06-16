@@ -9,6 +9,7 @@ export interface AsciiEffectSettings {
   charset: string;
   backgroundColor?: string;
   monochrome?: boolean;
+  colorInvert?: boolean;
   jitter?: number;
   textColor?: string;
   rotationMax: number;
@@ -39,6 +40,7 @@ export const applyAsciiEffect = (
     cellSize, 
     charset, 
     monochrome = true, 
+    colorInvert = false,
     jitter = 0, 
     textColor = '#ffffff', 
     backgroundColor = '#000000', 
@@ -101,7 +103,8 @@ export const applyAsciiEffect = (
       }
 
       const brightness = count > 0 ? total / count : 0;
-      const charIndex = Math.floor((brightness / 255) * (charLen - 1));
+      const normalizedBrightness = colorInvert ? 1 - brightness / 255 : brightness / 255;
+      const charIndex = Math.floor(normalizedBrightness * (charLen - 1));
       const char = chars[charIndex];
 
       // Calculate rotation based on mode

@@ -11,6 +11,8 @@ export interface BlobSettings {
   connectionType: 'straight' | 'curved' | 'wavy';
   connectionStrength: number;
   connectionColor: string;
+  backgroundColor?: string;
+  dotColor?: string;
   minDistance: number;
   maxDistance: number;
   angleOffset: number;
@@ -37,6 +39,8 @@ export const applyBlob = (
 
   // Clear canvas
   ctx.clearRect(0, 0, width, height);
+  ctx.fillStyle = settings.backgroundColor || '#ffffff';
+  ctx.fillRect(0, 0, width, height);
 
   // Calculate grid
   const cellSize = settings.cellSize;
@@ -82,7 +86,7 @@ export const applyBlob = (
   }
 
   // Draw connections
-  ctx.strokeStyle = settings.connectionColor;
+  ctx.strokeStyle = settings.connectionColor || '#000000';
   ctx.lineWidth = settings.connectionStrength;
 
   for (let i = 0; i < dots.length; i++) {
@@ -139,7 +143,9 @@ export const applyBlob = (
   // Draw dots
   dots.forEach(dot => {
     ctx.beginPath();
-    ctx.fillStyle = settings.colored ? `hsl(${dot.brightness * 360}, 70%, 50%)` : `rgba(0, 0, 0, ${dot.brightness})`;
+    ctx.fillStyle = settings.colored
+      ? `hsl(${dot.brightness * 360}, 70%, 50%)`
+      : `${settings.dotColor || '#000000'}${Math.round(dot.brightness * 255).toString(16).padStart(2, '0')}`;
 
     switch (settings.shape) {
       case 'circle':

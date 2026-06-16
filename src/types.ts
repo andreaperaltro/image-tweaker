@@ -93,6 +93,7 @@ export interface DistortSettings {
   offsetX: number;  // X position offset (-100 to 100)
   offsetY: number;  // Y position offset (-100 to 100)
   displacementMapUpdatedAt?: number;
+  colorAberration?: number;
 }
 
 export interface Effects {
@@ -142,6 +143,7 @@ export interface LinocutEffectSettings {
   orientation?: 'horizontal' | 'vertical'; // optional
   threshold?: number; // 0-1, for line visibility
   minLine?: number; // minimum line thickness
+  lineColor?: string;
 }
 
 export interface AsciiEffectSettings {
@@ -151,6 +153,7 @@ export interface AsciiEffectSettings {
   charset: string;
   backgroundColor?: string;
   monochrome?: boolean;
+  colorInvert?: boolean;
   jitter?: number;
   preset?: string;
   textColor?: string;
@@ -207,12 +210,13 @@ export type EffectType =
 
 export interface NoiseEffectSettings {
   enabled: boolean;
-  type: 'perlin';
+  type: 'gaussian' | 'uniform' | 'salt-and-pepper' | 'perlin' | 'simplex';
   intensity: number; // 0-1
   scale: number; // 0.01-500
   seed: number;
   blendMode: 'normal' | 'multiply' | 'screen' | 'overlay' | 'darken' | 'lighten' | 'color-dodge' | 'color-burn' | 'hard-light' | 'soft-light' | 'difference' | 'exclusion';
   monochrome?: boolean; // If true, use grayscale noise for all channels
+  monochromeColor?: string;
   channel?: 'all' | 'r' | 'g' | 'b'; // Which channel(s) to apply noise to
   octaves?: number; // Number of octaves for fBm
   persistence?: number; // Persistence for fBm

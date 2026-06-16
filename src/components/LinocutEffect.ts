@@ -25,6 +25,7 @@ export function applyLinocutEffect(
     orientation = 'horizontal',
     threshold = 0.5,
     minLine = 1,      // Minimum line thickness
+    lineColor,
   } = settings as any;
   const noise = new Noise(42);
   const imgData = ctx.getImageData(0, 0, width, height);
@@ -32,7 +33,7 @@ export function applyLinocutEffect(
   ctx.globalCompositeOperation = 'source-over';
   ctx.fillStyle = invert ? 'black' : 'white';
   ctx.fillRect(0, 0, width, height);
-  ctx.strokeStyle = invert ? 'white' : 'black';
+  ctx.strokeStyle = lineColor || (invert ? 'white' : 'black');
   for (let i = 0; i < (orientation === 'horizontal' ? height : width); i += lineSpacing) {
     for (let j = 0; j < (orientation === 'horizontal' ? width : height); j++) {
       // Map to image coordinates
@@ -71,12 +72,14 @@ export function applyLinocutEffect(
     }
   }
   ctx.restore();
-  // Threshold to pure black/white (optional, for extra crispness)
-  const outData = ctx.getImageData(0, 0, width, height);
-  for (let i = 0; i < outData.data.length; i += 4) {
-    const v = outData.data[i];
-    const bw = v > 128 ? 255 : 0;
-    outData.data[i] = outData.data[i + 1] = outData.data[i + 2] = bw;
+  if (!lineColor) {
+    // Threshold to pure black/white when using the classic monochrome palette.
+    const outData = ctx.getImageData(0, 0, width, height);
+    for (let i = 0; i < outData.data.length; i += 4) {
+      const v = outData.data[i];
+      const bw = v > 128 ? 255 : 0;
+      outData.data[i] = outData.data[i + 1] = outData.data[i + 2] = bw;
+    }
+    ctx.putImageData(outData, 0, 0);
   }
-  ctx.putImageData(outData, 0, 0);
-} 
+}

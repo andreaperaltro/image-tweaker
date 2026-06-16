@@ -262,6 +262,8 @@ export default function AdvancedEditor({
   
   // NEW: Store instance-specific settings
   const [instanceSettings, setInstanceSettings] = useState<{[id: string]: any}>({});
+  const pendingProcessRef = useRef(false);
+  const processImageRef = useRef<(() => Promise<void>) | null>(null);
 
   // Glitch settings
   const [glitchSettings, setGlitchSettings] = useState<GlitchSettings>({
@@ -389,6 +391,8 @@ export default function AdvancedEditor({
     connectionType: 'straight',
     connectionStrength: 2,
     connectionColor: '#000000',
+    backgroundColor: '#ffffff',
+    dotColor: '#000000',
     minDistance: 10,
     maxDistance: 50,
     angleOffset: 0,
@@ -466,7 +470,12 @@ export default function AdvancedEditor({
   
   // Define processImage
   const processImage = useCallback(async () => {
-    if (!canvasRef.current || !sourceCanvasRef.current || !originalImageDataRef.current || isProcessingRef.current) {
+    if (isProcessingRef.current) {
+      pendingProcessRef.current = true;
+      return;
+    }
+
+    if (!canvasRef.current || !sourceCanvasRef.current || !originalImageDataRef.current) {
       return;
     }
     
@@ -652,8 +661,19 @@ export default function AdvancedEditor({
       console.error('Error processing image:', error);
       isProcessingRef.current = false;
       setProcessing(false);
+    } finally {
+      if (pendingProcessRef.current) {
+        pendingProcessRef.current = false;
+        requestAnimationFrame(() => {
+          processImageRef.current?.();
+        });
+      }
     }
   }, [canvasWidth, canvasHeight, image, originalImageDataRef, effectInstances, instanceSettings, shouldGenerateCropData]);
+
+  useEffect(() => {
+    processImageRef.current = processImage;
+  }, [processImage]);
 
   // Add this function to get settings for an instance
   const getInstanceSettings = (instance: EffectInstance) => {
@@ -866,7 +886,8 @@ export default function AdvancedEditor({
           scale: 1.0,
           offsetX: 0,
           offsetY: 0,
-          smoothness: 0
+          smoothness: 0,
+          colorAberration: 0
         } as DistortSettings;
         break;
       case 'color':
@@ -971,6 +992,12 @@ export default function AdvancedEditor({
           scale: 0.1,
           seed: 0,
           blendMode: 'normal',
+          amount: 0.1,
+          density: 1,
+          octaves: 4,
+          persistence: 0.5,
+          monochrome: false,
+          monochromeColor: '#ffffff',
         };
         break;
       case 'linocut':
@@ -982,7 +1009,11 @@ export default function AdvancedEditor({
           centerY: 0.5,
           invert: false,
           orientation: 'horizontal',
-          threshold: 0.5
+          threshold: 0.5,
+          lineSpacing: 10,
+          strokeWidth: 8,
+          minLine: 1,
+          lineColor: '#000000'
         };
         break;
       case 'levels':
@@ -1038,7 +1069,7 @@ export default function AdvancedEditor({
           contrast: 100,
           subpixelOrientation: 'bgr',
           gridLines: false,
-          gridThickness: 0.5
+          gridThickness: 1.5
         };
         break;
       case 'snake':
@@ -1595,9 +1626,6 @@ export default function AdvancedEditor({
 
   // Update effects with manual processing
   const updateInstanceSettings = useCallback((id: string, settings: any) => {
-    // Don't allow updates while processing
-    if (isProcessingRef.current) return;
-
     setInstanceSettings(prev => {
       const prevSettings = prev[id] || {};
       // If this is a threeD effect, always merge with full defaults
@@ -2113,6 +2141,15 @@ export default function AdvancedEditor({
 
                 if (overlayCtx) {
                   const overlayData = new Uint8ClampedArray(data.length);
+                  const sampleChannel = (sampleX: number, sampleY: number, channel: number, fallback: number) => {
+                    sampleX = Math.round(sampleX);
+                    sampleY = Math.round(sampleY);
+                    if (sampleX < 0 || sampleX >= targetCanvas.width || sampleY < 0 || sampleY >= targetCanvas.height) {
+                      return fallback;
+                    }
+                    return data[(sampleY * targetCanvas.width + sampleX) * 4 + channel];
+                  };
+                  const colorAberration = Number(settings.colorAberration) || 0;
 
                   // Process each pixel for the overlay
                   for (let i = 0; i < data.length; i += 4) {
@@ -2130,13 +2167,10 @@ export default function AdvancedEditor({
                     const sourceX = Math.round(x + dx);
                     const sourceY = Math.round(y + dy);
 
-                    // No color aberration: all channels use the same source pixel
-                    const srcIdx = (sourceY * targetCanvas.width + sourceX) * 4;
-
                     if (intensity > 0.05) {
-                      overlayData[i] = data[srcIdx] || data[i];
-                      overlayData[i + 1] = data[srcIdx + 1] || data[i + 1];
-                      overlayData[i + 2] = data[srcIdx + 2] || data[i + 2];
+                      overlayData[i] = sampleChannel(sourceX + colorAberration, sourceY, 0, data[i]);
+                      overlayData[i + 1] = sampleChannel(sourceX, sourceY, 1, data[i + 1]);
+                      overlayData[i + 2] = sampleChannel(sourceX - colorAberration, sourceY, 2, data[i + 2]);
                       overlayData[i + 3] = Math.min(255, intensity * 255 * 2);
                     } else {
                       overlayData[i] = 0;

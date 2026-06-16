@@ -17,7 +17,7 @@ export function applyLCDEffect(
     contrast = 100,
     subpixelOrientation = 'bgr',
     gridLines = false,
-    gridThickness = 0.5
+    gridThickness = 1.5
   } = settings;
   const pixelSize = Math.max(
     1,
@@ -162,18 +162,30 @@ export function applyLCDEffect(
   }
   if (gridLines) {
     tempCtx.save();
-    tempCtx.strokeStyle = 'rgba(0, 0, 0, 0.85)';
-    tempCtx.lineWidth = Math.max(0.1, gridThickness);
+    const lineWidth = Math.max(0.5, gridThickness);
+    tempCtx.lineWidth = lineWidth;
     for (let x = 0; x <= canvas.width; x += cellWidth) {
+      tempCtx.strokeStyle = 'rgba(0, 0, 0, 0.9)';
       tempCtx.beginPath();
-      tempCtx.moveTo(x, 0);
-      tempCtx.lineTo(x, canvas.height);
+      tempCtx.moveTo(x + 0.5, 0);
+      tempCtx.lineTo(x + 0.5, canvas.height);
+      tempCtx.stroke();
+      tempCtx.strokeStyle = 'rgba(255, 255, 255, 0.38)';
+      tempCtx.beginPath();
+      tempCtx.moveTo(x + lineWidth + 0.5, 0);
+      tempCtx.lineTo(x + lineWidth + 0.5, canvas.height);
       tempCtx.stroke();
     }
     for (let y = 0; y <= canvas.height; y += cellHeight) {
+      tempCtx.strokeStyle = 'rgba(0, 0, 0, 0.9)';
       tempCtx.beginPath();
-      tempCtx.moveTo(0, y);
-      tempCtx.lineTo(canvas.width, y);
+      tempCtx.moveTo(0, y + 0.5);
+      tempCtx.lineTo(canvas.width, y + 0.5);
+      tempCtx.stroke();
+      tempCtx.strokeStyle = 'rgba(255, 255, 255, 0.32)';
+      tempCtx.beginPath();
+      tempCtx.moveTo(0, y + lineWidth + 0.5);
+      tempCtx.lineTo(canvas.width, y + lineWidth + 0.5);
       tempCtx.stroke();
     }
     tempCtx.restore();

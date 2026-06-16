@@ -2727,52 +2727,121 @@ const MobileControls: React.FC<MobileControlsProps> = ({
           <div className={`mobile-effect-content ${openSection === instance.id ? 'open' : ''}`}>
             <Slider
               label="Cell Size"
-              value={settings.cellSize}
+              value={settings.cellSize ?? 8}
               onChange={(value) => updateInstanceSettings(instance.id, { cellSize: value })}
               min={2}
-              max={30}
+              max={60}
               step={1}
               unit="px"
-              defaultValue={5} // Default value for Cell Size
+              defaultValue={8}
             />
             <Slider
-              label="Mix Amount"
-              value={settings.mix}
-              onChange={(value) => updateInstanceSettings(instance.id, { mix: value })}
-              min={0}
-              max={100}
-              step={1}
-              unit="%"
-              defaultValue={0} // Default value for Mix Amount
+              label="Dot Scale"
+              value={settings.dotScaleFactor ?? 0.8}
+              onChange={(value) => updateInstanceSettings(instance.id, { dotScaleFactor: value })}
+              min={0.1}
+              max={2}
+              step={0.05}
+              defaultValue={0.8}
             />
             <Slider
-              label="Sharpness"
-              value={settings.sharpness}
-              onChange={(value) => updateInstanceSettings(instance.id, { sharpness: value })}
+              label="Size Variation"
+              value={settings.sizeVariation ?? 0}
+              onChange={(value) => updateInstanceSettings(instance.id, { sizeVariation: value })}
               min={0}
-              max={100}
-              step={1}
-              unit="%"
-              defaultValue={0} // Default value for Sharpness
+              max={1}
+              step={0.05}
+              defaultValue={0}
             />
             <div className="mobile-control-group">
-              <label className="mobile-control-label">Merge Colors</label>
+              <label className="mobile-control-label">Shape</label>
+              <select
+                className="mobile-select"
+                value={settings.shape ?? 'circle'}
+                onChange={e => updateInstanceSettings(instance.id, { shape: e.target.value })}
+              >
+                <option value="circle">Circle</option>
+                <option value="square">Square</option>
+                <option value="diamond">Diamond</option>
+              </select>
+            </div>
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Connection Type</label>
+              <select
+                className="mobile-select"
+                value={settings.connectionType ?? 'straight'}
+                onChange={e => updateInstanceSettings(instance.id, { connectionType: e.target.value })}
+              >
+                <option value="straight">Straight</option>
+                <option value="curved">Curved</option>
+                <option value="wavy">Wavy</option>
+              </select>
+            </div>
+            <Slider
+              label="Connection Strength"
+              value={settings.connectionStrength ?? 2}
+              onChange={(value) => updateInstanceSettings(instance.id, { connectionStrength: value })}
+              min={0}
+              max={10}
+              step={0.5}
+              unit="px"
+              defaultValue={2}
+            />
+            <Slider
+              label="Max Distance"
+              value={settings.maxDistance ?? 50}
+              onChange={(value) => updateInstanceSettings(instance.id, { maxDistance: value })}
+              min={0}
+              max={200}
+              step={1}
+              unit="px"
+              defaultValue={50}
+            />
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Background</label>
+              <input
+                type="color"
+                className="mobile-color-picker"
+                value={settings.backgroundColor ?? '#ffffff'}
+                onChange={(e) => updateInstanceSettings(instance.id, { backgroundColor: e.target.value })}
+              />
+            </div>
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Dot Color</label>
+              <input
+                type="color"
+                className="mobile-color-picker"
+                value={settings.dotColor ?? '#000000'}
+                onChange={(e) => updateInstanceSettings(instance.id, { dotColor: e.target.value })}
+              />
+            </div>
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Connection Color</label>
+              <input
+                type="color"
+                className="mobile-color-picker"
+                value={settings.connectionColor ?? '#000000'}
+                onChange={(e) => updateInstanceSettings(instance.id, { connectionColor: e.target.value })}
+              />
+            </div>
+            <div className="mobile-control-group">
+              <label className="mobile-control-label">Colored Dots</label>
               <label className="mobile-effect-toggle">
                 <input 
                   type="checkbox" 
-                  checked={settings.mergeColors}
-                  onChange={(e) => updateInstanceSettings(instance.id, { mergeColors: e.target.checked })}
+                  checked={settings.colored ?? false}
+                  onChange={(e) => updateInstanceSettings(instance.id, { colored: e.target.checked })}
                 />
                 <span className="mobile-effect-toggle-slider"></span>
               </label>
             </div>
             <div className="mobile-control-group">
-              <label className="mobile-control-label">Invert Colors</label>
+              <label className="mobile-control-label">Invert Brightness</label>
               <label className="mobile-effect-toggle">
                 <input 
                   type="checkbox" 
-                  checked={settings.invertColors}
-                  onChange={(e) => updateInstanceSettings(instance.id, { invertColors: e.target.checked })}
+                  checked={settings.invertBrightness ?? false}
+                  onChange={(e) => updateInstanceSettings(instance.id, { invertBrightness: e.target.checked })}
                 />
                 <span className="mobile-effect-toggle-slider"></span>
               </label>
@@ -2832,57 +2901,41 @@ const MobileControls: React.FC<MobileControlsProps> = ({
         return (
           <div className={`mobile-effect-content ${openSection === instance.id ? 'open' : ''}`}>
             <Slider
-              label="Radius"
-              value={settings.radius}
-              onChange={(value) => updateInstanceSettings(instance.id, { radius: value })}
-              min={10}
-              max={200}
+              label="Rings"
+              value={settings.rings ?? 24}
+              onChange={(value) => updateInstanceSettings(instance.id, { rings: value })}
+              min={2}
+              max={100}
               step={1}
-              unit="px"
-              defaultValue={50} // Default value for Radius
+              defaultValue={24}
             />
             <Slider
-              label="Pixel Size"
-              value={settings.pixelSize}
-              onChange={(value) => updateInstanceSettings(instance.id, { pixelSize: value })}
-              min={1}
-              max={20}
+              label="Segments"
+              value={settings.segments ?? 48}
+              onChange={(value) => updateInstanceSettings(instance.id, { segments: value })}
+              min={2}
+              max={180}
               step={1}
-              unit="px"
-              defaultValue={5} // Default value for Pixel Size
+              defaultValue={48}
             />
             <Slider
-              label="Angle Step"
-              value={settings.angleStep}
-              onChange={(value) => updateInstanceSettings(instance.id, { angleStep: value })}
-              min={1}
-              max={90}
-              step={1}
-              unit="°"
-              defaultValue={10} // Default value for Angle Step
+              label="Center X"
+              value={settings.centerX ?? 0.5}
+              onChange={(value) => updateInstanceSettings(instance.id, { centerX: value })}
+              min={0}
+              max={1}
+              step={0.01}
+              defaultValue={0.5}
             />
-            <div className="mobile-control-group">
-              <label className="mobile-control-label">Preserve Colors</label>
-              <label className="mobile-effect-toggle">
-                <input 
-                  type="checkbox" 
-                  checked={settings.preserveColors}
-                  onChange={(e) => updateInstanceSettings(instance.id, { preserveColors: e.target.checked })}
-                />
-                <span className="mobile-effect-toggle-slider"></span>
-              </label>
-            </div>
-            <div className="mobile-control-group">
-              <label className="mobile-control-label">Invert</label>
-              <label className="mobile-effect-toggle">
-                <input 
-                  type="checkbox" 
-                  checked={settings.invert}
-                  onChange={(e) => updateInstanceSettings(instance.id, { invert: e.target.checked })}
-                />
-                <span className="mobile-effect-toggle-slider"></span>
-              </label>
-            </div>
+            <Slider
+              label="Center Y"
+              value={settings.centerY ?? 0.5}
+              onChange={(value) => updateInstanceSettings(instance.id, { centerY: value })}
+              min={0}
+              max={1}
+              step={0.01}
+              defaultValue={0.5}
+            />
           </div>
         );
 
@@ -3196,7 +3249,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
                 <input 
                   type="color" 
                   className="mobile-color-picker"
-                  value={settings.monochromeColor || '#000000'}
+                  value={settings.monochromeColor || '#ffffff'}
                   onChange={(e) => updateInstanceSettings(instance.id, { monochromeColor: e.target.value })}
                 />
               </div>
@@ -3209,21 +3262,21 @@ const MobileControls: React.FC<MobileControlsProps> = ({
           <div className={`mobile-effect-content ${openSection === instance.id ? 'open' : ''}`}>
             <Slider
               label="Threshold"
-              value={settings.threshold}
+              value={settings.threshold ?? 0.5}
               onChange={(value) => updateInstanceSettings(instance.id, { threshold: value })}
               min={0}
-              max={255}
-              step={1}
-              defaultValue={128} // Default value for Threshold
+              max={1}
+              step={0.01}
+              defaultValue={0.5}
             />
             <Slider
               label="Line Width"
-              value={settings.lineWidth}
-              onChange={(value) => updateInstanceSettings(instance.id, { lineWidth: value })}
+              value={settings.strokeWidth ?? settings.lineWidth ?? 8}
+              onChange={(value) => updateInstanceSettings(instance.id, { strokeWidth: value })}
               min={1}
-              max={10}
+              max={24}
               step={1}
-              defaultValue={1} // Default value for Line Width
+              defaultValue={8}
             />
             <div className="mobile-control-group">
               <label className="mobile-control-label">Invert</label>
@@ -3241,7 +3294,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               <input
                 type="color"
                 className="mobile-color-picker"
-                value={settings.lineColor}
+                value={settings.lineColor ?? (settings.invert ? '#ffffff' : '#000000')}
                 onChange={(e) => updateInstanceSettings(instance.id, { lineColor: e.target.value })}
               />
             </div>
@@ -3457,7 +3510,7 @@ const MobileControls: React.FC<MobileControlsProps> = ({
               value={settings.pixelSize ?? Math.max(1, Math.round((settings.cellWidth || 3) / 3))}
               onChange={(value) => updateInstanceSettings(instance.id, { pixelSize: value, cellWidth: value * 3, cellHeight: value * 3 })}
               min={1}
-              max={10}
+              max={24}
               step={1}
               unit="px"
               defaultValue={2} // Default value for Pixel Size
@@ -3496,13 +3549,13 @@ const MobileControls: React.FC<MobileControlsProps> = ({
             </div>
             <Slider
               label="Grid Thickness"
-              value={settings.gridThickness ?? 0.5}
+              value={settings.gridThickness ?? 1.5}
               onChange={(value) => updateInstanceSettings(instance.id, { gridThickness: value })}
-              min={0.1}
-              max={2}
-              step={0.1}
+              min={0.5}
+              max={8}
+              step={0.5}
               unit="px"
-              defaultValue={0.5} // Default value for Grid Thickness
+              defaultValue={1.5} // Default value for Grid Thickness
             />
           </div>
         );
